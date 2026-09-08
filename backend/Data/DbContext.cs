@@ -14,6 +14,7 @@ namespace RestaurantCRM.Data
         public DbSet<Order> Orders { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<OrderDetail> OrdersDetails { get; set; }
-        public DbSet<Expense> Expenses {get; set;}
+        public DbSet<Expense> Expenses { get; set; }
+        public DbSet<Restaurants> Restaurants { get; set; }
     }
 }
