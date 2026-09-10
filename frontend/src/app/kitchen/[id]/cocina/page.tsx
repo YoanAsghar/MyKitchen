@@ -1,7 +1,7 @@
 'use client';
 import { useMemo } from 'react';
 import KitchenView from './KitchenView';
-import { useOrdersContext } from '../OrdersContext';
+import { useOrdersContext } from '../../../OrdersContext';
 
 export default function CocinaPage() {
   // Live global state of every current order, kept in sync by the SignalR hub.

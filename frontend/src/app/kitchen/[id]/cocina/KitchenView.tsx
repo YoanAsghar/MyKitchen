@@ -1,5 +1,5 @@
-import { colorPalette } from "../../colorPallete"
-import { Order } from "../../models/order";
+import { colorPalette } from "../../../../colorPallete"
+import { Order } from "../../../../models/order";
 
 interface KitchenViewProps {
   activeOrders: Order[];

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, type ReactEventHandler } from "react";
-import { Order } from "../../models/order";
-import { OrderServices } from "../../services/OrderServices";
+import { Order } from "../../../../models/order";
+import { OrderServices } from "../../../../services/OrderServices";
 
 const colorPalette = {
   DeepTwilight: "#140152",

@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useMemo } from "react";
-import ProductCards from "../../components/ProductCards";
-import { Product } from "../../models/product";
-import { colorPalette } from "../../colorPallete";
+import ProductCards from "../../../../components/ProductCards";
+import { Product } from "../../../../models/product";
+import { colorPalette } from "../../../../colorPallete";
 
 interface MenuContentProps {
   products: Product[];

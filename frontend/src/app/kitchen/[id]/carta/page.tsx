@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import MenuContent from './MenuContent';
-import { ProductServices } from '../../services/ProductServices';
-import { useGlobalContext } from '../GlobalContext';
-import { Product } from '../../models/product';
+import { ProductServices } from '../../../../services/ProductServices';
+import { useGlobalContext } from '../../../GlobalContext';
+import { Product } from '../../../../models/product';
 
 export default function InventarioPage() {
   const { isAuthenticated } = useGlobalContext();

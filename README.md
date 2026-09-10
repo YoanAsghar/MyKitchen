@@ -21,6 +21,13 @@ Una solución integral para la gestión de restaurantes, permitiendo el control 
 
 ## 🛠️ Funcionalidades Principales
 
+### 0. Sitio de marketing (SaaS)
+- Landing page pública en `/home` (más `/home/pricing`, `/home/contact` y el formulario de registro `/home/registro`), portada del prototipo Figma (`FigmaDesigns/`, brief en `docs/landing-site-figma-brief.md`).
+- Tema oscuro con acentos violetas, tipografía DM Sans + Bebas Neue y componentes compartidos en `frontend/src/app/home/components/`.
+- `/home*` (marketing) y `/auth*` (login en `/auth/login`) son rutas públicas (sin autenticación); `/` redirige a `/home` cuando estás deslogueado.
+
+Las rutas de la app (bussines) viven bajo `/kitchen/{id}/` (mesas, cocina, carta, ordenes, admin), donde `{id}` es el id del restaurante (actualmente el placeholder `1`).
+
 ### 1. Gestión de Mesas
 - Visualización de estado de mesas en tiempo real.
 - Agregar o eliminar mesas dinámicamente.

@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Table } from "../../models/table";
-import { TableServices } from "../../services/TableServices";
-import { Product } from "../../models/product";
-import { ProductServices } from "../../services/ProductServices";
+import { Table } from "../../../../models/table";
+import { TableServices } from "../../../../services/TableServices";
+import { Product } from "../../../../models/product";
+import { ProductServices } from "../../../../services/ProductServices";
 import TablesContent from "./TablesContent";
 import TableInformation from "./tableInformation";
-import { useGlobalContext } from "../GlobalContext";
-import { useOrdersContext } from "../OrdersContext";
+import { useGlobalContext } from "../../../GlobalContext";
+import { useOrdersContext } from "../../../OrdersContext";
 
 export default function MesasPage() {
   const { setIsLoading, isAuthenticated, role, isAuthChecking } = useGlobalContext();

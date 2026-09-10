@@ -1,9 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { OrdersContent } from './OrdersContent';
-import { OrderServices } from '../../services/OrderServices';
-import { useGlobalContext } from '../GlobalContext';
-import { Order } from '../../models/order';
+import { OrderServices } from '../../../../services/OrderServices';
+import { useGlobalContext } from '../../../GlobalContext';
+import { Order } from '../../../../models/order';
 
 export default function OrdenesPage() {
   const { isAuthenticated } = useGlobalContext();

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { colorPalette } from "../../colorPallete";
-import { Product } from "../../models/product";
-import { Order, PaymentMethod } from "../../models/order";
-import { OrderServices } from "../../services/OrderServices";
-import { Table } from "../../models/table";
-import { orderDetail } from "../../models/orderDetails";
+import { colorPalette } from "../../../../colorPallete";
+import { Product } from "../../../../models/product";
+import { Order, PaymentMethod } from "../../../../models/order";
+import { OrderServices } from "../../../../services/OrderServices";
+import { Table } from "../../../../models/table";
+import { orderDetail } from "../../../../models/orderDetails";
 
 interface TableInformationProps{
   table: Table | undefined;

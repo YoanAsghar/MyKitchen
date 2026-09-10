@@ -1,6 +1,6 @@
-import { colorPalette} from "../../colorPallete"
-import TableCards from "../../components/TableCards";
-import { Table } from "../../models/table";
+import { colorPalette} from "../../../../colorPallete"
+import TableCards from "../../../../components/TableCards";
+import { Table } from "../../../../models/table";
 
 interface TableContentPrompts{
   tables: Table[];

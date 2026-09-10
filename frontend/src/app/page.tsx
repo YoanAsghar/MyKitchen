@@ -11,7 +11,9 @@ export default function Home() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/mesas");
+      router.replace("/kitchen/1/mesas");
+    } else {
+      router.replace("/home");
     }
   }, [router, isAuthenticated]);
 

@@ -1,4 +1,4 @@
-import { Product } from "../../models/product";
+import { Product } from "../../../../models/product";
 
 interface InventoryContentPromps {
   products: Product[];
