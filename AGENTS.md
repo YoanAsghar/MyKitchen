@@ -34,7 +34,6 @@ Restaurant CRM: `backend/` (.NET API) + `frontend/` (Next.js). Local-only app, n
 
 **Things to fix:**
 - Endpoints accept raw entities with no DTOs/validation; request/response models exist only for the open-order flow (`Models/OrderDtos.cs`, `Models/TableDtos.cs`). Most other endpoints still bind raw models (`ProductController`, `ExpensesController`, `MaintenanceController`).
-- `config.tsx` casts `process.env.NEXT_PUBLIC_API_ROUTE` to `string` — undefined at runtime if missing; guard it.
 - Auth: seeded default admin credentials (`admin`/`admin123`) are hardcoded in `Program.cs` seeding — must be changed/rotated for production, and there's no role-management UI yet (admin role only assignable via API/DB).
 - Backend ships `Microsoft.OpenApi` 2.4.1 (transitive via Swashbuckle) with a known high-severity vulnerability (`NU1903`) — bump Swashbuckle or suppress/patch.
 - XUnit analyzer warnings in `backend.Tests` (blocking `.Result` in `UserControllerTests` ctor → await).
@@ -51,6 +50,7 @@ Restaurant CRM: `backend/` (.NET API) + `frontend/` (Next.js). Local-only app, n
 - Frontend: `GlobalContext` now restores the session on load via `/me` (no more logout-on-refresh); `logout()` calls the backend logout. `Navbar` logout uses the context `logout`. Login shows validation/credential errors (was a silent catch). `UserServices`: added `getMe`/`logOut`, fixed `deleteUser` → `DELETE /{id}` and `editUser` → `PUT /{id}`.
 - Frontend: **all** API services now pass `credentials: "include"` — `UserServices`, `TableServices`, plus `ProductServices` and `OrderServices` which were missing it and 401'd against the now `[Authorize]`-protected controllers (caught in the browser: "Error fetching products").
 - Tests extended to 32: UserControllerTests cover auth (401 when anonymous for get/create/delete/me/logout, `/me` returns current user, post-logout session cleared). Table/Order tests authenticate as the seeded admin.
+- **Fixed cross-site auth-cookie rejection.** `.env.local` hardcoded `NEXT_PUBLIC_API_ROUTE="http://192.168.1.67:3000"`, so any page loaded from a different host (`localhost:5173` etc.) called that IP — a cross-SITE request on which the `SameSite=Lax` `AuthorizationCookies` cookie is never sent, 401'ing every API call ("Cookie AuthorizationCookies rejected", "Error fetching products/tables/orders"). Fix: removed the hardcoded override so `config.tsx` derives `http://<window.location.hostname>:3000` at runtime (page + API always same host → same-site, ports don't matter for SameSite). Also guarded `config.tsx`'s `NEXT_PUBLIC_API_ROUTE` read (`string | undefined`). Works for `localhost:5173` → `localhost:3000` and any machine loading `<server-ip>:5173` → `<server-ip>:3000` (backend CORS already allows the frontend origins). Restart the Next dev server after pulling this since `.env.local` is read at startup.
 
 **Missing features:**
 - Cross-client editing of the *same table simultaneously*: `tableInformation`'s local draft only re-seeds on `table.id` change, so a selected table ignores remote updates to the same table until reselected. Consider a dirty/conflict strategy in Part 2/3.
