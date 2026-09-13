@@ -22,7 +22,7 @@ export function MarketingFooter() {
                 <ChefHat className="w-4 h-4 text-white" />
               </div>
               <span className="text-white font-bold text-lg">
-                Restaurant CRM
+                MyKitchen
               </span>
             </div>
             <p className="text-white/40 text-sm leading-relaxed max-w-xs mb-6">
@@ -39,7 +39,7 @@ export function MarketingFooter() {
               </span>
               <span className="flex items-center gap-2">
                 <Mail className="w-3.5 h-3.5 text-white/40" />
-                hola@restaurantcrm.lat
+                hola@mykitchen.lat
               </span>
             </div>
           </div>
@@ -75,7 +75,7 @@ export function MarketingFooter() {
           style={{ borderColor: "rgba(255,255,255,0.07)" }}
         >
           <p className="text-white/25 text-xs">
-            © 2026 Restaurant CRM. Todos los derechos reservados.
+            © 2026 MyKitchen. Todos los derechos reservados.
           </p>
           <div className="flex gap-6 text-xs text-white/25">
             {["Términos", "Privacidad", "Cookies"].map((l) => (

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RestaurantCRM.Models
+namespace MyKitchen.Models
 {
     public enum PaymentMethod
     {
@@ -30,5 +30,6 @@ namespace RestaurantCRM.Models
         [ForeignKey("TableId")]
         public int? TableId { get; set; }
         public ICollection<OrderDetail> OrderDetail { get; set; } = new List<OrderDetail>();
+        public int RestaurantId { get; set; }
     }
 }

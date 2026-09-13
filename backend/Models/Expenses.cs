@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
-using RestaurantCRM.Models;
+using MyKitchen.Models;
 
-namespace RestaurantCRM.Models
+namespace MyKitchen.Models
 {
     public enum ExpenseTypes
     {
@@ -21,5 +21,7 @@ namespace RestaurantCRM.Models
 
         [ForeignKey("CreatedByUserId")]
         public User? CreatedByUser { get; set; }
+
+        public int RestaurantId {get; set;}
     }
 }

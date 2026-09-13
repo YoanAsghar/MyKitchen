@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
-namespace RestaurantCRM.Hubs
+namespace MyKitchen.Hubs
 {
     // Central registry of real-time event names so backend controllers and the
     // frontend (src/services/SignalRService.ts) stay in sync.

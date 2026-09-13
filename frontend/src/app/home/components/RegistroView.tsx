@@ -25,7 +25,7 @@ export default function RegistroView() {
             <ChefHat className="w-6 h-6 text-white" />
           </div>
           <span className="text-gray-900 font-bold text-xl">
-            Restaurant CRM
+            MyKitchen
           </span>
         </div>
 

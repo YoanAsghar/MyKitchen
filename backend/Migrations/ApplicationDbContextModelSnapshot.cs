@@ -3,12 +3,12 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using MyKitchen.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using RestaurantCRM.Data;
 
 #nullable disable
 
-namespace RestaurantCRM.Migrations
+namespace MyKitchen.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
@@ -22,7 +22,7 @@ namespace RestaurantCRM.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("RestaurantCRM.Models.Expense", b =>
+            modelBuilder.Entity("MyKitchen.Models.Expense", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -43,6 +43,9 @@ namespace RestaurantCRM.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("Value")
                         .HasColumnType("numeric");
 
@@ -53,7 +56,7 @@ namespace RestaurantCRM.Migrations
                     b.ToTable("Expenses");
                 });
 
-            modelBuilder.Entity("RestaurantCRM.Models.Order", b =>
+            modelBuilder.Entity("MyKitchen.Models.Order", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -68,6 +71,9 @@ namespace RestaurantCRM.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("PaymentMethod")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RestaurantId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Status")
@@ -87,7 +93,7 @@ namespace RestaurantCRM.Migrations
                     b.ToTable("orders");
                 });
 
-            modelBuilder.Entity("RestaurantCRM.Models.OrderDetail", b =>
+            modelBuilder.Entity("MyKitchen.Models.OrderDetail", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -104,6 +110,9 @@ namespace RestaurantCRM.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
@@ -113,7 +122,7 @@ namespace RestaurantCRM.Migrations
                     b.ToTable("orderDetails");
                 });
 
-            modelBuilder.Entity("RestaurantCRM.Models.Product", b =>
+            modelBuilder.Entity("MyKitchen.Models.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -139,12 +148,15 @@ namespace RestaurantCRM.Migrations
                     b.Property<double>("Price")
                         .HasColumnType("double precision");
 
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable("products");
                 });
 
-            modelBuilder.Entity("RestaurantCRM.Models.Restaurants", b =>
+            modelBuilder.Entity("MyKitchen.Models.Restaurants", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -172,13 +184,16 @@ namespace RestaurantCRM.Migrations
                     b.ToTable("restaurants");
                 });
 
-            modelBuilder.Entity("RestaurantCRM.Models.Table", b =>
+            modelBuilder.Entity("MyKitchen.Models.Table", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("integer");
 
                     b.Property<int?>("TableNumber")
                         .HasColumnType("integer");
@@ -188,7 +203,7 @@ namespace RestaurantCRM.Migrations
                     b.ToTable("tables");
                 });
 
-            modelBuilder.Entity("RestaurantCRM.Models.User", b =>
+            modelBuilder.Entity("MyKitchen.Models.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -202,6 +217,9 @@ namespace RestaurantCRM.Migrations
 
                     b.Property<DateOnly>("PaymentDate")
                         .HasColumnType("date");
+
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -219,9 +237,9 @@ namespace RestaurantCRM.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("RestaurantCRM.Models.Expense", b =>
+            modelBuilder.Entity("MyKitchen.Models.Expense", b =>
                 {
-                    b.HasOne("RestaurantCRM.Models.User", "CreatedByUser")
+                    b.HasOne("MyKitchen.Models.User", "CreatedByUser")
                         .WithMany()
                         .HasForeignKey("CreatedByUserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -230,15 +248,15 @@ namespace RestaurantCRM.Migrations
                     b.Navigation("CreatedByUser");
                 });
 
-            modelBuilder.Entity("RestaurantCRM.Models.OrderDetail", b =>
+            modelBuilder.Entity("MyKitchen.Models.OrderDetail", b =>
                 {
-                    b.HasOne("RestaurantCRM.Models.Order", null)
+                    b.HasOne("MyKitchen.Models.Order", null)
                         .WithMany("OrderDetail")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("RestaurantCRM.Models.Product", "Product")
+                    b.HasOne("MyKitchen.Models.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -247,7 +265,7 @@ namespace RestaurantCRM.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("RestaurantCRM.Models.Order", b =>
+            modelBuilder.Entity("MyKitchen.Models.Order", b =>
                 {
                     b.Navigation("OrderDetail");
                 });

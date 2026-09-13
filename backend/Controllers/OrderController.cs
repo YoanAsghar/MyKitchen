@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RestaurantCRM.Models;
+using MyKitchen.Models;
 using Microsoft.EntityFrameworkCore;
-using RestaurantCRM.Data;
+using MyKitchen.Data;
 using Microsoft.AspNetCore.SignalR;
-using RestaurantCRM.Hubs;
-using RestaurantCRM.Services;
+using MyKitchen.Hubs;
+using MyKitchen.Services;
 
-namespace RestaurantCRM.Controllers;
+namespace MyKitchen.Controllers;
 
 [Route("api/v1/[controller]")]
 [ApiController]
@@ -69,8 +69,8 @@ public class OrderController : ControllerBase
     [HttpPut("table/{tableId:int}")]
     public async Task<ActionResult<Order>> SaveOpenOrder(int tableId, [FromBody] SaveOpenOrderRequest request)
     {
-        var tableExists = await _context.Tables.AnyAsync(t => t.Id == tableId);
-        if (!tableExists)
+        var table = await _context.Tables.FirstOrDefaultAsync(t => t.Id == tableId);
+        if (table == null)
         {
             return NotFound($"Table with id {tableId} doesn't exist");
         }
@@ -115,12 +115,14 @@ public class OrderController : ControllerBase
             existing = new Order
             {
                 TableId = tableId,
+                RestaurantId = table.RestaurantId,
                 Status = OrderStatus.OPEN,
                 OrderDate = DateTime.UtcNow
             };
             _context.Orders.Add(existing);
         }
 
+        existing.RestaurantId = table.RestaurantId;
         existing.Guests = request.Guests;
         existing.Tip = request.Tip;
         existing.PaymentMethod = request.PaymentMethod;
@@ -130,7 +132,8 @@ public class OrderController : ControllerBase
         existing.OrderDetail = details.Select(d => new OrderDetail
         {
             ProductId = d.ProductId,
-            Quantity = d.Quantity
+            Quantity = d.Quantity,
+            RestaurantId = existing.RestaurantId
         }).ToList();
 
         await _context.SaveChangesAsync();
@@ -166,6 +169,24 @@ public class OrderController : ControllerBase
 
         order.Id = 0;
         order.Status = OrderStatus.PAID;
+
+        // Keep the order scoped to the same restaurant as its table when the
+        // client can't know it yet (single-restaurant flows send 0).
+        if (order.RestaurantId == 0 && order.TableId is int orderTableId)
+        {
+            var table = await _context.Tables.AsNoTracking().FirstOrDefaultAsync(t => t.Id == orderTableId);
+            if (table != null)
+            {
+                order.RestaurantId = table.RestaurantId;
+            }
+        }
+        foreach (var detail in order.OrderDetail)
+        {
+            if (detail.RestaurantId == 0)
+            {
+                detail.RestaurantId = order.RestaurantId;
+            }
+        }
 
         _context.Orders.Add(order);
 

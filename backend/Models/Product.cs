@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RestaurantCRM.Models
+namespace MyKitchen.Models
 {
     [Table("products")]
     public class Product
@@ -11,5 +11,6 @@ namespace RestaurantCRM.Models
         public string Category { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string? Image { get; set; } = string.Empty;
+        public int RestaurantId { get; set; }
     }
 }

@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../backend/RestaurantCRM.csproj" />
+    <ProjectReference Include="../backend/MyKitchen.csproj" />
   </ItemGroup>
 
 </Project>

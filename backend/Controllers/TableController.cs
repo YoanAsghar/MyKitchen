@@ -1,13 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using RestaurantCRM.Models;
-using RestaurantCRM.Data;
+using MyKitchen.Models;
+using MyKitchen.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.SignalR;
-using RestaurantCRM.Hubs;
-using RestaurantCRM.Services;
+using MyKitchen.Hubs;
+using MyKitchen.Services;
 
-namespace RestaurantCRM.Controllers;
+namespace MyKitchen.Controllers;
 
 [Route("api/v1/[controller]")]
 [ApiController]

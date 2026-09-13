@@ -36,7 +36,7 @@ export function MarketingNavbar() {
             <ChefHat className="w-4 h-4 text-white" />
           </div>
           <span className="text-gray-900 font-bold text-lg tracking-tight">
-            Restaurant CRM
+            MyKitchen
           </span>
         </button>
 

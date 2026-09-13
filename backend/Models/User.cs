@@ -1,4 +1,4 @@
-namespace RestaurantCRM.Models
+namespace MyKitchen.Models
 {
     // Canonical role names. Stored as lowercase strings on the wire and in
     // claims; used by the authorization policies in Program.cs and the
@@ -17,5 +17,6 @@ namespace RestaurantCRM.Models
         public string Role { get; set; } = Roles.User;
         public float Salary { get; set; }
         public DateOnly PaymentDate { get; set; }
+        public int RestaurantId {get; set;}
     }
 }

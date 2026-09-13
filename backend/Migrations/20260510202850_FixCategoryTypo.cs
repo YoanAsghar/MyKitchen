@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace RestaurantCRM.Migrations
+namespace MyKitchen.Migrations
 {
     /// <inheritdoc />
     public partial class FixCategoryTypo : Migration

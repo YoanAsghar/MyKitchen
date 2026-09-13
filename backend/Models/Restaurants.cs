@@ -1,7 +1,7 @@
 
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace RestaurantCRM.Models
+namespace MyKitchen.Models
 {
     [Table("restaurants")]
     public class Restaurants

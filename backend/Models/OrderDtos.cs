@@ -1,6 +1,6 @@
-using RestaurantCRM.Models;
+using MyKitchen.Models;
 
-namespace RestaurantCRM.Models
+namespace MyKitchen.Models
 {
     public class SaveOpenOrderRequest
     {

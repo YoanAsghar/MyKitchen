@@ -23,8 +23,9 @@ export class Order{
   status: OrderStatus;
   tableId: number;
   orderDetail: orderDetail[];
+  restaurantId: number;
 
-  constructor(tableId: number){
+  constructor(tableId: number, restaurantId: number){
     this.id = 0;
     this.tableId = tableId;
     this.orderDetail = [];
@@ -34,6 +35,7 @@ export class Order{
     this.tip = 0;
     this.paymentMethod = PaymentMethod.CASH;
     this.status = OrderStatus.OPEN;
+    this.restaurantId = restaurantId;
   }
 
   public static getAllOrderInstances(){

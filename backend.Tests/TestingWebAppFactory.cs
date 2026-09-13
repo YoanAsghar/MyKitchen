@@ -5,7 +5,7 @@ namespace backend.Tests;
 
 public class TestingWebAppFactory : WebApplicationFactory<Program>
 {
-    private readonly string _dbName = $"RestaurantCrm_{Guid.NewGuid():N}";
+    private readonly string _dbName = $"MyKitchen_{Guid.NewGuid():N}";
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

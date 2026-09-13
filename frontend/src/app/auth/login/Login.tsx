@@ -26,7 +26,7 @@ const Login = () => {
 
     setIsLoading(true);
     try {
-      let response = await UserServices.logIn(new User(loginUsername, loginPassword));
+      let response = await UserServices.logIn(new User(loginUsername, loginPassword, 0));
 
       setUsername(response.userName);
       setRole(response.role);
@@ -47,7 +47,7 @@ const Login = () => {
             <ChefHat className="w-7 h-7 text-white" />
           </div>
           <span className="text-gray-900 font-bold text-2xl">
-            Restaurant CRM
+            MyKitchen
           </span>
         </div>
 

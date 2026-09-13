@@ -8,7 +8,7 @@ const API_URL = `${config.apiRoute}/api/v1/Order`
 // Maps a raw API order (camelCase JSON) into a typed Order instance so the rest
 // of the app can rely on real Date objects and typed enums everywhere.
 export function toOrder(raw: any): Order {
-  const order = new Order(raw.tableId ?? 0);
+  const order = new Order(raw.tableId ?? 0, raw.restaurantId ?? 0);
   order.id = raw.id ?? 0;
   order.totalPrice = raw.totalPrice ?? 0;
   order.orderDate = new Date(raw.orderDate);
@@ -24,10 +24,18 @@ export function toOrder(raw: any): Order {
           detail.product.price,
           detail.product.category,
           detail.product.description,
-          detail.product.image
+          detail.product.image,
+          detail.product.restaurantId ?? 0
         )
       : undefined;
-    const typed = new orderDetail(detail.id, detail.productId, product as Product, detail.quantity, detail.orderId);
+    const typed = new orderDetail(
+      detail.id,
+      detail.productId,
+      product as Product,
+      detail.quantity,
+      detail.restaurantId ?? 0,
+      detail.orderId
+    );
     return typed;
   });
   return order;
@@ -84,8 +92,9 @@ export const OrderServices = {
       orderDate: order.orderDate,
       guests: order.guests,
       tip: order.tip,
-      PaymentMethod: order.paymentMethod,
+      paymentMethod: order.paymentMethod,
       tableId: order.tableId,
+      restaurantId: order.restaurantId,
       orderDetail: order.orderDetail.map(detail => ({
         id: detail.id || 0,
         orderId: detail.orderId || 0,
