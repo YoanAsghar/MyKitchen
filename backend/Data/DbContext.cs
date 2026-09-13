@@ -1,8 +1,8 @@
-using RestaurantCRM.Models;
+using MyKitchen.Models;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace RestaurantCRM.Data
+namespace MyKitchen.Data
 {
     public class ApplicationDbContext : DbContext
     {

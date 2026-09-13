@@ -9,10 +9,10 @@ const contacts = [
   {
     icon: Mail,
     label: "Correo electrónico",
-    value: "hola@restaurantcrm.lat",
+    value: "hola@mykitchen.lat",
     note: "[ Dirección de correo — editar antes de publicar ]",
     action: "Escríbenos",
-    href: "mailto:hola@restaurantcrm.lat",
+    href: "mailto:hola@mykitchen.lat",
     isExternal: false,
   },
   {

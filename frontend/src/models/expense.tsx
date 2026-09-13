@@ -15,14 +15,15 @@ export class expense{
   dateOfExpense: Date;
   createdByUserId: number;
   createdByUser: User;
+  restaurantId: number;
 
-  constructor(name: string, value: number, expenseType: ExpenseType, dateOfExpense: Date, createdByUser: User){
+  constructor(name: string, value: number, expenseType: ExpenseType, dateOfExpense: Date, createdByUser: User, restaurantId: number){
     this.name = name;
     this.value = value;
     this.expenseType = expenseType;
     this.dateOfExpense = dateOfExpense;
     this.createdByUserId = createdByUser.id || 0;
     this.createdByUser = createdByUser;
-
+    this.restaurantId = restaurantId;
   }
 }

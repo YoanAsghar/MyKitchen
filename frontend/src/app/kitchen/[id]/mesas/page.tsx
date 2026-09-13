@@ -29,7 +29,7 @@ export default function MesasPage() {
 
   // Derive the selected table from the tables array (memoized to prevent new object references)
   const selectedTable = useMemo(
-    () => tablesWithOrders.find(t => t.id === currentTableSelectedId) || tablesWithOrders[0] || new Table(currentTableSelectedId),
+    () => tablesWithOrders.find(t => t.id === currentTableSelectedId) || tablesWithOrders[0] || new Table(currentTableSelectedId, 0),
     [tablesWithOrders, currentTableSelectedId]
   );
 

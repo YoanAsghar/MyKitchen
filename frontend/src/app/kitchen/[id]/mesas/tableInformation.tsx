@@ -41,7 +41,7 @@ const TableInformation = ({table, onUpdateTable, setIsLoading, products }: Table
   // Función para sincronizar los datos locales con el componente padre (y las tarjetas)
   const syncWithParent = (guests: number, orderDetail: orderDetail[], tip: number) => {
     if (!table) return;
-    const updatedOrder = new Order(table.id);
+    const updatedOrder = new Order(table.id, table.restaurantId);
     updatedOrder.guests = guests;
     updatedOrder.orderDetail = orderDetail;
     updatedOrder.tip = tip;
@@ -74,7 +74,7 @@ const TableInformation = ({table, onUpdateTable, setIsLoading, products }: Table
           : detail
       );
     } else {
-      const newDetail = new orderDetail(0, item.id, item, 1, 0);
+      const newDetail = new orderDetail(0, item.id, item, 1, table?.restaurantId ?? 0);
       newDetails = [...currentProducts, newDetail];
     }
 
@@ -116,7 +116,7 @@ const TableInformation = ({table, onUpdateTable, setIsLoading, products }: Table
     if (!table) return;
     if (currentProducts.length === 0) return;
 
-    const finalOrder = new Order(table.id);
+    const finalOrder = new Order(table.id, table.restaurantId);
     finalOrder.totalPrice = totalPrice;
     finalOrder.guests = amountOfPersons;
     finalOrder.tip = propina;

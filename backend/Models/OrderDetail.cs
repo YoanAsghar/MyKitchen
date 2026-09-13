@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
-namespace RestaurantCRM.Models
+namespace MyKitchen.Models
 {
     [Table("orderDetails")]
     public class OrderDetail
@@ -13,5 +13,6 @@ namespace RestaurantCRM.Models
         public Product? Product { get; set; }
         [Required]
         public int Quantity { get; set; }
+        public int RestaurantId { get; set; }
     }
 }

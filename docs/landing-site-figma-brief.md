@@ -1,6 +1,6 @@
 # Landing Site — Figma Brief & Design Reference
 
-> **Product:** Restaurant CRM · **Working name during prototyping:** MyKitchen
+> **Product:** MyKitchen · **Working name during prototyping:** MyKitchen
 > **Source:** `FigmaDesigns/` (exported Figma prototype) — design of record for the landing site.
 > **Date:** 2026-09-09
 
@@ -21,14 +21,14 @@ This brief documents the Figma-generated design decisions for the **public marke
 | Login | `/auth/login`, styled to match Figma LoginView |
 | Pricing | **single flat plan** "Profesional" · USD 89/mes (USD 69 annual) · monthly/annual toggle |
 | Contact | placeholder details (email/phone/address) + mailto/WhatsApp — marked editable |
-| Brand | "RestaurantCRM", ChefHat logo mark, no external assets (pure SVG/lucide) |
+| Brand | "MyKitchen", ChefHat logo mark, no external assets (pure SVG/lucide) |
 | Visual kit | dark `#030014`, purple `#22007c`, gradient `#D6C7FF→#AB8BFF`, Bebas Neue watermarks, glass cards, glow orbs |
 | Register | visual form only for now; backend wiring (`POST /api/v1/Restaurant/register`) pending |
 | App | kitchen-scoped under `/kitchen/{id}/` → `/kitchen/{id}/mesas` · `.../cocina` · `.../carta` · `.../ordenes` · `.../admin` (id = restaurant id, currently `1`) |
 
 ## Figma prompt (as submitted)
 
-> Build a high-fidelity, dark-themed SaaS marketing + onboarding prototype for "Restaurant CRM"
+> Build a high-fidelity, dark-themed SaaS marketing + onboarding prototype for "MyKitchen"
 > — a restaurant management platform with real-time table & kitchen order sync (SignalR). UI
 > language: SPANISH (Latin America). Style: premium dark SaaS, violet-purple accents, subtle
 > glassmorphism, soft glowing orbs, rounded glass cards, bold modern type.

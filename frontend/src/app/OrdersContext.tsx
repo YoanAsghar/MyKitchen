@@ -74,7 +74,7 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
   const clearPersist = useCallback(async (tableId: number) => {
     try {
       // An empty cart tells the server to delete the open order and broadcast.
-      await OrderServices.saveOpenOrder(new Order(tableId));
+      await OrderServices.saveOpenOrder(new Order(tableId, 0));
       removeLocal(tableId);
     } catch (error) {
       console.error("Error clearing open order:", error);

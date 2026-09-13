@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using RestaurantCRM.Data;
-using RestaurantCRM.Models;
+using MyKitchen.Data;
+using MyKitchen.Models;
 using System.Security.Claims;
 using BCrypt.Net;
 
-namespace RestaurantCRM.Controllers
+namespace MyKitchen.Controllers
 {
 
     [ApiController]

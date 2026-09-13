@@ -13,7 +13,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Restaurant CRM",
+  title: "MyKitchen",
   description: "Restaurant Management System",
 };
 

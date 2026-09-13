@@ -1,4 +1,4 @@
-# RestaurantCRM
+# MyKitchen
 
 Una solución integral para la gestión de restaurantes, permitiendo el control de mesas, toma de pedidos y administración de inventario en tiempo real.
 
@@ -98,7 +98,7 @@ Fue un reto bastante grande al principio pues cuando empece nunca habia desarrol
 ## 📂 Estructura del Proyecto
 
 ```text
-RestaurantCRM/
+MyKitchen/
 ├── backend/            # API en ASP.NET Core
 ├── frontend/           # Aplicación React
 └── mockups/            # Referencias de diseño

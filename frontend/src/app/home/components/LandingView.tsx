@@ -65,7 +65,7 @@ const steps = [
 const testimonials = [
   {
     quote:
-      "Desde que usamos RestaurantCRM los errores en pedidos bajaron a cero. La cocina siempre sabe qué preparar sin que nadie grite.",
+      "Desde que usamos MyKitchen los errores en pedidos bajaron a cero. La cocina siempre sabe qué preparar sin que nadie grite.",
     name: "Rodrigo Méndez",
     role: "Dueño · La Parrilla del Centro, Buenos Aires",
     initials: "RM",
@@ -161,7 +161,7 @@ export default function LandingView() {
       <section className="py-12 border-y border-gray-200 bg-white">
         <div className="max-w-7xl mx-auto px-6">
           <p className="text-center text-xs text-gray-400 uppercase tracking-[0.18em] mb-8 font-semibold">
-            Restaurantes que ya operan con RestaurantCRM
+            Restaurantes que ya operan con MyKitchen
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
             {trustNames.map((name) => (

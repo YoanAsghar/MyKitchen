@@ -4,10 +4,11 @@ export class Table {
 
   id: number;
   order?: Order;
+  restaurantId: number;
 
-  constructor(id: number, order?: Order) {
+  constructor(id: number, restaurantId: number,  order?: Order) {
     this.id = id;
     this.order = order;
-
+    this.restaurantId = restaurantId;
   }
 }

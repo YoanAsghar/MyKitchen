@@ -1,6 +1,6 @@
-using RestaurantCRM.Models;
+using MyKitchen.Models;
 
-namespace RestaurantCRM.Services
+namespace MyKitchen.Services
 {
     // Shared projection used by OrderController + TableController: flattens
     // Order -> OrderDetail -> Product into a clean wire shape (no EF cycles,

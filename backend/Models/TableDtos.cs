@@ -1,7 +1,5 @@
-namespace RestaurantCRM.Models
+namespace MyKitchen.Models
 {
-    // Wire shape for tables: the DB entity plus the table's current OPEN order
-    // (if any) so the Mesas page initializes from real shared state.
     public class TableResponseDto
     {
         public int Id { get; set; }

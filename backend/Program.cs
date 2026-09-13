@@ -1,6 +1,6 @@
-using RestaurantCRM.Hubs;
-using RestaurantCRM.Data;
-using RestaurantCRM.Models;
+using MyKitchen.Hubs;
+using MyKitchen.Data;
+using MyKitchen.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
@@ -45,7 +45,7 @@ builder.Services.AddSignalR()
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     if (builder.Configuration.GetValue<bool>("UseInMemoryDatabase"))
-        options.UseInMemoryDatabase(builder.Configuration["InMemoryDatabaseName"] ?? "RestaurantCrm");
+        options.UseInMemoryDatabase(builder.Configuration["InMemoryDatabaseName"] ?? "MyKitchen");
     else
         options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Restaurant CRM: `backend/` (.NET API) + `frontend/` (Next.js). Local-only app, no CI.
+MyKitchen: `backend/` (.NET API) + `frontend/` (Next.js). Local-only app, no CI.
 
 ## Run the app
 - Backend: `cd backend && dotnet ef database update && dotnet run` (PostgreSQL, listens on `http://localhost:3000`). Run from `backend/` (appsettings.json is resolved there).
@@ -40,7 +40,20 @@ Restaurant CRM: `backend/` (.NET API) + `frontend/` (Next.js). Local-only app, n
 ## TODO / tracking list
 - (Maintained here — update after each task.)
 
-**Done (this session): Kitchen-scoped business routes + `/auth` section.**
+**Done (this session): `RestaurantId` added across models and the database.**
+- All backend entities now carry `RestaurantId` (non-nullable `int`, default 0): `User`, `Table`, `Product`, `Order`, `OrderDetail`, `Expense`. `Restaurants` is the scope root itself (its `Id` IS the restaurant id). No FK/navigation wired yet — multi-restaurant scoping is still a future step; keeping it a plain column lets the currently-empty `restaurants` table and existing rows stay valid.
+- Migration `AddRestaurantIdColumns` (applied via `dotnet ef database update` against `restaurant_crm`) adds the column to all six tables (`Users`, `tables`, `products`, `orders`, `orderDetails`, `Expenses`).
+- Frontend models: added `restaurantId` (camelCase to match the API wire format) to `Product`; fixed the existing all-lowercase `restaurantid` on `expense`, `orderDetails`, `order`, `table`, `user` (that casing would never have bound to the API's `restaurantId`). Updated every constructor call site (mesas page fallback, `tableInformation`, `OrdersContext`, login, `OrderServices.toOrder`).
+- `OrderController` now derives `RestaurantId` from the owning `Table` when upserting an OPEN order and creating new ORDER details; `CreateOrder` backfills the table's `RestaurantId` when the client sends 0. `OrderServices.createOrder` now sends `restaurantId` on the wire.
+- Verified: backend builds, 40/40 tests pass, `npx tsc --noEmit` clean.
+
+**Done (this session): Brand renamed `RestaurantCRM` → `MyKitchen` (repo-wide).**
+- Backend project `backend/RestaurantCRM.csproj` → `backend/MyKitchen.csproj` (imports/namespace `MyKitchen.*` everywhere: `Models`, `Data`, `Hubs`, `Services`, `Controllers`, migrations incl. `ApplicationDbContextModelSnapshot` and designer `BuildTargetModel` string entity names). `backend.Tests.csproj` ProjectReference updated; stale `bin/`/`obj/` cleared so the generated AssemblyInfo/GlobalUsings use the new name. `Program.cs` in-memory DB name and `TestingWebAppFactory` DB name now `MyKitchen`. Verified: `dotnet build` clears (0 errors), 40/40 tests pass.
+- Frontend brand text `Restaurant CRM` → `MyKitchen` (`layout.tsx` title, `Login.tsx`, `MarketingNavbar`, `RegistroView`, `MarketingFooter` incl. copyright, `LandingView` testimonial/stats, `AppMockup`). Fake domains `app.restaurantcrm.lat` / `hola@restaurantcrm.lat` → `*.mykitchen.lat`. `npx tsc --noEmit` clean.
+- Docs: `README.md` title/tree + `docs/landing-site-figma-brief.md` brand rows updated to `MyKitchen`.
+- Note: DB tables/columns are unaffected (schema name comes from `DbSet` property names, not the namespace); no migration needed. Caveat: an existing database created under the old migrations is still fully compatible — migrations are tracked by `[Migration("...")]` id, not namespace.
+
+**Done (before): Kitchen-scoped business routes + `/auth` section.**
 - Moved every business page under `frontend/src/app/kitchen/[id]/` → routes are now `/kitchen/{id}/mesas`, `/kitchen/{id}/cocina`, `/kitchen/{id}/carta`, `/kitchen/{id}/ordenes`, `/kitchen/{id}/admin` (removed the top-level `/mesas`, `/cocina`, `/carta`, `/ordenes`, `/admin` folders). `[id]` is the restaurant id; routes currently always use the placeholder `1` until multi-restaurant scoping is wired.
 - Auth lives under `frontend/src/app/auth/`: `/login` moved to `/auth/login` (`login/` → `auth/login/`). `RootClientLayout` public-path check now matches `/auth*` + `/home*` (future `/auth/register` etc. are public automatically); unauthenticated redirect is `/auth/login`.
 - `RootClientLayout.handleTabChange` reads `{id}` from `useParams` and pushes `/kitchen/${id}/${tab}` (falls back to `1` off a kitchen route). Root `/` redirects to `/kitchen/1/mesas` (authenticated) / `/home` (logged out); auth'd session bounce after login is `/kitchen/1/mesas` too.
@@ -54,7 +67,7 @@ Restaurant CRM: `backend/` (.NET API) + `frontend/` (Next.js). Local-only app, n
 - XUnit analyzer warnings in `backend.Tests` (blocking `.Result` in `UserControllerTests` ctor → await).
 
 **Done (this session): Marketing site restyled — purple/glow removed to match the app's mesas aesthetic.**
-- Stripped the Figma purple palette (`#22007c`/`#140152`/`#04052e`, `#AB8BFF`/`#D6C7FF`, `rgba(34,0,124,…)`) and all decorative effects (GlowOrbs, Bebas watermarks, gradient text, purple glows/shadows) from the marketing pages and login. New look mirrors the app UI: neutral near-black bg `#0a0a0f`, cards `bg-white/[0.02]` with `border-white/[0.06-0.08]`, white `opacity`-based text (`text-white/40` etc.), and the app's green accent `#22c55e` for CTAs/toggles/checkmarks (the same green mesas uses for occupied/active states). `GlowOrb` + `GradientText` were deleted from `home/components/ui.tsx` (brand text is now plain "Restaurant CRM"); `PrimaryBtn` is green. Affected: `Login.tsx`, `LandingView`, `PricingView`, `ContactView`, `RegistroView`, `MarketingNavbar`, `MarketingFooter`, `AppMockup`. Typecheck passes. Note: the app's internal pages (`mesas`, `ordenes`, `Navbar`) still use purple — retheme them separately if desired; `index.css` `text-gradient` utility remains purple but is now unused.
+- Stripped the Figma purple palette (`#22007c`/`#140152`/`#04052e`, `#AB8BFF`/`#D6C7FF`, `rgba(34,0,124,…)`) and all decorative effects (GlowOrbs, Bebas watermarks, gradient text, purple glows/shadows) from the marketing pages and login. New look mirrors the app UI: neutral near-black bg `#0a0a0f`, cards `bg-white/[0.02]` with `border-white/[0.06-0.08]`, white `opacity`-based text (`text-white/40` etc.), and the app's green accent `#22c55e` for CTAs/toggles/checkmarks (the same green mesas uses for occupied/active states). `GlowOrb` + `GradientText` were deleted from `home/components/ui.tsx` (brand text is now plain "MyKitchen"); `PrimaryBtn` is green. Affected: `Login.tsx`, `LandingView`, `PricingView`, `ContactView`, `RegistroView`, `MarketingNavbar`, `MarketingFooter`, `AppMockup`. Typecheck passes. Note: the app's internal pages (`mesas`, `ordenes`, `Navbar`) still use purple — retheme them separately if desired; `index.css` `text-gradient` utility remains purple but is now unused.
 
 **Done (earlier this session): Landing site ported from Figma.**
 - Ported the `FigmaDesigns/` prototype into the Next.js app as a public marketing site under `frontend/src/app/home/`: landing (`/home`), pricing (`/home/pricing`), contact (`/home/contact`), registro (`/home/registro`). Backed by shared primitives + marketing navbar/footer/hero-mockup in `home/components/`. `RootClientLayout` now treats `/home*` + `/auth*` as public (no redirect, no app Navbar, normal page scroll); `/` redirects to `/home` when logged out. `Login.tsx` restyled to the Figma LoginView while keeping the working auth (`handleLoginButton`) and validation errors. Docs: `AGENTS.md` + `docs/landing-site-figma-brief.md`. Build/typecheck pass; lint is unconfigured (no `eslint.config.*`).
@@ -78,7 +91,15 @@ Restaurant CRM: `backend/` (.NET API) + `frontend/` (Next.js). Local-only app, n
 
 **Things to finish:**
 - Wire `/home/registro` to a real backend `POST /api/v1/Restaurant/register` (anonymous; transactional create of `Restaurants` + admin `User` with `RestaurantId`; returns session) — UI/form exists, submit is a no-op today.
-- Multi-restaurant data scoping: the `/kitchen/{id}` URL scope is in place (partially complete — IDs forwarded only in navigation), but the backend still ignores `RestaurantId` and the frontend only ever uses the placeholder `1`.
+- **Multi-restaurant data scoping (NEXT TASK):** enforce that a user only sees/edits their own restaurant's data. Architecture decided → **the auth cookie is the source of truth; the endpoints enforce it**. Do NOT trust a `restaurantId` sent by the client (URL/body) — any authenticated user could then read another restaurant's data.
+  - `UserController.Login` (`backend/Controllers/UserController.cs:101-104`): add `new Claim("restaurantId", user.RestaurantId.ToString())` alongside the existing `ClaimTypes.Name`/`ClaimTypes.Role`.
+  - `GET /User/me` (`:119-124`): also return `restaurantId` so the frontend restores working scope on refresh.
+  - Each controller: read `currentRestaurantId` from the `"restaurantId"` claim (helper extension on `ClaimsPrincipal`), then:
+    - every list/get adds `.Where(x => x.RestaurantId == currentRestaurantId)`;
+    - every create/update **stamps** `RestaurantId = currentRestaurantId` and ignores whatever the client sent (`ProductController`, `TableController`, `OrderController`, `ExpensesController`, `UserController`);
+    - `OrderController.SaveOpenOrder`/`CreateOrder` already derive from the table (done) — gate the table lookup itself by `currentRestaurantId` so a foreign table isn't pressable.
+  - Frontend: `/kitchen/{id}` URL scope is partially in place (IDs forwarded only in navigation; placeholder `1` used everywhere). Replace the hardcoded `0`/`1` placeholders with the session's `restaurantId` from `GlobalContext`/`/me`.
+  - Note: today all users/tables/orders default to `RestaurantId = 0` and nothing filters — so isolation currently does nothing until real per-restaurant rows exist (see `/home/registro` wiring to create real `Restaurants` + admin users).
 - Refresh stale `README.md` + `frontend/README.md` (describe Vite; real app is Next.js App Router).
 - Backend test coverage: only `UserController`, `TableController`, `OrderController` are tested. Add tests for `ProductController`, `ExpensesController`, `MaintenanceController`.
 - Fix frontend warning-level xUnit issues in tests (blocking `.Result` calls → await).
