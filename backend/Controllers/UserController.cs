@@ -12,7 +12,7 @@ namespace MyKitchen.Controllers
 
     [ApiController]
     [Route("api/v1/[controller]")]
-    public class UserController : ControllerBase
+    public class UserController : RestaurantScopedController
     {
         private readonly ApplicationDbContext _context;
         public UserController(ApplicationDbContext context)
@@ -20,15 +20,15 @@ namespace MyKitchen.Controllers
             _context = context;
         }
 
-
         //
-        // GET FOR THE USERS (any authenticated user)
+        // GET FOR THE USERS (any authenticated user, own restaurant only)
         //
         [HttpGet]
         [Authorize]
         public async Task<ActionResult<List<User>>> GetUsers()
         {
             var users = await _context.Users
+              .Where(u => u.RestaurantId == CurrentRestaurantId)
               .OrderBy(u => u.Id)
               .Select(u => new
               {
@@ -68,6 +68,8 @@ namespace MyKitchen.Controllers
             newUser.Role = string.Equals(newUser.Role, Roles.Admin, StringComparison.OrdinalIgnoreCase)
                 ? Roles.Admin
                 : Roles.User;
+            // Users belong to the caller's restaurant, never to a client-sent id.
+            newUser.RestaurantId = CurrentRestaurantId;
             newUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newUser.PasswordHash, workFactor: 12);
 
             try
@@ -100,7 +102,8 @@ namespace MyKitchen.Controllers
 
             var claims = new List<Claim>{
               new Claim(ClaimTypes.Name, user.UserName),
-              new Claim(ClaimTypes.Role, user.Role)
+              new Claim(ClaimTypes.Role, user.Role),
+              new Claim(RestaurantClaims.Id, user.RestaurantId.ToString())
             };
 
             var identity = new ClaimsIdentity(claims, "cookie");
@@ -120,7 +123,8 @@ namespace MyKitchen.Controllers
         {
             var userName = User.FindFirstValue(ClaimTypes.Name) ?? "";
             var role = User.FindFirstValue(ClaimTypes.Role) ?? Roles.User;
-            return Ok(new { userName, role });
+            var restaurantId = int.TryParse(User.FindFirstValue(RestaurantClaims.Id), out var id) ? id : 0;
+            return Ok(new { userName, role, restaurantId });
         }
 
         //
@@ -141,10 +145,11 @@ namespace MyKitchen.Controllers
         [Authorize(Policy = "AdminOnly")]
         public async Task<ActionResult<User>> EditUser(int id, User editerUserData)
         {
-            var UserToEdit = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            var UserToEdit = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == id && u.RestaurantId == CurrentRestaurantId);
             if (UserToEdit == null)
             {
-                return BadRequest($"User with id {id} not found");
+                return NotFound($"User with id {id} not found");
             }
 
             UserToEdit.PaymentDate = editerUserData.PaymentDate;
@@ -154,6 +159,8 @@ namespace MyKitchen.Controllers
                 : Roles.User;
             UserToEdit.Salary = editerUserData.Salary;
             UserToEdit.PasswordHash = editerUserData.PasswordHash;
+            // The scope always follows the caller; never a client-sent id.
+            UserToEdit.RestaurantId = CurrentRestaurantId;
 
             try
             {
@@ -173,7 +180,8 @@ namespace MyKitchen.Controllers
         [Authorize(Policy = "AdminOnly")]
         public async Task<ActionResult<User>> DeleteUser(int id)
         {
-            var userToDelete = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            var userToDelete = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == id && u.RestaurantId == CurrentRestaurantId);
             if (userToDelete == null)
             {
                 return NotFound($"User with id {id} doesn't exist");

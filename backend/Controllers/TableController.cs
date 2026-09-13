@@ -12,7 +12,7 @@ namespace MyKitchen.Controllers;
 [Route("api/v1/[controller]")]
 [ApiController]
 [Authorize]
-public class TableController : ControllerBase
+public class TableController : RestaurantScopedController
 {
     private readonly ApplicationDbContext _context;
     private readonly IHubContext<RestaurantHub> _hubContext;
@@ -23,17 +23,20 @@ public class TableController : ControllerBase
         _hubContext = hubContext;
     }
     //
-    // GET FOR THE ORDERS
+    // GET FOR THE TABLES (own restaurant only, each with its open order)
     //
     [HttpGet]
     public async Task<ActionResult<List<TableResponseDto>>> GetTables()
     {
-        var tables = await _context.Tables.AsNoTracking().ToListAsync();
+        var tables = await _context.Tables
+            .Where(t => t.RestaurantId == CurrentRestaurantId)
+            .AsNoTracking()
+            .ToListAsync();
 
         // Attach each table's current OPEN order (if any) so every client
         // boots with the same "who has an active order" picture.
         var openOrders = await OrderProjection.Project(_context.Orders
-            .Where(o => o.Status == OrderStatus.OPEN && o.TableId != null))
+            .Where(o => o.Status == OrderStatus.OPEN && o.TableId != null && o.RestaurantId == CurrentRestaurantId))
             .ToListAsync();
 
         var openByTable = openOrders.ToDictionary(o => o.TableId!.Value);
@@ -49,7 +52,7 @@ public class TableController : ControllerBase
     }
 
     //
-    // POST FOR THE ORDERS
+    // POST FOR THE TABLES (stamped with the caller's restaurant)
     //
     [HttpPost]
     public async Task<ActionResult> CreateTable(Table table)
@@ -59,18 +62,21 @@ public class TableController : ControllerBase
             return BadRequest("Table number is required");
         }
 
+        // The scope always follows the caller; never a client-sent id.
+        table.RestaurantId = CurrentRestaurantId;
         _context.Tables.Add(table);
         await _context.SaveChangesAsync();
         return Ok(table);
     }
 
     //
-    // DELETE FOR THE TABLES
+    // DELETE FOR THE TABLES (own restaurant only)
     //
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> DeleteTable(int id)
     {
-        var tableToDelete = await _context.Tables.FirstOrDefaultAsync(t => t.Id == id);
+        var tableToDelete = await _context.Tables
+            .FirstOrDefaultAsync(t => t.Id == id && t.RestaurantId == CurrentRestaurantId);
         if (tableToDelete == null)
         {
             return NotFound($"Table with id {id} doesn't exist");
@@ -81,7 +87,7 @@ public class TableController : ControllerBase
         // Removing a table must also clear its in-progress order so no orphan
         // OPEN order lingers in /Order/active (and therefore in Cocina).
         var openOrder = await _context.Orders
-            .FirstOrDefaultAsync(o => o.TableId == id && o.Status == OrderStatus.OPEN);
+            .FirstOrDefaultAsync(o => o.TableId == id && o.Status == OrderStatus.OPEN && o.RestaurantId == CurrentRestaurantId);
         if (openOrder != null)
         {
             _context.Orders.Remove(openOrder);
@@ -92,7 +98,8 @@ public class TableController : ControllerBase
             await _context.SaveChangesAsync();
             if (openOrder != null)
             {
-                await _hubContext.Clients.All.SendAsync(HubEvents.OrderClosed, new { tableId = id });
+                await _hubContext.Clients.Group(RestaurantHub.GroupFor(CurrentRestaurantId))
+                    .SendAsync(HubEvents.OrderClosed, new { tableId = id });
             }
             return Ok(tableToDelete);
         }

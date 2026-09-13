@@ -23,10 +23,16 @@ Una solución integral para la gestión de restaurantes, permitiendo el control 
 
 ### 0. Sitio de marketing (SaaS)
 - Landing page pública en `/home` (más `/home/pricing`, `/home/contact` y el formulario de registro `/home/registro`), portada del prototipo Figma (`FigmaDesigns/`, brief en `docs/landing-site-figma-brief.md`).
-- Tema oscuro con acentos violetas, tipografía DM Sans + Bebas Neue y componentes compartidos en `frontend/src/app/home/components/`.
+- Estética neutra (blanco/negro) con acento verde `#22c55e`, tipografía DM Sans y componentes compartidos en `frontend/src/app/home/components/`.
 - `/home*` (marketing) y `/auth*` (login en `/auth/login`) son rutas públicas (sin autenticación); `/` redirige a `/home` cuando estás deslogueado.
 
-Las rutas de la app (bussines) viven bajo `/kitchen/{id}/` (mesas, cocina, carta, ordenes, admin), donde `{id}` es el id del restaurante (actualmente el placeholder `1`).
+Las rutas de la app (business) viven bajo `/kitchen/{id}/` (mesas, cocina, carta, ordenes, admin), donde `{id}` es el id del restaurante (se toma de la sesión actual, no de un placeholder).
+
+### 7. Registro de restaurantes y aislamiento por restaurante
+- `/home/registro` crea un restaurante real: `POST /api/v1/Restaurant/register` (anónimo) crea la fila `Restaurants` (nombre, contraseña hasheada, encargado, email, teléfono) **y** el `User` admin con `UserName = email` en una sola transacción; auto-inicia sesión (cookie) y redirige a `/kitchen/{id}/mesas`.
+- El cookie de sesión lleva un claim `restaurantId` (fuente de verdad). `GET /User/me` lo devuelve para restaurar el scope al refrescar la página.
+- `RestaurantController` expone además GET (propio restaurante), POST (alta admin), PUT y DELETE (admin, scope por claim; el DELETE borra en cascada usuarios, mesas, productos, órdenes y gastos del restaurante).
+- Los usuarios creados (`POST /User`) se estampan con el `restaurantId` del llamador; el `PasswordHash` del restaurante nunca se serializa en las respuestas.
 
 ### 1. Gestión de Mesas
 - Visualización de estado de mesas en tiempo real.

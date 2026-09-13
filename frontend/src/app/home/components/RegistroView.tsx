@@ -3,19 +3,82 @@
 import { useState } from "react";
 import { Eye, EyeOff, ChevronLeft, ArrowRight, ChefHat } from "lucide-react";
 import { PrimaryBtn, FieldInput, marketingPath } from "./ui";
+import { RestaurantServices } from "../../../services/RestaurantServices";
+import { useGlobalContext } from "../../GlobalContext";
 import { useRouter } from "next/navigation";
 
 export default function RegistroView() {
+  const { setUsername, setRole, setRestaurantId, setIsAuthenticated } = useGlobalContext();
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [form, setForm] = useState({
     restaurante: "",
-    usuario: "",
+    nombreEncargado: "",
+    email: "",
+    telefono: "",
     password: "",
     confirm: "",
   });
   const router = useRouter();
   const navigate = (page: "login" | "landing") => router.push(marketingPath(page));
+
+  async function handleSubmit(): Promise<void> {
+    setError("");
+    setSuccess("");
+    if (submitting) return;
+
+    if (!form.restaurante.trim()) {
+      setError("El nombre del restaurante es obligatorio");
+      return;
+    }
+    if (!form.nombreEncargado.trim()) {
+      setError("El nombre del encargado es obligatorio");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      setError("Ingresá un email válido");
+      return;
+    }
+    if (form.password.length < 8) {
+      setError("La contraseña debe tener al menos 8 caracteres");
+      return;
+    }
+    if (form.password !== form.confirm) {
+      setError("Las contraseñas no coinciden");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const result = await RestaurantServices.register({
+        name: form.restaurante.trim(),
+        password: form.password,
+        nombreDelEncargado: form.nombreEncargado.trim(),
+        email: form.email.trim(),
+        phoneNumber: form.telefono.trim(),
+      });
+
+      // Start the session with the newly created restaurant's scope.
+      setUsername(result.userName);
+      setRole(result.role);
+      setRestaurantId(result.restaurantId);
+      setIsAuthenticated(true);
+      setSuccess("Restaurante creado correctamente");
+
+      // Confirm visibly, then enter the app.
+      setTimeout(() => {
+        router.push(`/kitchen/${result.restaurantId}/mesas`);
+      }, 1500);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "No se pudo crear el restaurante";
+      setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-16 relative bg-white">
@@ -35,10 +98,22 @@ export default function RegistroView() {
             Configurá tu cuenta en menos de 2 minutos.
           </p>
 
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3 mb-6">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="bg-green-50 border border-green-200 text-green-600 text-sm rounded-xl px-4 py-3 mb-6">
+              {success}
+            </div>
+          )}
+
           <form
             className="flex flex-col gap-5"
             onSubmit={(e) => {
               e.preventDefault();
+              handleSubmit();
             }}
           >
             <FieldInput
@@ -48,10 +123,23 @@ export default function RegistroView() {
               onChange={(v) => setForm({ ...form, restaurante: v })}
             />
             <FieldInput
-              label="Nombre de usuario (admin)"
-              placeholder="Ej: admin_laparrilla"
-              value={form.usuario}
-              onChange={(v) => setForm({ ...form, usuario: v })}
+              label="Nombre del encargado"
+              placeholder="Ej: Juan Pérez"
+              value={form.nombreEncargado}
+              onChange={(v) => setForm({ ...form, nombreEncargado: v })}
+            />
+            <FieldInput
+              label="Email"
+              type="email"
+              placeholder="Ej: hola@turestaurante.com"
+              value={form.email}
+              onChange={(v) => setForm({ ...form, email: v })}
+            />
+            <FieldInput
+              label="Teléfono"
+              placeholder="Ej: 11 5555 1234"
+              value={form.telefono}
+              onChange={(v) => setForm({ ...form, telefono: v })}
             />
             <FieldInput
               label="Contraseña"
@@ -86,7 +174,9 @@ export default function RegistroView() {
               }
             />
             <PrimaryBtn type="submit" className="w-full text-base py-4 mt-1">
-              Crear tu restaurante <ArrowRight className="w-4 h-4" />
+              {submitting ? "Creando restaurante..." : (
+                <>Crear tu restaurante <ArrowRight className="w-4 h-4" /></>
+              )}
             </PrimaryBtn>
           </form>
 

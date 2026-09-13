@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function LoginPage() {
-  const { isAuthenticated } = useGlobalContext();
+  const { isAuthenticated, restaurantId } = useGlobalContext();
   const router = useRouter();
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/kitchen/1/mesas');
+      router.push(`/kitchen/${restaurantId || 1}/mesas`);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, restaurantId, router]);
 
   return <Login />;
 }

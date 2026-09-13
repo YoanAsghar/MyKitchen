@@ -22,7 +22,8 @@ namespace MyKitchen.Models
     {
         public int Id { get; set; }
         public float TotalPrice { get; set; }
-        public DateTime OrderDate { get; set; } = DateTime.Now;
+        // Npgsql only accepts UTC for "timestamp with time zone".
+        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
         public int Guests { get; set; }
         public int Tip { get; set; }
         public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.CASH;

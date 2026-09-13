@@ -6,6 +6,7 @@ const API_URL = `${config.apiRoute}/api/v1/User`
 export interface AuthSession {
   userName: string;
   role: string;
+  restaurantId: number;
 }
 
 export const UserServices = {
