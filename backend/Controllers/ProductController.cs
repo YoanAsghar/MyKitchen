@@ -10,7 +10,7 @@ namespace MyKitchen.Controllers;
 [ApiController]
 [Authorize]
 
-public class ProductController : ControllerBase
+public class ProductController : RestaurantScopedController
 {
     private readonly ApplicationDbContext _context;
 
@@ -19,23 +19,26 @@ public class ProductController : ControllerBase
         _context = context;
     }
     //
-    // GET FOR THE PRODUCTS
+    // GET FOR THE PRODUCTS (own restaurant only)
     //
     [HttpGet("search")]
     public async Task<ActionResult<List<Product>>> GetProducts([FromQuery] string? search = null)
     {
         if (string.IsNullOrEmpty(search))
         {
-            return Ok(await _context.Products.ToListAsync());
+            return Ok(await _context.Products
+              .Where(p => p.RestaurantId == CurrentRestaurantId)
+              .ToListAsync());
         }
         var productsFromDatabase = await _context.Products
+          .Where(p => p.RestaurantId == CurrentRestaurantId)
           .Where(p => p.Name.ToLower().Contains(search.ToLower()))
           .OrderBy(p => p.Id)
           .ToListAsync();
         return Ok(productsFromDatabase);
     }
     //
-    // POST FOR THE PRODUCTS
+    // POST FOR THE PRODUCTS (stamped with the caller's restaurant)
     //
     [HttpPost]
     public async Task<ActionResult<List<Product>>> CreateProduct(Product product)
@@ -44,12 +47,14 @@ public class ProductController : ControllerBase
         {
             return BadRequest("Los datos del producto son requeridos");
         }
+        // The scope always follows the caller; never a client-sent id.
+        product.RestaurantId = CurrentRestaurantId;
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
         return Ok(product);
     }
     //
-    // PUT FOR THE PRODUCTS
+    // PUT FOR THE PRODUCTS (own restaurant only)
     //
     [HttpPut("{id:int}")]
     public async Task<ActionResult<List<Product>>> EditProduct(int id, [FromBody] Product newProductData)
@@ -58,7 +63,8 @@ public class ProductController : ControllerBase
         {
             return BadRequest("Los datos del producto son requeridos");
         }
-        var ProductToEdit = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+        var ProductToEdit = await _context.Products
+            .FirstOrDefaultAsync(p => p.Id == id && p.RestaurantId == CurrentRestaurantId);
 
         if (ProductToEdit == null)
         {
@@ -69,6 +75,8 @@ public class ProductController : ControllerBase
         ProductToEdit.Price = newProductData.Price;
         ProductToEdit.Description = newProductData.Description;
         ProductToEdit.Image = newProductData.Image;
+        // The scope always follows the caller; never a client-sent id.
+        ProductToEdit.RestaurantId = CurrentRestaurantId;
 
         try
         {
@@ -81,12 +89,13 @@ public class ProductController : ControllerBase
         }
     }
     //
-    // DELETE FOR THE PRODUCTS
+    // DELETE FOR THE PRODUCTS (own restaurant only)
     //
     [HttpDelete("{id:int}")]
     public async Task<ActionResult<List<Product>>> DeleteProduct(int id)
     {
-        var ProductToDelete = await _context.Products.FirstOrDefaultAsync(p => p.Id == id);
+        var ProductToDelete = await _context.Products
+            .FirstOrDefaultAsync(p => p.Id == id && p.RestaurantId == CurrentRestaurantId);
 
         if (ProductToDelete == null)
         {

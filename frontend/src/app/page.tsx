@@ -7,15 +7,15 @@ import { useGlobalContext } from "./GlobalContext";
 
 export default function Home() {
   const router = useRouter();
-  const { isAuthenticated } = useGlobalContext();
+  const { isAuthenticated, restaurantId } = useGlobalContext();
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.replace("/kitchen/1/mesas");
+      router.replace(`/kitchen/${restaurantId || 1}/mesas`);
     } else {
       router.replace("/home");
     }
-  }, [router, isAuthenticated]);
+  }, [router, isAuthenticated, restaurantId]);
 
   return null;
 }

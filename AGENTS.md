@@ -24,10 +24,10 @@ MyKitchen: `backend/` (.NET API) + `frontend/` (Next.js). Local-only app, no CI.
 ## Routing
 - **Public:** the marketing site under `frontend/src/app/home/` route group (`/home` landing, `/home/pricing`, `/home/contact`, `/home/registro`) and the auth section under `frontend/src/app/auth/` (`/auth/login`; `/auth/*` for future auth pages). `RootClientLayout` treats `/home*` and `/auth*` as **public paths**: no auth redirect, no app `Navbar`, and they render as normal scrollable pages (no `h-screen` app chrome).
 - **App (business):** every business page lives under `frontend/src/app/kitchen/[id]/` where `[id]` is the restaurant id: `/kitchen/{id}/mesas`, `/kitchen/{id}/cocina`, `/kitchen/{id}/carta`, `/kitchen/{id}/ordenes`, `/kitchen/{id}/admin`. Pages render inside the app chrome (`Navbar` + `h-screen` layout). Tab navigation goes through `RootClientLayout.handleTabChange`, which reads the current `{id}` from `useParams` and pushes `/kitchen/${id}/${tab}`.
-- **Root `/`** redirects to `/kitchen/1/mesas` (authenticated) or `/home` (unauthenticated) via `app/page.tsx`. The `1` is a **placeholder restaurant id** until multi-restaurant scoping is fully wired — the backend aligns it later; nothing else reads `{id}` yet.
+- **Root `/`** redirects to `/kitchen/{restaurantId}/mesas` (authenticated; restaurant id comes from the session cookie) or `/home` (unauthenticated) via `app/page.tsx`.
 - Shared marketing primitives (`PrimaryBtn`, `GhostBtn`, `FieldInput`) + route helper `marketingPath()` + `MarketingPage` type live in `src/app/home/components/ui.tsx`. `MarketingNavbar`/`MarketingFooter`/`AppMockup` are in `src/app/home/components/`. Each view (`LandingView`, `PricingView`, `ContactView`, `RegistroView`) is mounted by a `page.tsx` under `src/app/home/` and does its own `useRouter` navigation.
 - **Marketing style direction (current):** mirrors the app's mesas aesthetic — neutral near-black `#0a0a0f` page bg, cards `bg-white/[0.02]` + `border-white/[0.06]`, text via white opacity tiers (`text-white/35` body, `text-white/20`-`/30` labels, `text-white` headings), single green accent `#22c55e` for CTAs/toggles/status. No purple, no glow orbs, no gradient text, no Bebas watermarks. The old Figma visual language (dark `#030014`, purple `#22007c`, gradient `#D6C7FF→#AB8BFF`, glow orbs) is **retired** for marketing pages; `FigmaDesigns/` + `docs/landing-site-figma-brief.md` remain as layout/structure reference only.
-- `/home/registro` is currently **visual-only** (form + state, submit is a no-op). Wiring it to a real backend `POST /api/v1/Restaurant/register` (creates `Restaurants` + admin `User`, returns session) is a planned but not-yet-implemented feature — see "Things to finish". `/auth/login` keeps its real auth (`handleLoginButton` in `src/app/auth/login/Login.tsx`).
+- `/home/registro` is **wired**: it calls `POST /api/v1/Restaurant/register`, which creates a `Restaurants` row + its admin `User` (username = email, same password) and returns a session. `/auth/login` keeps its real auth (`handleLoginButton` in `src/app/auth/login/Login.tsx`).
 
 ## Workflow (one task per agent session)
 - One focused task per session. The user runs a new agent for each feature/task.
@@ -40,7 +40,22 @@ MyKitchen: `backend/` (.NET API) + `frontend/` (Next.js). Local-only app, no CI.
 ## TODO / tracking list
 - (Maintained here — update after each task.)
 
-**Done (this session): `RestaurantId` added across models and the database.**
+**Done (this session): Multi-restaurant data scoping enforced — each user only sees/touches their own restaurant.**
+- New `RestaurantScopedController` base (`Controllers/RestaurantScopedController.cs`): `CurrentRestaurantId` is read from the `"restaurantId"` cookie claim (constant centralized in `Models/RestaurantClaims.cs`). `RestaurantController`, `UserController`, `ProductController`, `TableController`, `OrderController`, `ExpensesController` all inherit it — the claim is the single source of truth; client-sent ids are never trusted.
+- Every list/get is filtered by `RestaurantId == CurrentRestaurantId` (`Product`, `Table`, `Order` history + active, `Expense`, `User`); every create/update **stamps** `RestaurantId` from the claim. Create/edit/delete use scoped lookups and return `NotFound` for foreign ids, so the existence of other restaurants' data is never leaked.
+- `OrderController`: `SaveOpenOrder` only resolves tables/products belonging to the caller's restaurant (foreign table → `404`, foreign product → `400`); `CreateOrder` validates the referenced table belongs to the caller **before** clearing any OPEN order, so a foreign table can never be paid/cleared. Orders + details are always stamped from the claim instead of backfilled from the table.
+- **SignalR scoped per restaurant:** `RestaurantHub.OnConnectedAsync` joins each connection to a `restaurant-{id}` group; all `OrderUpdated`/`OrderClosed` broadcasts in `OrderController`/`TableController` target `Clients.Group(...)` instead of `Clients.All`, so real-time data can't leak across tenants. Frontend unchanged (cookie auth still drives it).
+- Fixed latent routing bug: the `ExpensesControllers` plural class name made the `[controller]` token resolve to `api/v1/ExpensesControllers` — `/api/v1/Expenses` had always 404'd. Renamed to `ExpensesController`. (No frontend service existed yet, so nothing consumed it.)
+- Tests 54 → 59: new `RestaurantScopingTests` (two registered restaurants over one shared DB; proves product/table/order/expense/user isolation, foreign products can't be ordered on another's table, and paying a foreign table is rejected without clearing its OPEN order). `OrderControllerTests` `CreateOrder` helper no longer uses a fake foreign `tableId=1` (table-less by default).
+- Verified: backend builds, 59/59 tests pass, `npx tsc --noEmit` clean.
+
+**Done (this session): Restaurant registration + per-restaurant login scope wired.**
+- `/home/registro` now creates a real restaurant via `POST /api/v1/Restaurant/register` (anonymous): validates the profile (name ≤ 100, password ≥ 8, valid email, encargado), enforces unique restaurant name + email, creates `Restaurants` (Name, BCrypt `PasswordHash`, `NombreDelEncargado`, `Email`, `PhoneNumber`) AND the admin `User` (`UserName` = email, same hash, `Role = admin`) in one transaction, auto-signs-in (cookie) and returns the session + `RestaurantResponseDto` (the `PasswordHash` is never serialized).
+- `RestaurantController` (`api/v1/Restaurant`): `GET` (own restaurant via the cookie claim), `POST` (admin-only provision), `PUT /{id}` (admin-only; cross-restaurant id → `403`), `DELETE /{id}` (admin-only; cascades users/tables/products/orders/details/expenses in one transaction). Transactions are only opened when `Database.IsRelational()` (the in-memory test provider has none).
+- **Scope in the cookie:** `UserController.Login` and `register` both add the `restaurantId` claim; `GET /User/me` returns `restaurantId`; `UserController.CreateUser` stamps the caller's `RestaurantId` (ignores whatever the client sent). Frontend `GlobalContext` now holds `restaurantId`; `/` root, post-login and `RootClientLayout`'s fallback redirect/scope via the session id instead of the placeholder `1`.
+- `Restaurants` model changed: `Adress` → `PasswordHash` + added `NombreDelEncargado` and `Email`; migration `RestaurantProfileColumns` (renames `Adress`→`PasswordHash`, adds the new columns; applied via `dotnet ef database update`).
+- Frontend: new `models/restaurant.tsx` + `services/RestaurantServices.tsx`; `RegistroView` collects (nombre, encargado, email, teléfono, contraseña + confirmación), validates client-side, shows a confirmation message and redirects to `/kitchen/{restaurantId}/mesas`. `AuthSession`/`GlobalContext` expose `restaurantId`.
+- Tests 40 → 54: added `RestaurantControllerTests` (register ok + cookie, name/email conflicts, missing name, invalid email, short password, auto-login + login round-trip scope, GET/PUT own vs foreign `403`, DELETE cascade, anonymous `401`).
 - All backend entities now carry `RestaurantId` (non-nullable `int`, default 0): `User`, `Table`, `Product`, `Order`, `OrderDetail`, `Expense`. `Restaurants` is the scope root itself (its `Id` IS the restaurant id). No FK/navigation wired yet — multi-restaurant scoping is still a future step; keeping it a plain column lets the currently-empty `restaurants` table and existing rows stay valid.
 - Migration `AddRestaurantIdColumns` (applied via `dotnet ef database update` against `restaurant_crm`) adds the column to all six tables (`Users`, `tables`, `products`, `orders`, `orderDetails`, `Expenses`).
 - Frontend models: added `restaurantId` (camelCase to match the API wire format) to `Product`; fixed the existing all-lowercase `restaurantid` on `expense`, `orderDetails`, `order`, `table`, `user` (that casing would never have bound to the API's `restaurantId`). Updated every constructor call site (mesas page fallback, `tableInformation`, `OrdersContext`, login, `OrderServices.toOrder`).
@@ -90,21 +105,12 @@ MyKitchen: `backend/` (.NET API) + `frontend/` (Next.js). Local-only app, no CI.
 - Cross-client editing of the *same table simultaneously*: `tableInformation`'s local draft only re-seeds on `table.id` change, so a selected table ignores remote updates to the same table until reselected. Consider a dirty/conflict strategy in Part 2/3.
 
 **Things to finish:**
-- Wire `/home/registro` to a real backend `POST /api/v1/Restaurant/register` (anonymous; transactional create of `Restaurants` + admin `User` with `RestaurantId`; returns session) — UI/form exists, submit is a no-op today.
-- **Multi-restaurant data scoping (NEXT TASK):** enforce that a user only sees/edits their own restaurant's data. Architecture decided → **the auth cookie is the source of truth; the endpoints enforce it**. Do NOT trust a `restaurantId` sent by the client (URL/body) — any authenticated user could then read another restaurant's data.
-  - `UserController.Login` (`backend/Controllers/UserController.cs:101-104`): add `new Claim("restaurantId", user.RestaurantId.ToString())` alongside the existing `ClaimTypes.Name`/`ClaimTypes.Role`.
-  - `GET /User/me` (`:119-124`): also return `restaurantId` so the frontend restores working scope on refresh.
-  - Each controller: read `currentRestaurantId` from the `"restaurantId"` claim (helper extension on `ClaimsPrincipal`), then:
-    - every list/get adds `.Where(x => x.RestaurantId == currentRestaurantId)`;
-    - every create/update **stamps** `RestaurantId = currentRestaurantId` and ignores whatever the client sent (`ProductController`, `TableController`, `OrderController`, `ExpensesController`, `UserController`);
-    - `OrderController.SaveOpenOrder`/`CreateOrder` already derive from the table (done) — gate the table lookup itself by `currentRestaurantId` so a foreign table isn't pressable.
-  - Frontend: `/kitchen/{id}` URL scope is partially in place (IDs forwarded only in navigation; placeholder `1` used everywhere). Replace the hardcoded `0`/`1` placeholders with the session's `restaurantId` from `GlobalContext`/`/me`.
-  - Note: today all users/tables/orders default to `RestaurantId = 0` and nothing filters — so isolation currently does nothing until real per-restaurant rows exist (see `/home/registro` wiring to create real `Restaurants` + admin users).
 - Refresh stale `README.md` + `frontend/README.md` (describe Vite; real app is Next.js App Router).
-- Backend test coverage: only `UserController`, `TableController`, `OrderController` are tested. Add tests for `ProductController`, `ExpensesController`, `MaintenanceController`.
+- Backend test coverage: `ProductController`/`ExpensesController` are now exercised via `RestaurantScopingTests`, but `MaintenanceController` still has no dedicated tests.
 - Fix frontend warning-level xUnit issues in tests (blocking `.Result` calls → await).
 - Build out the admin tab (role/user management UI) now that `UserController` create/edit/delete are admin-only; current UI has no screens wired to `UserServices.editUser`/`deleteUser`.
 - Replace hardcoded seeded admin password with an env/secret for production.
+- `Expense.CreatedByUserId` is client-sent (no claim for the current user's id exists yet); consider stamping it server-side like `RestaurantId` when a stable user-id claim is added.
 
 ## Style / conventions
 - Frontend UI depends on `src/colorPalette.tsx` and `src/config.tsx`; models live in `src/models/*`, API calls in `src/services/*`.
@@ -113,5 +119,5 @@ MyKitchen: `backend/` (.NET API) + `frontend/` (Next.js). Local-only app, no CI.
 
 ## Checks
 - Frontend typecheck: `npx tsc --noEmit` (strict). `npm run lint` runs `next lint` (deprecated in Next 16); no `eslint.config.*` exists in frontend, so treat it as unconfigured.
-- Backend tests: `cd backend.Tests && dotnet test` (xUnit integration tests via `TestingWebAppFactory`/in-memory EF; covers `User`, `Table`, `Order` controllers). Add a test per controller as new ones are created.
+- Backend tests: `cd backend.Tests && dotnet test` (xUnit integration tests via `TestingWebAppFactory`/in-memory EF; covers `User`, `Table`, `Order`, `Restaurant` controllers). Add a test per controller as new ones are created.
 - Frontend has no test suite; verification is build/typecheck + manual API calls via Swagger (backend dev: `/swagger`).

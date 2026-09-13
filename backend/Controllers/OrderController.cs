@@ -12,7 +12,7 @@ namespace MyKitchen.Controllers;
 [Route("api/v1/[controller]")]
 [ApiController]
 [Authorize]
-public class OrderController : ControllerBase
+public class OrderController : RestaurantScopedController
 {
     private readonly ApplicationDbContext _context;
     private readonly IHubContext<RestaurantHub> _hubContext;
@@ -37,7 +37,7 @@ public class OrderController : ControllerBase
         var endDay = startDay.AddDays(1);
 
         var orders = await OrderProjection.Project(_context.Orders
-                  .Where(o => o.Status == OrderStatus.PAID)
+                  .Where(o => o.Status == OrderStatus.PAID && o.RestaurantId == CurrentRestaurantId)
                   .Where(o => o.OrderDate >= startDay && o.OrderDate < endDay))
                   .OrderByDescending(o => o.Id)
                   .ToListAsync();
@@ -54,7 +54,7 @@ public class OrderController : ControllerBase
     public async Task<ActionResult<List<Order>>> GetActiveOrders()
     {
         var orders = await OrderProjection.Project(_context.Orders
-                  .Where(o => o.Status == OrderStatus.OPEN))
+                  .Where(o => o.Status == OrderStatus.OPEN && o.RestaurantId == CurrentRestaurantId))
                   .OrderBy(o => o.TableId)
                   .ToListAsync();
 
@@ -64,12 +64,15 @@ public class OrderController : ControllerBase
     //
     // PUT /api/v1/Order/table/{tableId}
     // Upserts the OPEN order for a table. Empty payload clears it. Broadcasts
-    // OrderUpdated/OrderClosed to every connected client so Mesas + Cocina sync.
+    // OrderUpdated/OrderClosed to the restaurant's clients so Mesas + Cocina sync.
     //
     [HttpPut("table/{tableId:int}")]
     public async Task<ActionResult<Order>> SaveOpenOrder(int tableId, [FromBody] SaveOpenOrderRequest request)
     {
-        var table = await _context.Tables.FirstOrDefaultAsync(t => t.Id == tableId);
+        // The table must belong to the caller's restaurant; a foreign table is
+        // neither pressable nor editable.
+        var table = await _context.Tables
+            .FirstOrDefaultAsync(t => t.Id == tableId && t.RestaurantId == CurrentRestaurantId);
         if (table == null)
         {
             return NotFound($"Table with id {tableId} doesn't exist");
@@ -88,7 +91,7 @@ public class OrderController : ControllerBase
 
         var existingOrders = await _context.Orders
             .Include(o => o.OrderDetail)
-            .Where(o => o.TableId == tableId && o.Status == OrderStatus.OPEN)
+            .Where(o => o.TableId == tableId && o.Status == OrderStatus.OPEN && o.RestaurantId == CurrentRestaurantId)
             .ToListAsync();
         var existing = existingOrders.FirstOrDefault();
 
@@ -100,8 +103,10 @@ public class OrderController : ControllerBase
         }
 
         var productIds = details.Select(d => d.ProductId).Distinct().ToList();
+        // Products must belong to the caller's restaurant too, so a product
+        // from another restaurant is rejected as "doesn't exist".
         var products = await _context.Products
-            .Where(p => productIds.Contains(p.Id))
+            .Where(p => productIds.Contains(p.Id) && p.RestaurantId == CurrentRestaurantId)
             .AsNoTracking()
             .ToDictionaryAsync(p => p.Id);
 
@@ -115,14 +120,14 @@ public class OrderController : ControllerBase
             existing = new Order
             {
                 TableId = tableId,
-                RestaurantId = table.RestaurantId,
+                RestaurantId = CurrentRestaurantId,
                 Status = OrderStatus.OPEN,
                 OrderDate = DateTime.UtcNow
             };
             _context.Orders.Add(existing);
         }
 
-        existing.RestaurantId = table.RestaurantId;
+        existing.RestaurantId = CurrentRestaurantId;
         existing.Guests = request.Guests;
         existing.Tip = request.Tip;
         existing.PaymentMethod = request.PaymentMethod;
@@ -133,7 +138,7 @@ public class OrderController : ControllerBase
         {
             ProductId = d.ProductId,
             Quantity = d.Quantity,
-            RestaurantId = existing.RestaurantId
+            RestaurantId = CurrentRestaurantId
         }).ToList();
 
         await _context.SaveChangesAsync();
@@ -141,7 +146,8 @@ public class OrderController : ControllerBase
         var enriched = await OrderProjection.Project(_context.Orders.Where(o => o.Id == existing.Id))
             .SingleOrDefaultAsync();
 
-        await _hubContext.Clients.All.SendAsync(HubEvents.OrderUpdated, enriched);
+        await _hubContext.Clients.Group(RestaurantHub.GroupFor(CurrentRestaurantId))
+            .SendAsync(HubEvents.OrderUpdated, enriched);
 
         return Ok(enriched);
     }
@@ -149,7 +155,7 @@ public class OrderController : ControllerBase
     //
     // POST /api/v1/Order
     // The waiter pays for a table: the order is persisted as PAID, the table's
-    // OPEN order is cleared and every client is told the table is now free.
+    // OPEN order is cleared and the restaurant's clients are told it's now free.
     //
     [HttpPost]
     public async Task<ActionResult> CreateOrder(Order order)
@@ -170,22 +176,22 @@ public class OrderController : ControllerBase
         order.Id = 0;
         order.Status = OrderStatus.PAID;
 
-        // Keep the order scoped to the same restaurant as its table when the
-        // client can't know it yet (single-restaurant flows send 0).
-        if (order.RestaurantId == 0 && order.TableId is int orderTableId)
+        // The caller's restaurant scope always wins; a client-sent RestaurantId
+        // is never trusted. A referenced table must belong to this restaurant,
+        // otherwise a foreign table's OPEN order could be paid/cleared.
+        order.RestaurantId = CurrentRestaurantId;
+        if (order.TableId is int orderTableId)
         {
-            var table = await _context.Tables.AsNoTracking().FirstOrDefaultAsync(t => t.Id == orderTableId);
-            if (table != null)
+            var table = await _context.Tables.AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == orderTableId && t.RestaurantId == CurrentRestaurantId);
+            if (table == null)
             {
-                order.RestaurantId = table.RestaurantId;
+                return NotFound($"Table with id {orderTableId} doesn't exist");
             }
         }
         foreach (var detail in order.OrderDetail)
         {
-            if (detail.RestaurantId == 0)
-            {
-                detail.RestaurantId = order.RestaurantId;
-            }
+            detail.RestaurantId = CurrentRestaurantId;
         }
 
         _context.Orders.Add(order);
@@ -194,7 +200,7 @@ public class OrderController : ControllerBase
         {
             var openOrders = await _context.Orders
                 .Include(o => o.OrderDetail)
-                .Where(o => o.TableId == tableId && o.Status == OrderStatus.OPEN)
+                .Where(o => o.TableId == tableId && o.Status == OrderStatus.OPEN && o.RestaurantId == CurrentRestaurantId)
                 .ToListAsync();
             if (openOrders.Count > 0)
             {
@@ -206,7 +212,8 @@ public class OrderController : ControllerBase
 
         if (order.TableId is int paidTableId)
         {
-            await _hubContext.Clients.All.SendAsync(HubEvents.OrderClosed, new { tableId = paidTableId });
+            await _hubContext.Clients.Group(RestaurantHub.GroupFor(CurrentRestaurantId))
+                .SendAsync(HubEvents.OrderClosed, new { tableId = paidTableId });
         }
 
         return Ok(order);
@@ -216,7 +223,7 @@ public class OrderController : ControllerBase
     {
         var openOrders = await _context.Orders
             .Include(o => o.OrderDetail)
-            .Where(o => o.TableId == tableId && o.Status == OrderStatus.OPEN)
+            .Where(o => o.TableId == tableId && o.Status == OrderStatus.OPEN && o.RestaurantId == CurrentRestaurantId)
             .ToListAsync();
 
         if (openOrders.Count > 0)
@@ -225,7 +232,8 @@ public class OrderController : ControllerBase
             await _context.SaveChangesAsync();
         }
 
-        await _hubContext.Clients.All.SendAsync(HubEvents.OrderClosed, new { tableId });
+        await _hubContext.Clients.Group(RestaurantHub.GroupFor(CurrentRestaurantId))
+            .SendAsync(HubEvents.OrderClosed, new { tableId });
 
         return Ok(new { tableId });
     }

@@ -10,6 +10,8 @@ interface GlobalContextType {
   setUsername: (val: string) => void;
   role: string;
   setRole: (val: string) => void;
+  restaurantId: number;
+  setRestaurantId: (val: number) => void;
   isLoading: boolean;
   setIsLoading: (val: boolean) => void;
   isAuthChecking: boolean;
@@ -22,6 +24,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState("");
   const [role, setRole] = useState("");
+  const [restaurantId, setRestaurantId] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   // True while we verify the persisted session on first load; the app must not
   // redirect to /login before this resolves.
@@ -36,6 +39,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         if (!active) return;
         setUsername(session.userName);
         setRole(session.role);
+        setRestaurantId(session.restaurantId ?? 0);
         setIsAuthenticated(true);
       } catch {
         // No valid session — stay logged out.
@@ -56,6 +60,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     setIsAuthenticated(false);
     setUsername("");
     setRole("");
+    setRestaurantId(0);
   }, []);
 
   const value = useMemo(() => ({
@@ -65,11 +70,13 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     setUsername,
     role,
     setRole,
+    restaurantId,
+    setRestaurantId,
     isLoading,
     setIsLoading,
     isAuthChecking,
     logout,
-  }), [isAuthenticated, username, role, isLoading, isAuthChecking, logout]);
+  }), [isAuthenticated, username, role, restaurantId, isLoading, isAuthChecking, logout]);
 
   return (
     <GlobalContext.Provider value={value}>

@@ -16,6 +16,7 @@ export default function RootClientLayout({
     isAuthenticated,
     username,
     role,
+    restaurantId,
     isLoading,
     isAuthChecking,
     logout,
@@ -50,8 +51,9 @@ export default function RootClientLayout({
   const currentTab = getTabFromPathname(pathname || "");
 
   // The restaurant id for the current kitchen scope, from /kitchen/[id]/...
-  // Falls back to the first restaurant until multi-restaurant scoping is wired.
-  const kitchenId = typeof params?.id === "string" ? params.id : "1";
+  // Falls back to the session's restaurant so navigation still works even
+  // when directly landing on a kitchen page.
+  const kitchenId = typeof params?.id === "string" ? params.id : String(restaurantId || 1);
 
   const handleTabChange = (tab: BodyTabs) => {
     router.push(`/kitchen/${kitchenId}/${tab}`);

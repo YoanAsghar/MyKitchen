@@ -8,7 +8,7 @@ import { FieldInput, marketingPath } from "../../home/components/ui";
 import { colorPalette } from "../../../colorPallete";
 
 const Login = () => {
-  const { setIsLoading, setUsername, setRole, setIsAuthenticated } = useGlobalContext();
+  const { setIsLoading, setUsername, setRole, setRestaurantId, setIsAuthenticated } = useGlobalContext();
   const [loginUsername, setLoginUsername] = useState<string>("");
   const [loginPassword, setLoginPassword] = useState<string>("");
   const [showPass, setShowPass] = useState(false);
@@ -30,6 +30,7 @@ const Login = () => {
 
       setUsername(response.userName);
       setRole(response.role);
+      setRestaurantId(response.restaurantId ?? 0);
       setIsAuthenticated(true);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "No se pudo iniciar sesión";

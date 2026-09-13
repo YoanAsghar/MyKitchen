@@ -10,10 +10,10 @@ namespace MyKitchen.Controllers;
 [ApiController]
 [Route("api/v1/[controller]")]
 [Authorize]
-public class ExpensesControllers : ControllerBase
+public class ExpensesController : RestaurantScopedController
 {
     private readonly ApplicationDbContext _context;
-    public ExpensesControllers(ApplicationDbContext context)
+    public ExpensesController(ApplicationDbContext context)
     {
         _context = context;
     }
@@ -23,14 +23,15 @@ public class ExpensesControllers : ControllerBase
     {
         try
         {
-            var orders = await _context.Expenses
+            var expenses = await _context.Expenses
+              .Where(e => e.RestaurantId == CurrentRestaurantId)
               .Include(e => e.CreatedByUser)
               .OrderByDescending(o => o.Id)
               .Skip((page - 1) * pageSize)
               .Take(pageSize)
               .OrderBy(o => o.Id)
               .ToListAsync();
-            return Ok(orders);
+            return Ok(expenses);
         }
         catch (Exception ex)
         {
@@ -42,6 +43,12 @@ public class ExpensesControllers : ControllerBase
     {
         try
         {
+            if (NewExpense == null)
+            {
+                return BadRequest("La data del gasto es requerida");
+            }
+            // The scope always follows the caller; never a client-sent id.
+            NewExpense.RestaurantId = CurrentRestaurantId;
             _context.Expenses.Add(NewExpense);
             await _context.SaveChangesAsync();
 

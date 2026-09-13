@@ -34,7 +34,7 @@ public class OrderControllerTests : IDisposable
 
     private async Task<JsonElement> CreateOrderAsync(
         string orderDateIso, int productId, string paymentMethod = "CASH",
-        int guests = 2, int quantity = 1, double totalPrice = 12.5, int? tableIdParam = 1)
+        int guests = 2, int quantity = 1, double totalPrice = 12.5, int? tableIdParam = null)
     {
         var body = new
         {
