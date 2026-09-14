@@ -23,8 +23,8 @@ public class UserControllerTests : IDisposable
         _factory.Dispose();
     }
 
-    // A default admin (admin/admin123) is seeded on startup. Logging in sets the
-    // AuthorizationCookies cookie on the shared HttpClient for subsequent calls.
+    // A default admin (admin/admin123) is seeded by the test factory. Logging
+    // in sets the AuthorizationCookies cookie on the shared HttpClient.
     private async Task<HttpResponseMessage> LoginAsAdminAsync()
     {
         return await _client.PostAsJsonAsync("/api/v1/User/login",
@@ -111,6 +111,50 @@ public class UserControllerTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateUser_OwnerRole_AsAdmin_ReturnsOwnerRole()
+    {
+        await LoginAsAdminAsync();
+        var response = await CreateUserAsync("socio", "secret123", Roles.Owner);
+        var user = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(Roles.Owner, user.GetProperty("role").GetString());
+    }
+
+    [Fact]
+    public async Task CreateUser_AsRegularUser_ReturnsForbidden()
+    {
+        // Seed a plain staff user, log in as it, then try to create another
+        // user — staff has no management rights.
+        await LoginAsAdminAsync();
+        await CreateUserAsync("mesero", "secret123", Roles.User);
+        var login = await _client.PostAsJsonAsync("/api/v1/User/login",
+            new { userName = "mesero", passwordHash = "secret123" });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+
+        var response = await CreateUserAsync("otro-mesero", "secret123");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateUser_AdminOnly_NonAdminCannotEscalate()
+    {
+        // An owner (restaurant principal) trying to mint an admin must be
+        // downgraded to the base user role — only a global admin can create
+        // admins.
+        var register = await _client.PostAsJsonAsync("/api/v1/Restaurant/register",
+            new { name = "Escalada S.A.", password = "secret123", nombreDelEncargado = "Jefe", email = "escalada@test.com" });
+        Assert.Equal(HttpStatusCode.OK, register.StatusCode);
+
+        var response = await _client.PostAsJsonAsync("/api/v1/User",
+            new { userName = "tramposo", passwordHash = "secret123", role = Roles.Admin });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var user = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(Roles.User, user.GetProperty("role").GetString());
+    }
+
+    [Fact]
     public async Task Login_ValidCredentials_ReturnsOkWithUserNameAndRole()
     {
         // Seed a regular user, then log in with it.
@@ -173,7 +217,7 @@ public class UserControllerTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         // 2 created users + the seeded admin.
         Assert.Equal(3, users.Length);
-        var serialized = response.Content.ReadAsStringAsync().Result;
+        var serialized = await response.Content.ReadAsStringAsync();
         Assert.DoesNotContain("passwordHash", serialized, StringComparison.OrdinalIgnoreCase);
     }
 

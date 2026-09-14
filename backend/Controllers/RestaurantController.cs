@@ -20,8 +20,10 @@ public class RestaurantController : RestaurantScopedController
         _context = context;
     }
 
-    // Shared validation for the restaurant profile fields (name, password,
-    // encargado, email). Returns the first error message, or null when valid.
+    // Shared validation for the restaurant profile fields (name, the owner's
+    // password, encargado, email). Returns the first error message, or null
+    // when valid. The password credentials belong to the Owner user created at
+    // signup — the restaurant row itself no longer carries credentials.
     private static string? ValidateProfile(string? name, string? password, string? email, string? encargado)
     {
         if (string.IsNullOrWhiteSpace(name)) return "El nombre del restaurante es obligatorio";
@@ -68,9 +70,10 @@ public class RestaurantController : RestaurantScopedController
 
     //
     // POST /api/v1/Restaurant/register
-    // Anonymous signup: creates the restaurant + its admin user atomically and
-    // signs the admin in (sets the AuthorizationCookies session cookie). The
-    // restaurant email doubles as the admin username for future logins.
+    // Anonymous signup: creates the restaurant + its Owner user atomically and
+    // signs the Owner in (sets the AuthorizationCookies session cookie). The
+    // Owner's username is the restaurant email; the Owner is who logs in — the
+    // restaurant row itself stores no password.
     //
     [HttpPost("register")]
     [AllowAnonymous]
@@ -91,24 +94,24 @@ public class RestaurantController : RestaurantScopedController
             return Conflict(new { message = "El email ya está en uso" });
 
         var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12);
+        var ownerUserName = request.Email.Trim().ToLower();
         var restaurant = new Restaurants
         {
             Name = request.Name.Trim(),
-            PasswordHash = passwordHash,
             NombreDelEncargado = request.NombreDelEncargado.Trim(),
-            Email = request.Email.Trim().ToLower(),
+            Email = ownerUserName,
             PhoneNumber = request.PhoneNumber?.Trim() ?? string.Empty
         };
         _context.Restaurants.Add(restaurant);
 
-        var adminUser = new User
+        var ownerUser = new User
         {
-            UserName = request.Email.Trim().ToLower(),
+            UserName = ownerUserName,
             PasswordHash = passwordHash,
-            Role = Roles.Admin,
+            Role = Roles.Owner,
             RestaurantId = 0 // stamped after the restaurant is saved to get its Id
         };
-        _context.Users.Add(adminUser);
+        _context.Users.Add(ownerUser);
 
         // Atomic: the DB-generated Id is only known after the first save, and
         // User.RestaurantId is a plain column (no navigation), so two saves
@@ -121,7 +124,7 @@ public class RestaurantController : RestaurantScopedController
         try
         {
             await _context.SaveChangesAsync();
-            adminUser.RestaurantId = restaurant.Id;
+            ownerUser.RestaurantId = restaurant.Id;
             await _context.SaveChangesAsync();
             if (tx != null) await tx.CommitAsync();
         }
@@ -131,29 +134,31 @@ public class RestaurantController : RestaurantScopedController
             return StatusCode(500, new { message = "No se pudo crear el restaurante" });
         }
 
-        // Auto-login the new admin so signup starts a working session.
+        // Auto-login the new Owner so signup starts a working session.
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, adminUser.UserName),
-            new Claim(ClaimTypes.Role, adminUser.Role),
-            new Claim(RestaurantClaims.Id, adminUser.RestaurantId.ToString())
+            new Claim(ClaimTypes.Name, ownerUser.UserName),
+            new Claim(ClaimTypes.Role, ownerUser.Role),
+            new Claim(RestaurantClaims.Id, ownerUser.RestaurantId.ToString()),
+            new Claim(RestaurantClaims.UserId, ownerUser.Id.ToString())
         };
         var identity = new ClaimsIdentity(claims, "cookie");
         await HttpContext.SignInAsync("cookie", new ClaimsPrincipal(identity));
 
         return Ok(new
         {
-            userName = adminUser.UserName,
-            role = adminUser.Role,
-            restaurantId = adminUser.RestaurantId,
+            userId = ownerUser.Id,
+            userName = ownerUser.UserName,
+            role = ownerUser.Role,
+            restaurantId = ownerUser.RestaurantId,
             restaurant = ToDto(restaurant)
         });
     }
 
     //
     // POST /api/v1/Restaurant
-    // Provision a restaurant row directly (admin-only bootstrap; the register
-    // flow above is what the /home/registro form calls).
+    // Provision a restaurant + its Owner user directly (admin-only bootstrap;
+    // the register flow above is what the /home/registro form calls).
     //
     [HttpPost]
     [Authorize(Policy = "AdminOnly")]
@@ -168,28 +173,59 @@ public class RestaurantController : RestaurantScopedController
         if (nameTaken)
             return Conflict(new { message = "El nombre del restaurante ya está registrado" });
 
+        var emailTaken = await _context.Users
+            .AnyAsync(u => u.UserName.ToLower() == request.Email.ToLower());
+        if (emailTaken)
+            return Conflict(new { message = "El email ya está en uso" });
+
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12);
+        var ownerUserName = request.Email.Trim().ToLower();
         var restaurant = new Restaurants
         {
             Name = request.Name.Trim(),
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12),
             NombreDelEncargado = request.NombreDelEncargado.Trim(),
-            Email = request.Email.Trim().ToLower(),
+            Email = ownerUserName,
             PhoneNumber = request.PhoneNumber?.Trim() ?? string.Empty
         };
-
         _context.Restaurants.Add(restaurant);
-        await _context.SaveChangesAsync();
+
+        var ownerUser = new User
+        {
+            UserName = ownerUserName,
+            PasswordHash = passwordHash,
+            Role = Roles.Owner,
+            RestaurantId = 0
+        };
+        _context.Users.Add(ownerUser);
+
+        await using var tx = _context.Database.IsRelational()
+            ? await _context.Database.BeginTransactionAsync()
+            : null;
+        try
+        {
+            await _context.SaveChangesAsync();
+            ownerUser.RestaurantId = restaurant.Id;
+            await _context.SaveChangesAsync();
+            if (tx != null) await tx.CommitAsync();
+        }
+        catch
+        {
+            if (tx != null) await tx.RollbackAsync();
+            return StatusCode(500, new { message = "No se pudo crear el restaurante" });
+        }
+
         return Ok(ToDto(restaurant));
     }
 
     //
     // PUT /api/v1/Restaurant/{id}
-    // Update restaurant profile fields. Only the restaurant's own admin (per
-    // the cookie claim) may do this — cross-restaurant edits are refused.
-    // Changing the password is intentionally not part of this endpoint.
+    // Update restaurant profile fields. Only the restaurant's own owner (or a
+    // global admin), per the cookie claim, may do this — cross-restaurant edits
+    // are refused. Changing the owner password is intentionally not part of
+    // this endpoint.
     //
     [HttpPut("{id:int}")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "ManagerOnly")]
     public async Task<ActionResult<RestaurantResponseDto>> UpdateRestaurant(int id, [FromBody] RegisterRestaurantRequest updatedData)
     {
         if (id != CurrentRestaurantId)
@@ -218,10 +254,10 @@ public class RestaurantController : RestaurantScopedController
     //
     // DELETE /api/v1/Restaurant/{id}
     // Removes the restaurant and ALL its data (users, tables, products,
-    // orders, order details, expenses). Admin-only and claim-scoped.
+    // orders, order details, expenses). Manager-only and claim-scoped.
     //
     [HttpDelete("{id:int}")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "ManagerOnly")]
     public async Task<IActionResult> DeleteRestaurant(int id)
     {
         if (id != CurrentRestaurantId)

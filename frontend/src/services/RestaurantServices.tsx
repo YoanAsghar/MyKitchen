@@ -12,6 +12,7 @@ export interface RegisterRestaurantPayload {
 }
 
 export interface RegisterRestaurantResult {
+  userId: number;
   userName: string;
   role: string;
   restaurantId: number;

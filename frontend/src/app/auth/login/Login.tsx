@@ -1,7 +1,7 @@
 import { UserServices } from "@/services/UserServices";
 import { User } from "@/models/user";
 import { useGlobalContext } from "../../GlobalContext";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Eye, EyeOff, ArrowRight, ChefHat, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FieldInput, marketingPath } from "../../home/components/ui";

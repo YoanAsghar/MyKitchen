@@ -1,8 +1,8 @@
 namespace MyKitchen.Models
 {
-    // Public signup payload: a brand-new restaurant + its first admin user.
-    // "Password" is the raw password; it is BCrypt-hashed before persisting
-    // into Restaurants.PasswordHash and reused as the admin user's hash.
+    // Public signup payload: a brand-new restaurant + its Owner user. "Password"
+    // is the Owner's raw password, BCrypt-hashed before persisting into the
+    // User row — the restaurant itself stores no credentials.
     public class RegisterRestaurantRequest
     {
         public string Name { get; set; } = string.Empty;
@@ -12,7 +12,8 @@ namespace MyKitchen.Models
         public string PhoneNumber { get; set; } = string.Empty;
     }
 
-    // Wire shape for a restaurant that never exposes its PasswordHash.
+    // Wire shape for a restaurant profile. Credentials live on the Owner user,
+    // never on the restaurant row.
     public class RestaurantResponseDto
     {
         public int Id { get; set; }
