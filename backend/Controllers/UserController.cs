@@ -99,7 +99,13 @@ namespace MyKitchen.Controllers
         [AllowAnonymous]
         public async Task<ActionResult> Login([FromBody] User request)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserName == request.UserName);
+            if (string.IsNullOrWhiteSpace(request.UserName))
+                return Unauthorized("Invalid credentials");
+
+            // Usernames are emails (the Owner's login) and the duplicate check
+            // on create is already case-insensitive, so match login the same way.
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.UserName.ToLower() == request.UserName.ToLower());
 
             if (user == null || !BCrypt.Net.BCrypt.Verify(request.PasswordHash, user.PasswordHash))
             {

@@ -222,7 +222,9 @@ public class RestaurantController : RestaurantScopedController
     // Update restaurant profile fields. Only the restaurant's own owner (or a
     // global admin), per the cookie claim, may do this — cross-restaurant edits
     // are refused. Changing the owner password is intentionally not part of
-    // this endpoint.
+    // this endpoint. When the restaurant email changes, the primary Owner
+    // user's login username (which = email at signup) is kept in sync so the
+    // owner can still log in.
     //
     [HttpPut("{id:int}")]
     [Authorize(Policy = "ManagerOnly")]
@@ -242,10 +244,37 @@ public class RestaurantController : RestaurantScopedController
         if (string.IsNullOrWhiteSpace(updatedData.Email) || !IsValidEmail(updatedData.Email))
             return BadRequest(new { message = "Ingresá un email válido" });
 
+        var newEmail = updatedData.Email.Trim().ToLower();
+
         restaurant.Name = updatedData.Name.Trim();
         restaurant.NombreDelEncargado = updatedData.NombreDelEncargado.Trim();
-        restaurant.Email = updatedData.Email.Trim().ToLower();
         restaurant.PhoneNumber = updatedData.PhoneNumber?.Trim() ?? string.Empty;
+
+        // The restaurant email doubles as its primary Owner's login username, so
+        // a change must follow through to that User (otherwise the owner would
+        // keep logging in with the old email). The primary owner is the one whose
+        // username matches the current restaurant email.
+        if (!string.Equals(restaurant.Email, newEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            var primaryOwner = await _context.Users
+                .FirstOrDefaultAsync(u => u.RestaurantId == id
+                    && u.Role == Roles.Owner
+                    && u.UserName.ToLower() == restaurant.Email.ToLower());
+
+            if (primaryOwner != null)
+            {
+                // Usernames are login keys and unique across the whole app, so
+                // the new email must not belong to another user.
+                var emailTaken = await _context.Users
+                    .AnyAsync(u => u.Id != primaryOwner.Id && u.UserName.ToLower() == newEmail);
+                if (emailTaken)
+                    return Conflict(new { message = "El email ya está en uso" });
+
+                primaryOwner.UserName = newEmail;
+            }
+
+            restaurant.Email = newEmail;
+        }
 
         await _context.SaveChangesAsync();
         return Ok(ToDto(restaurant));
