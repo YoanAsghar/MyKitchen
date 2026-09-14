@@ -3,11 +3,12 @@ import { Table } from "../models/table";
 
 interface TableCardProps {
   table: Table;
+  number: number;
   setSelectedTable: (table: Table) => void;
   selectedTable: Table;
 }
 
-const TableCards = ({table, setSelectedTable, selectedTable}: TableCardProps) => {
+const TableCards = ({table, number, setSelectedTable, selectedTable}: TableCardProps) => {
   const guests = table.order?.guests || 0;
   const productsTotal = table.order?.orderDetail?.reduce((sum, item) => sum + ((item.product?.price || 0) * item.quantity), 0) || 0;
   const tip = table.order?.tip || 0;
@@ -20,7 +21,7 @@ const TableCards = ({table, setSelectedTable, selectedTable}: TableCardProps) =>
     >
       {/*<img className="rounded-t-2xl" src="/tables_image.png" alt="" />*/}
       <div className="flex flex-row space-betwen items-center relative">
-        <h3 className="text-white p-4 pb-1">{`Mesa ${table.id}`}</h3>
+        <h3 className="text-white p-4 pb-1">{`Mesa ${number}`}</h3>
         {(!table.order || table.order.orderDetail.length === 0) 
           ? 
           <h3 className="text-red-500 bg-red-800 right-4 absolute border-1 rounded-lg text-xs flex items-center w-15 h-5 justify-center">

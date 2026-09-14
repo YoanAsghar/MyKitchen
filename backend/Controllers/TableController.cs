@@ -66,6 +66,12 @@ public class TableController : RestaurantScopedController
         table.RestaurantId = CurrentRestaurantId;
         _context.Tables.Add(table);
         await _context.SaveChangesAsync();
+
+        // Tell every connected client of this restaurant that a new table
+        // exists so all of them add it to their floor in real-time.
+        await _hubContext.Clients.Group(RestaurantHub.GroupFor(CurrentRestaurantId))
+            .SendAsync(HubEvents.TableCreated, table);
+
         return Ok(table);
     }
 
@@ -96,6 +102,12 @@ public class TableController : RestaurantScopedController
         try
         {
             await _context.SaveChangesAsync();
+
+            // Real-time table removal: every connected client of this
+            // restaurant drops the table from its local list.
+            await _hubContext.Clients.Group(RestaurantHub.GroupFor(CurrentRestaurantId))
+                .SendAsync(HubEvents.TableDeleted, new { tableId = id });
+
             if (openOrder != null)
             {
                 await _hubContext.Clients.Group(RestaurantHub.GroupFor(CurrentRestaurantId))
