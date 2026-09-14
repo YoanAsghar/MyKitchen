@@ -40,11 +40,17 @@ MyKitchen: `backend/` (.NET API) + `frontend/` (Next.js). Local-only app, no CI.
 ## TODO / tracking list
 - (Maintained here — update after each task.)
 
+**Done (this session): email-change now follows through to the Owner's login + case-insensitive login, committed.**
+- `PUT /Restaurant/{id}` no longer desyncs the Owner's login: when the restaurant email changes, the primary Owner user (the one whose `UserName` = the current email, in that restaurant) is updated to the new email in the same save. New emails are rejected with `409` if any other user already uses them as a username (`UserName` is the global login key). If no matching Owner exists (e.g. deleted by a global admin), the email is updated without touching users.
+- `POST /User/login` now matches usernames **case-insensitively** (with a null/empty guard → `401`), consistent with the case-insensitive duplicate check on create. Since usernames are emails, `OWNER@x.com` = `owner@x.com`.
+- Tests 62 → 65: `RestaurantControllerTests` gains `UpdateRestaurant_ChangingEmail_AlsoUpdatesOwnerLogin` (log back in with the new email after logout), `UpdateRestaurant_NewEmailConflictingWithAnotherUser_ReturnsConflict`, and `Login_IsCaseInsensitive_OnUsername`. Verified: backend 65/65, `npx tsc --noEmit` clean.
+- No DB migration needed (no schema change).
+
 **Done (this session): stopped seeding a hardcoded admin + reviewed/fixed the Owner flow, committed.**
 - **No more hardcoded bootstrap admin.** The `admin`/`admin123` seed block in `Program.cs` was **removed** — no credentials exist in code anymore. Registration (`POST /Restaurant/register`) creates the restaurant's Owner user, which is who logs in; the global `admin` role is now provisioned **manually** (DB/script only) and is not created anywhere at startup.
 - **Tests seed their own admin.** `TestingWebAppFactory` now seeds a test-only `admin`/`admin123` (in-memory DB, `RestaurantId = 0`) so the User/Table/Order admin-scoped tests keep working without the production seed. Comments updated accordingly.
 - **Fixed the blocking `.Result`** xUnit warning in `UserControllerTests.GetUsers_ReturnsUnhashedUsers` (now awaited). Remaining known warnings are the `NU1903` OpenAPI vuln, `CS8xxx` nullability, and `CA2200` rethrow in `ExpensesController` — all pre-existing.
-- **Gap tracked, not fixed here:** `PUT /Restaurant/{id}` lets an owner change `Restaurant.Email`, but the Owner user's login `UserName` (= email at signup) is **not** updated, so the owner would log in with the *old* email afterwards. Deliberately deferred (no profile-edit UI exists yet) — see "Things to fix".
+- **Gap tracked, not fixed here:** `PUT /Restaurant/{id}` lets an owner change `Restaurant.Email`, but the Owner user's login `UserName` (= email at signup) is **not** updated, so the owner would log in with the *old* email afterwards. Deliberately deferred at the time (no profile-edit UI exists yet). *(Fixed next session — see top of list: the Owner's username now follows the email, with a `409` conflict guard.)*
 - Verified: backend 62/62 tests pass, `npx tsc --noEmit` clean, `dotnet ef database update` is up to date (both pending migrations applied: `RemoveRestaurantPasswordHash`, `RestaurantProfileColumns`).
 
 **Done (this session): Owner role replaces restaurant-as-credentials + server-side author stamping.**
@@ -93,7 +99,6 @@ MyKitchen: `backend/` (.NET API) + `frontend/` (Next.js). Local-only app, no CI.
 **Things to fix:**
 - Endpoints accept raw entities with no DTOs/validation; request/response models exist only for the open-order flow (`Models/OrderDtos.cs`, `Models/TableDtos.cs`). Most other endpoints still bind raw models (`ProductController`, `ExpensesController`, `MaintenanceController`).
 - Auth: **no admin is seeded anymore** — the hardcoded `admin`/`admin123` bootstrap was removed. The global `admin` role now has no in-app bootstrap path (only an admin can mint admins); provisioning one is a manual DB/script step. Consider an env-driven bootstrap (`AdminUsername`/`AdminPassword` config) if a super-admin is needed in production. There's still no role-management UI.
-- `PUT /Restaurant/{id}` can change `Restaurant.Email` without updating the Owner user's `UserName` (which = email at signup), so the owner would then log in with the old email. Fix together with a future profile-edit UI.
 - Backend ships `Microsoft.OpenApi` 2.4.1 (transitive via Swashbuckle) with a known high-severity vulnerability (`NU1903`) — bump Swashbuckle or suppress/patch.
 - XUnit analyzer warnings in `backend.Tests` (blocking `.Result` in `UserControllerTests` ctor → await).
 

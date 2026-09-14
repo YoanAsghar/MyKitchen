@@ -186,6 +186,78 @@ public class RestaurantControllerTests : IDisposable
     }
 
     [Fact]
+    public async Task UpdateRestaurant_ChangingEmail_AlsoUpdatesOwnerLogin()
+    {
+        await RegisterAsync();
+        var restaurantId = await GetCurrentRestaurantIdAsync();
+
+        var response = await _client.PutAsJsonAsync($"/api/v1/Restaurant/{restaurantId}",
+            new
+            {
+                name = "La Parrilla",
+                password = "secret123",
+                nombreDelEncargado = "Juan Pérez",
+                email = "nuevo@laparrilla.com",
+                phoneNumber = "1155551234"
+            });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // Restaurant email updated...
+        var restaurant = await _client.GetFromJsonAsync<JsonElement>("/api/v1/Restaurant");
+        Assert.Equal("nuevo@laparrilla.com", restaurant.GetProperty("email").GetString());
+
+        // ...and the Owner can log back in with the NEW email (mixed case on
+        // purpose: login matches usernames case-insensitively).
+        await _client.PostAsync("/api/v1/User/logout", null);
+        var login = await _client.PostAsJsonAsync("/api/v1/User/login",
+            new { userName = "NUEVO@laparrilla.com", passwordHash = "secret123" });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+
+        var me = await _client.GetFromJsonAsync<JsonElement>("/api/v1/User/me");
+        Assert.Equal("nuevo@laparrilla.com", me.GetProperty("userName").GetString());
+    }
+
+    [Fact]
+    public async Task UpdateRestaurant_NewEmailConflictingWithAnotherUser_ReturnsConflict()
+    {
+        await RegisterAsync();
+        var restaurantId = await GetCurrentRestaurantIdAsync();
+
+        // Another user already holds the desired email as its login username.
+        await _client.PostAsJsonAsync("/api/v1/User",
+            new { userName = "ocupado@mail.com", passwordHash = "secret123" });
+
+        var response = await _client.PutAsJsonAsync($"/api/v1/Restaurant/{restaurantId}",
+            new
+            {
+                name = "La Parrilla",
+                password = "secret123",
+                nombreDelEncargado = "Juan Pérez",
+                email = "ocupado@mail.com",
+                phoneNumber = "1155551234"
+            });
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+
+        // Nothing changed: restaurant email and owner login stay intact.
+        var restaurant = await _client.GetFromJsonAsync<JsonElement>("/api/v1/Restaurant");
+        Assert.Equal("owner@laparrilla.com", restaurant.GetProperty("email").GetString());
+    }
+
+    [Fact]
+    public async Task Login_IsCaseInsensitive_OnUsername()
+    {
+        await RegisterAsync();
+
+        await _client.PostAsync("/api/v1/User/logout", null);
+        var login = await _client.PostAsJsonAsync("/api/v1/User/login",
+            new { userName = "OWNER@laparrilla.com", passwordHash = "secret123" });
+
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+        var body = await login.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("owner@laparrilla.com", body.GetProperty("userName").GetString());
+    }
+
+    [Fact]
     public async Task UpdateRestaurant_OtherRestaurant_ReturnsForbidden()
     {
         await RegisterAsync();
