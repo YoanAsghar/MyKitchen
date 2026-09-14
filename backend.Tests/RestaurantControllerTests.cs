@@ -73,8 +73,11 @@ public class RestaurantControllerTests : IDisposable
         var me = await _client.GetFromJsonAsync<JsonElement>("/api/v1/User/me");
 
         Assert.Equal("owner@laparrilla.com", me.GetProperty("userName").GetString());
-        Assert.Equal(Roles.Admin, me.GetProperty("role").GetString());
+        // Signup creates an Owner (the restaurant's principal), not an admin.
+        Assert.Equal(Roles.Owner, me.GetProperty("role").GetString());
         Assert.True(me.GetProperty("restaurantId").GetInt32() > 0);
+        // The userId claim must round-trip so the server can stamp authors.
+        Assert.True(me.GetProperty("userId").GetInt32() > 0);
     }
 
     [Fact]

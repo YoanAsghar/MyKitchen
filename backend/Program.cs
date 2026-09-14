@@ -83,27 +83,20 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy =>
         policy.RequireAuthenticatedUser().RequireRole(Roles.Admin));
+    // Restaurant management: user CRUD + restaurant profile edits. Both global
+    // admins and the restaurant's owner may do these within their scope.
+    options.AddPolicy("ManagerOnly", policy =>
+        policy.RequireAuthenticatedUser().RequireRole(Roles.Admin, Roles.Owner));
     options.AddPolicy("Authenticated", policy =>
         policy.RequireAuthenticatedUser());
 });
 
 var app = builder.Build();
 
-// Seed a default admin on first run so there is always a privileged account.
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    if (!db.Users.Any(u => u.Role == Roles.Admin))
-    {
-        db.Users.Add(new User
-        {
-            UserName = "admin",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123", workFactor: 12),
-            Role = Roles.Admin
-        });
-        await db.SaveChangesAsync();
-    }
-}
+// NOTE: No admin is seeded at startup anymore. A restaurant signs up through
+// POST /api/v1/Restaurant/register, which creates the restaurant + its Owner
+// user (that's who logs in); the global `admin` role is now provisioned
+// manually (DB/script only) and is not created anywhere in code.
 
 app.UseHttpsRedirection();
 

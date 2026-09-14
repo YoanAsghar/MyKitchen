@@ -28,11 +28,11 @@ Una solución integral para la gestión de restaurantes, permitiendo el control 
 
 Las rutas de la app (business) viven bajo `/kitchen/{id}/` (mesas, cocina, carta, ordenes, admin), donde `{id}` es el id del restaurante (se toma de la sesión actual, no de un placeholder).
 
-### 7. Registro de restaurantes y aislamiento por restaurante
-- `/home/registro` crea un restaurante real: `POST /api/v1/Restaurant/register` (anónimo) crea la fila `Restaurants` (nombre, contraseña hasheada, encargado, email, teléfono) **y** el `User` admin con `UserName = email` en una sola transacción; auto-inicia sesión (cookie) y redirige a `/kitchen/{id}/mesas`.
-- El cookie de sesión lleva un claim `restaurantId` (fuente de verdad). `GET /User/me` lo devuelve para restaurar el scope al refrescar la página.
-- `RestaurantController` expone además GET (propio restaurante), POST (alta admin), PUT y DELETE (admin, scope por claim; el DELETE borra en cascada usuarios, mesas, productos, órdenes y gastos del restaurante).
-- Los usuarios creados (`POST /User`) se estampan con el `restaurantId` del llamador; el `PasswordHash` del restaurante nunca se serializa en las respuestas.
+### 7. Registro de restaurantes, autenticación y aislamiento por restaurante
+- `/home/registro` crea un restaurante real: `POST /api/v1/Restaurant/register` (anónimo) crea la fila `Restaurants` (nombre, encargado, email, teléfono — **sin credenciales propias**) **y** su `User` con rol **`owner`** (`UserName = email`, misma contraseña) en una sola transacción; auto-inicia sesión (cookie) y redirige a `/kitchen/{id}/mesas`. El Owner es quien inicia sesión desde ahora.
+- El cookie de sesión lleva los claims `restaurantId` + `userId` (fuente de verdad). `GET /User/me` los devuelve para restaurar el scope al refrescar la página; `GET /Expenses` estampa el autor (`CreatedByUserId`) desde el claim, nunca del payload.
+- `RestaurantController` expone además GET (propio restaurante), POST (alta admin; también crea el User owner), PUT y DELETE (gestores = admin|owner; scope por claim; el DELETE borra en cascada usuarios, mesas, productos, órdenes y gastos del restaurante).
+- Roles: `admin` (super-admin global), `owner` (principal del restaurante) y `user` (staff). Los usuarios creados (`POST /User`) se estampan con el `restaurantId` del llamador; solo un `admin` global puede crear admins y un `owner` crea owners/staff — sin escalada de privilegios.
 
 ### 1. Gestión de Mesas
 - Visualización de estado de mesas en tiempo real.

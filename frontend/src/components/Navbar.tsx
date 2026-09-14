@@ -78,7 +78,7 @@ const Navbar = ({role, username, setTabChange, onLogout} : SideBarProps) => {
               Ordenes
             </a>
           </li>
-          {role === "admin" ? (
+          {role === "admin" || role === "owner" ? (
           <li
             onClick={() => {
               setTabChange(BodyTabs.admin);

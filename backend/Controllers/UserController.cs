@@ -42,10 +42,10 @@ namespace MyKitchen.Controllers
         }
 
         //
-        // POST FOR THE USERS CREATION (admin only)
+        // POST FOR THE USERS CREATION (manager only: restaurant owner or admin)
         //
         [HttpPost]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "ManagerOnly")]
         public async Task<ActionResult<User>> CreateUser([FromBody] User newUser)
         {
 
@@ -63,11 +63,17 @@ namespace MyKitchen.Controllers
                 return Conflict(new { message = "Username already exists" });
             }
 
-            // An admin may assign a role; anyone else gets the default user role.
-            // Roles are normalized to lowercase canonical names.
-            newUser.Role = string.Equals(newUser.Role, Roles.Admin, StringComparison.OrdinalIgnoreCase)
-                ? Roles.Admin
-                : Roles.User;
+            // Roles are normalized within the caller's own capability: only a
+            // global admin can mint an admin; an owner can create owners/staff;
+            // anything else falls back to the base user role. This prevents
+            // privilege escalation from within a restaurant.
+            var callerRole = User.FindFirstValue(ClaimTypes.Role) ?? Roles.User;
+            if (string.Equals(newUser.Role, Roles.Admin, StringComparison.OrdinalIgnoreCase))
+                newUser.Role = callerRole == Roles.Admin ? Roles.Admin : Roles.User;
+            else
+                newUser.Role = string.Equals(newUser.Role, Roles.Owner, StringComparison.OrdinalIgnoreCase)
+                    ? Roles.Owner
+                    : Roles.User;
             // Users belong to the caller's restaurant, never to a client-sent id.
             newUser.RestaurantId = CurrentRestaurantId;
             newUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newUser.PasswordHash, workFactor: 12);
@@ -103,7 +109,8 @@ namespace MyKitchen.Controllers
             var claims = new List<Claim>{
               new Claim(ClaimTypes.Name, user.UserName),
               new Claim(ClaimTypes.Role, user.Role),
-              new Claim(RestaurantClaims.Id, user.RestaurantId.ToString())
+              new Claim(RestaurantClaims.Id, user.RestaurantId.ToString()),
+              new Claim(RestaurantClaims.UserId, user.Id.ToString())
             };
 
             var identity = new ClaimsIdentity(claims, "cookie");
@@ -111,7 +118,7 @@ namespace MyKitchen.Controllers
 
             await HttpContext.SignInAsync("cookie", principal);
 
-            return Ok(new { user.UserName, user.Role });
+            return Ok(new { user.UserName, user.Role, user.RestaurantId });
         }
 
         //
@@ -124,7 +131,8 @@ namespace MyKitchen.Controllers
             var userName = User.FindFirstValue(ClaimTypes.Name) ?? "";
             var role = User.FindFirstValue(ClaimTypes.Role) ?? Roles.User;
             var restaurantId = int.TryParse(User.FindFirstValue(RestaurantClaims.Id), out var id) ? id : 0;
-            return Ok(new { userName, role, restaurantId });
+            var userId = int.TryParse(User.FindFirstValue(RestaurantClaims.UserId), out var uid) ? uid : 0;
+            return Ok(new { userId, userName, role, restaurantId });
         }
 
         //
@@ -139,10 +147,10 @@ namespace MyKitchen.Controllers
         }
 
         //
-        // Editing user (admin only)
+        // Editing user (manager only)
         //
         [HttpPut("{id:int}")]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "ManagerOnly")]
         public async Task<ActionResult<User>> EditUser(int id, User editerUserData)
         {
             var UserToEdit = await _context.Users
@@ -152,13 +160,30 @@ namespace MyKitchen.Controllers
                 return NotFound($"User with id {id} not found");
             }
 
+            // Only a global admin may modify an owner's account (prevents an
+            // owner team from demoting/locking out its own restaurant owner).
+            var callerRole = User.FindFirstValue(ClaimTypes.Role) ?? Roles.User;
+            if (UserToEdit.Role == Roles.Owner && callerRole != Roles.Admin)
+                return Forbid();
+            // Managers can't edit themselves; an admin still can.
+            if (UserToEdit.Id == CurrentUserId && callerRole != Roles.Admin)
+                return Forbid();
+
             UserToEdit.PaymentDate = editerUserData.PaymentDate;
-            // Roles are normalized to canonical names, preventing privilege escalation.
-            UserToEdit.Role = string.Equals(editerUserData.Role, Roles.Admin, StringComparison.OrdinalIgnoreCase)
-                ? Roles.Admin
-                : Roles.User;
             UserToEdit.Salary = editerUserData.Salary;
-            UserToEdit.PasswordHash = editerUserData.PasswordHash;
+            // Roles are normalized within the caller's own capability, never
+            // escalating (see CreateUser).
+            if (string.Equals(editerUserData.Role, Roles.Admin, StringComparison.OrdinalIgnoreCase))
+                UserToEdit.Role = callerRole == Roles.Admin ? Roles.Admin : Roles.User;
+            else
+                UserToEdit.Role = string.Equals(editerUserData.Role, Roles.Owner, StringComparison.OrdinalIgnoreCase)
+                    ? Roles.Owner
+                    : Roles.User;
+            // Only re-hash when a new (non-empty) password was sent; an empty
+            // value must leave the existing hash untouched instead of wiping it
+            // or storing a plaintext that would never verify.
+            if (!string.IsNullOrWhiteSpace(editerUserData.PasswordHash))
+                UserToEdit.PasswordHash = BCrypt.Net.BCrypt.HashPassword(editerUserData.PasswordHash, workFactor: 12);
             // The scope always follows the caller; never a client-sent id.
             UserToEdit.RestaurantId = CurrentRestaurantId;
 
@@ -174,10 +199,10 @@ namespace MyKitchen.Controllers
         }
 
         //
-        // Deleting users (admin only)
+        // Deleting users (manager only)
         //
         [HttpDelete("{id:int}")]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "ManagerOnly")]
         public async Task<ActionResult<User>> DeleteUser(int id)
         {
             var userToDelete = await _context.Users
@@ -186,6 +211,14 @@ namespace MyKitchen.Controllers
             {
                 return NotFound($"User with id {id} doesn't exist");
             }
+
+            // Owners can't be deleted by non-admins, and nobody can delete
+            // their own account from here.
+            var callerRole = User.FindFirstValue(ClaimTypes.Role) ?? Roles.User;
+            if (userToDelete.Role == Roles.Owner && callerRole != Roles.Admin)
+                return Forbid();
+            if (userToDelete.Id == CurrentUserId)
+                return BadRequest(new { message = "No podés eliminar tu propio usuario" });
 
             try
             {

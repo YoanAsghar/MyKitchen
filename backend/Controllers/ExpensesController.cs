@@ -49,6 +49,10 @@ public class ExpensesController : RestaurantScopedController
             }
             // The scope always follows the caller; never a client-sent id.
             NewExpense.RestaurantId = CurrentRestaurantId;
+            // Author is stamped from the auth cookie claim, never from the
+            // client payload (a user could otherwise attribute expenses to
+            // another staff member).
+            NewExpense.CreatedByUserId = CurrentUserId;
             _context.Expenses.Add(NewExpense);
             await _context.SaveChangesAsync();
 

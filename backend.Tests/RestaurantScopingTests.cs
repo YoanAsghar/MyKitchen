@@ -206,6 +206,12 @@ public class RestaurantScopingTests : IDisposable
             new { userName = "cocinero-iota", passwordHash = "secret123", role = "user" });
         staff.EnsureSuccessStatusCode();
 
+        var meA = await _clientA.GetFromJsonAsync<JsonElement>("/api/v1/User/me");
+        var userIdA = meA.GetProperty("userId").GetInt32();
+        Assert.True(userIdA > 0);
+
+        // The author of the expense is stamped from the caller's userId claim
+        // (the owner here). The client-sent createdByUserId=1 is ignored.
         var expense = await _clientA.PostAsJsonAsync("/api/v1/Expenses", new
         {
             name = "Luz",
@@ -234,5 +240,7 @@ public class RestaurantScopingTests : IDisposable
         var expensesA = await _clientA.GetFromJsonAsync<JsonElement[]>("/api/v1/Expenses?pageSize=50&page=1");
         var expenseA = Assert.Single(expensesA!);
         Assert.Equal("Luz", expenseA.GetProperty("name").GetString());
+        // Author is the calling owner, stamped from the cookie claim.
+        Assert.Equal(userIdA, expenseA.GetProperty("createdByUserId").GetInt32());
     }
 }

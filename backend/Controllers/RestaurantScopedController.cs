@@ -15,4 +15,9 @@ public abstract class RestaurantScopedController : ControllerBase
     // matching legacy unscoped rows (e.g. the seeded bootstrap admin).
     protected int CurrentRestaurantId =>
         int.TryParse(User.FindFirstValue(RestaurantClaims.Id), out var id) ? id : 0;
+
+    // The authenticated user's own id, from the userId claim. Missing/invalid
+    // resolves to 0; never trust a client-sent user id.
+    protected int CurrentUserId =>
+        int.TryParse(User.FindFirstValue(RestaurantClaims.UserId), out var id) ? id : 0;
 }
