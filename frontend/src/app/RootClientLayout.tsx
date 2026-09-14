@@ -55,6 +55,25 @@ export default function RootClientLayout({
   // when directly landing on a kitchen page.
   const kitchenId = typeof params?.id === "string" ? params.id : String(restaurantId || 1);
 
+  // The session's own restaurant. The backend scopes every API call to the
+  // cookie's restaurantId claim, so the URL can never switch tenants.
+  const sessionKitchenId = String(restaurantId || 1);
+
+  useEffect(() => {
+    const onKitchenRoute = /^\/kitchen\/[^/]+/.test(pathname ?? "");
+    // Keep the URL honest: a manually edited /kitchen/<otherId>/... can't show
+    // another restaurant's data (the backend serves only the session's scope),
+    // so bounce back to the caller's own restaurant.
+    if (
+      !isAuthChecking &&
+      isAuthenticated &&
+      onKitchenRoute &&
+      kitchenId !== sessionKitchenId
+    ) {
+      router.replace(`/kitchen/${sessionKitchenId}/mesas`);
+    }
+  }, [isAuthChecking, isAuthenticated, pathname, kitchenId, sessionKitchenId, router]);
+
   const handleTabChange = (tab: BodyTabs) => {
     router.push(`/kitchen/${kitchenId}/${tab}`);
   };

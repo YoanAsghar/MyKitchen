@@ -13,9 +13,10 @@ interface ordersContentProps {
   orders: Order[];
   setOrdersDateQuery: (date: string) => void;
   orderDatesQuery: string;
+  tableNumbers: Map<number, number>;
 }
 
-export const OrdersContent = ({orders, setOrdersDateQuery, orderDatesQuery} : ordersContentProps) => {
+export const OrdersContent = ({orders, setOrdersDateQuery, orderDatesQuery, tableNumbers} : ordersContentProps) => {
 
   function handleDateChange(e: React.ChangeEvent<HTMLInputElement>){
     setOrdersDateQuery(e.target.value);
@@ -114,7 +115,7 @@ export const OrdersContent = ({orders, setOrdersDateQuery, orderDatesQuery} : or
                         className="py-5 px-6 text-sm font-medium"
                         style={{ color: colorPalette.White }}
                       >
-                        {order.tableId}
+                        {tableNumbers.get(order.tableId) ?? order.tableId}
                       </td>
 
                       {/* Comensales */}

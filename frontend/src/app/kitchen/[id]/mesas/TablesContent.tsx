@@ -29,8 +29,8 @@ const TablesContent = ({tables, onAddTable, onRemoveTable, role, setSelectedTabl
         </div>
           </div>
         <div className="grid w-full p-6 grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-6">
-          {tables.map((table) => (
-          <TableCards key={table.id} table={table} setSelectedTable={setSelectedTable} selectedTable={selectedTable}/>
+          {tables.map((table, index) => (
+          <TableCards key={table.id} number={index + 1} table={table} setSelectedTable={setSelectedTable} selectedTable={selectedTable}/>
           ))}
         </div>
       </div>

@@ -3,9 +3,10 @@ import { Order } from "../../../../models/order";
 
 interface KitchenViewProps {
   activeOrders: Order[];
+  tableNumbers: Map<number, number>;
 }
 
-const KitchenView = ({ activeOrders }: KitchenViewProps) => {
+const KitchenView = ({ activeOrders, tableNumbers }: KitchenViewProps) => {
   return (
     <div className="flex flex-row flex-wrap h-full w-full p-6 gap-6 overflow-y-auto" style={{ backgroundColor: colorPalette.Charcoal }}>
       {activeOrders.length === 0 ? (
@@ -23,7 +24,7 @@ const KitchenView = ({ activeOrders }: KitchenViewProps) => {
             {/* Header */}
             <div className="bg-black/40 p-4 border-b border-white/10">
               <div className="flex justify-between items-center">
-                <h3 className="text-white font-bold text-xl">Mesa {order.tableId}</h3>
+                <h3 className="text-white font-bold text-xl">Mesa {tableNumbers.get(order.tableId) ?? order.tableId}</h3>
                 <span className="text-xs text-indigo-400 font-mono">
                   {new Date(order.orderDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>

@@ -5,10 +5,14 @@ import { config } from "../config";
 export const HubEvents = {
   OrderUpdated: "OrderUpdated",
   OrderClosed: "OrderClosed",
+  TableCreated: "TableCreated",
+  TableDeleted: "TableDeleted",
 } as const;
 
 type OrderUpdatedHandler = (order: any) => void;
 type OrderClosedHandler = (payload: { tableId: number }) => void;
+type TableCreatedHandler = (table: any) => void;
+type TableDeletedHandler = (payload: { tableId: number }) => void;
 
 /**
  * Thin wrapper around the SignalR hub connection. Owns the connection lifecycle
@@ -21,7 +25,9 @@ class SignalRService {
   async connect(
     onOrderUpdated: OrderUpdatedHandler,
     onOrderClosed: OrderClosedHandler,
-    onReconnected: () => void
+    onReconnected: () => void,
+    onTableCreated: TableCreatedHandler,
+    onTableDeleted: TableDeletedHandler
   ): Promise<void> {
     if (this.connection) return;
 
@@ -33,6 +39,8 @@ class SignalRService {
 
     connection.on(HubEvents.OrderUpdated, onOrderUpdated);
     connection.on(HubEvents.OrderClosed, onOrderClosed);
+    connection.on(HubEvents.TableCreated, onTableCreated);
+    connection.on(HubEvents.TableDeleted, onTableDeleted);
     connection.onreconnected(onReconnected);
 
     this.connection = connection;
@@ -45,6 +53,8 @@ class SignalRService {
     this.connection = null;
     connection.off(HubEvents.OrderUpdated);
     connection.off(HubEvents.OrderClosed);
+    connection.off(HubEvents.TableCreated);
+    connection.off(HubEvents.TableDeleted);
     await connection.stop().catch(() => {});
   }
 }

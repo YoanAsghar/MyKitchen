@@ -14,6 +14,14 @@ namespace MyKitchen.Hubs
 
         // Payload: { tableId: int }. The table's open order was paid/cleared.
         public const string OrderClosed = "OrderClosed";
+
+        // Payload: the created Table (id, tableNumber, restaurantId). A table
+        // was added for the restaurant; every connected client adds it.
+        public const string TableCreated = "TableCreated";
+
+        // Payload: { tableId: int }. The table was deleted; every connected
+        // client removes it from its local list.
+        public const string TableDeleted = "TableDeleted";
     }
 
     [Authorize]

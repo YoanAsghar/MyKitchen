@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Table } from "../../../../models/table";
-import { TableServices } from "../../../../services/TableServices";
 import { Product } from "../../../../models/product";
 import { ProductServices } from "../../../../services/ProductServices";
 import TablesContent from "./TablesContent";
@@ -12,19 +11,23 @@ import { useOrdersContext } from "../../../OrdersContext";
 
 export default function MesasPage() {
   const { setIsLoading, isAuthenticated, role, isAuthChecking } = useGlobalContext();
-  // The single real-time source of "who has a current order" — shared with Cocina
-  // and every other connected client through the SignalR hub.
-  const { openOrders, syncOpenOrder, clearOpenOrder } = useOrdersContext();
+  // The single real-time source of tables and current orders — shared with
+  // Cocina/Ordenes and every other connected client through the SignalR hub
+  // (creating/deleting a table or an order syncs across all of them).
+  const { openOrders, syncOpenOrder, clearOpenOrder, tables, addTable, removeTable } = useOrdersContext();
 
   // Table related status and functions
-  const [tables, setTables] = useState<Table[]>([]);
   const [currentTableSelectedId, setCurrentTableSelectedId] = useState<number>(1);
 
   // Merge the global open orders onto each table for display; the hub keeps
-  // openOrders fresh, so every client renders the same live picture.
+  // openOrders fresh, so every client renders the same live picture. Tables are
+  // ordered by id so "Mesa N" maps to their 1-based position everywhere.
   const tablesWithOrders = useMemo(() => {
     const orderByTable = new Map(openOrders.map((o) => [o.tableId, o]));
-    return tables.map((t) => ({ ...t, order: orderByTable.get(t.id) }));
+    return tables
+      .slice()
+      .sort((a, b) => a.id - b.id)
+      .map((t) => ({ ...t, order: orderByTable.get(t.id) }));
   }, [tables, openOrders]);
 
   // Derive the selected table from the tables array (memoized to prevent new object references)
@@ -33,19 +36,15 @@ export default function MesasPage() {
     [tablesWithOrders, currentTableSelectedId]
   );
 
-  // Retrieve all the created tables
-  useEffect(() => {
-    if (!isAuthenticated || isAuthChecking) return;
-    TableServices.getAll()
-      .then(setTables)
-      .catch(console.error);
-  }, [isAuthenticated, isAuthChecking]);
+  // 1-based position of the selected table within the (id-sorted) list.
+  const selectedTableNumber = Math.max(
+    1,
+    tablesWithOrders.findIndex((t) => t.id === selectedTable.id) + 1
+  );
 
   const handleUpdateTable = useCallback((updatedTable: Table) => {
-    // Keep the table identity; order state lives in the global context.
-    setTables((prev) =>
-      prev.map((t) => (t.id === updatedTable.id ? updatedTable : t)),
-    );
+    // Table identity lives in the global tables state; order state lives in the
+    // global context (openOrders), so a table edit only syncs its order.
     if (updatedTable.order) {
       syncOpenOrder(updatedTable.order);
     } else {
@@ -60,9 +59,8 @@ export default function MesasPage() {
   const handleAddTable = async () => {
     setIsLoading(true);
     try {
-      await TableServices.createTable();
-      const updatedTables = await TableServices.getAll();
-      setTables(updatedTables);
+      // The hub broadcast (TableCreated) adds the table on every client.
+      await addTable();
     } catch (error) {
       console.error("Error adding table:", error);
     } finally {
@@ -74,9 +72,7 @@ export default function MesasPage() {
     setIsLoading(true);
     try {
       const selected = tables.find(t => t.id === currentTableSelectedId) ?? tables[0];
-      if (selected?.id) await TableServices.deleteTable(selected.id);
-      const updatedTables = await TableServices.getAll();
-      setTables(updatedTables);
+      if (selected?.id) await removeTable(selected.id);
     } catch (error) {
       // Error handling
     } finally {
@@ -109,6 +105,7 @@ export default function MesasPage() {
         products={products}
         key={currentTableSelectedId}
         table={selectedTable}
+        tableNumber={selectedTableNumber}
         onUpdateTable={handleUpdateTable}
          setIsLoading={setIsLoading}
       />

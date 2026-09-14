@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { colorPalette } from "../../../../colorPallete";
 import { Product } from "../../../../models/product";
 import { Order, PaymentMethod } from "../../../../models/order";
@@ -8,12 +8,13 @@ import { orderDetail } from "../../../../models/orderDetails";
 
 interface TableInformationProps{
   table: Table | undefined;
+  tableNumber: number;
   onUpdateTable: (updatedTable: Table) => void;
   setIsLoading: (isLoading: boolean) => void;
   products: Product[];
 }
 
-const TableInformation = ({table, onUpdateTable, setIsLoading, products }: TableInformationProps) => {
+const TableInformation = ({table, tableNumber, onUpdateTable, setIsLoading, products }: TableInformationProps) => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
   const [amountOfPersons, setAmountOfPersons] = useState(table?.order?.guests || 0);
   const [propina, setPropina] = useState(table?.order?.tip || 0);
@@ -22,11 +23,30 @@ const TableInformation = ({table, onUpdateTable, setIsLoading, products }: Table
   const [currentProducts, setCurrentProducts] = useState<orderDetail[]>([]);
   const [totalPrice, setTotalPrice] = useState(0);
 
+  // Content signature of the last order we applied to the draft, so we can tell
+  // "a real change arrived over the wire" apart from harmless re-render noise.
+  const appliedKeyRef = useRef("");
+
+  // Keep the draft in sync with the shared real-time order state: whenever the
+  // *content* of the selected table's order changes (a hub broadcast from
+  // another connection, or the canonical result of our own debounced edit),
+  // re-seed the form instead of staling on the last selection. Guests, tip and
+  // products all travel in that payload, so a tip set on laptop A shows up on
+  // laptop B's selected-table panel too. (Last-write-wins: a peer editing the
+  // same table simultaneously overwrites the local draft.)
   useEffect(() => {
-    setAmountOfPersons(table?.order?.guests || 0);
-    setPropina(table?.order?.tip || 0);
-    setCurrentProducts(table?.order?.orderDetail || []);
-  }, [table?.id]);
+    const o = table?.order;
+    const key = JSON.stringify([
+      o?.guests ?? 0,
+      o?.tip ?? 0,
+      (o?.orderDetail ?? []).map((d) => `${d.productId}x${d.quantity}`).join(","),
+    ]);
+    if (key === appliedKeyRef.current) return;
+    appliedKeyRef.current = key;
+    setAmountOfPersons(o?.guests ?? 0);
+    setPropina(o?.tip ?? 0);
+    setCurrentProducts(o?.orderDetail || []);
+  }, [table]);
 
   useEffect(() => {
     const productsTotal = currentProducts.reduce((sum, item) => sum + ((item.product?.price || 0) * item.quantity), 0);
@@ -145,7 +165,7 @@ const TableInformation = ({table, onUpdateTable, setIsLoading, products }: Table
         style={{ backgroundColor: colorPalette.Navy }}
       >
         <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-white">{`Mesa ${table?.id}`}</h2>
+          <h2 className="text-2xl font-bold text-white">{`Mesa ${tableNumber}`}</h2>
         </div>
 
         <div className="flex flex-wrap gap-4">

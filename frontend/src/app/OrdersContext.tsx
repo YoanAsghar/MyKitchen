@@ -5,10 +5,16 @@ import { useGlobalContext } from "./GlobalContext";
 import { Order } from "../models/order";
 import { OrderServices, toOrder } from "../services/OrderServices";
 import { signalRService } from "../services/SignalRService";
+import { Table } from "../models/table";
+import { TableServices } from "../services/TableServices";
 
-// Global state of every current (OPEN) order, shared across all clients.
-// - Seeded from GET /api/v1/Order/active on connect (snapshot).
-// - Kept live via the SignalR hub: OrderUpdated upserts, OrderClosed removes.
+// Global real-time state shared across all clients of a restaurant:
+// - openOrders: every current (OPEN) order. Seeded from GET /api/v1/Order/active
+//   on connect (snapshot); kept live via the hub (OrderUpdated upserts,
+//   OrderClosed removes).
+// - tables: the restaurant's tables. Seeded from GET /api/v1/Table; kept live
+//   via TableCreated/TableDeleted broadcasts so adding/removing a table on one
+//   client is reflected on every connected client (Mesas, Cocina, Ordenes).
 // - syncOpenOrder/clearOpenOrder persist a local change so the backend
 //   broadcasts it to every connected client (including this one, canonical).
 interface OrdersContextType {
@@ -16,6 +22,10 @@ interface OrdersContextType {
   isLive: boolean;
   syncOpenOrder: (order: Order) => void;
   clearOpenOrder: (tableId: number) => void;
+  tables: Table[];
+  tableNumbers: Map<number, number>;
+  addTable: () => Promise<void>;
+  removeTable: (tableId: number) => Promise<void>;
 }
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
@@ -26,8 +36,19 @@ const DEBOUNCE_MS = 500;
 export function OrdersProvider({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useGlobalContext();
   const [openOrders, setOpenOrders] = useState<Order[]>([]);
+  const [tables, setTables] = useState<Table[]>([]);
   const [isLive, setIsLive] = useState(false);
   const debounceTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+
+  // 1-based "Mesa N" position per table (tables ordered by id), kept consistent
+  // with the floor numbering so Cocina/Ordenes label tables the same way.
+  const tableNumbers = useMemo(() => {
+    const map = new Map<number, number>();
+    [...tables]
+      .sort((a, b) => a.id - b.id)
+      .forEach((t, i) => map.set(t.id, i + 1));
+    return map;
+  }, [tables]);
 
   const upsertLocal = useCallback((order: Order) => {
     setOpenOrders((prev) => {
@@ -43,13 +64,36 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
     setOpenOrders((prev) => prev.filter((o) => o.tableId !== tableId));
   }, []);
 
+  const applyTableCreated = useCallback((raw: Table) => {
+    setTables((prev) => {
+      if (prev.some((t) => t.id === raw.id)) return prev;
+      return [...prev, raw];
+    });
+  }, []);
+
+  const applyTableDeleted = useCallback((payload: { tableId: number }) => {
+    setTables((prev) => prev.filter((t) => t.id !== payload.tableId));
+  }, []);
+
+  // Create/delete through the API; the hub broadcast then applies the change on
+  // every connected client (this one included) for a single source of truth.
+  const addTable = useCallback(async () => {
+    const created = await TableServices.createTable();
+    setTables((prev) => (prev.some((t) => t.id === created.id) ? prev : [...prev, created]));
+  }, []);
+
+  const removeTable = useCallback(async (tableId: number) => {
+    await TableServices.deleteTable(tableId);
+    setTables((prev) => prev.filter((t) => t.id !== tableId));
+  }, []);
+
   const resync = useCallback(async () => {
-    try {
-      const current = await OrderServices.getActive();
-      setOpenOrders(current);
-    } catch (error) {
-      console.error("Failed to re-sync active orders:", error);
-    }
+    const [current, currentTables] = await Promise.all([
+      OrderServices.getActive().catch(() => [] as Order[]),
+      TableServices.getAll().catch(() => [] as Table[]),
+    ]);
+    setOpenOrders(current);
+    setTables(currentTables);
   }, []);
 
   const scheduleDebounced = useCallback((key: number, fn: () => void) => {
@@ -94,12 +138,13 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
     scheduleDebounced(tableId, () => clearPersist(tableId));
   }, [removeLocal, scheduleDebounced, clearPersist]);
 
-  // On auth: load the snapshot, then open the hub connection and stay in sync.
+  // On auth: load the snapshots, then open the hub connection and stay in sync.
   useEffect(() => {
     if (!isAuthenticated) {
       debounceTimers.current.forEach((timer) => clearTimeout(timer));
       debounceTimers.current.clear();
       setOpenOrders([]);
+      setTables([]);
       setIsLive(false);
       signalRService.disconnect();
       return;
@@ -108,30 +153,40 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
     let active = true;
     (async () => {
       try {
-        const current = await OrderServices.getActive();
+        const [current, currentTables] = await Promise.all([
+          OrderServices.getActive().catch(() => [] as Order[]),
+          TableServices.getAll().catch(() => [] as Table[]),
+        ]);
         if (!active) return;
         setOpenOrders(current);
+        setTables(currentTables);
 
         await signalRService.connect(
           (orderRaw) => { if (active) upsertLocal(toOrder(orderRaw)); },
           (payload) => { if (active) removeLocal(payload.tableId); },
-          () => { if (active) resync(); }
+          () => { if (active) resync(); },
+          (tableRaw) => { if (active) applyTableCreated(tableRaw); },
+          (payload) => { if (active) applyTableDeleted(payload); }
         );
         if (active) setIsLive(true);
       } catch (error) {
-        console.error("Failed to start real-time order sync:", error);
+        console.error("Failed to start real-time sync:", error);
       }
     })();
 
     return () => { active = false; };
-  }, [isAuthenticated, upsertLocal, removeLocal, resync]);
+  }, [isAuthenticated, upsertLocal, removeLocal, resync, applyTableCreated, applyTableDeleted]);
 
   const value = useMemo(() => ({
     openOrders,
     isLive,
     syncOpenOrder,
     clearOpenOrder,
-  }), [openOrders, isLive, syncOpenOrder, clearOpenOrder]);
+    tables,
+    tableNumbers,
+    addTable,
+    removeTable,
+  }), [openOrders, isLive, syncOpenOrder, clearOpenOrder, tables, tableNumbers, addTable, removeTable]);
 
   return (
     <OrdersContext.Provider value={value}>
