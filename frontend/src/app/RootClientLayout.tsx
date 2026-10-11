@@ -26,9 +26,18 @@ export default function RootClientLayout({
   const pathname = usePathname();
   const params = useParams();
 
-  // Marketing pages (/home*) and the auth section (/auth*) are public: no auth
-  // redirect and no app Navbar. Everything else requires an authenticated session.
-  const isPublicPath = pathname.startsWith("/auth") || pathname.startsWith("/home");
+  // Marketing pages (/home*), the auth section (/auth*) and the root "/" (which
+  // now always shows the landing) are public: no auth redirect and no app Navbar.
+  // Everything else requires an authenticated session.
+  const isPublicPath =
+    pathname === "/" ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/home");
+
+  // The admin dashboard (/admin/[id]) is a fully standalone section: it still
+  // requires a session but renders its own chrome (sidebar/topbar in its layout),
+  // without the app Navbar.
+  const isAdminPath = pathname.startsWith("/admin");
 
   useEffect(() => {
     // Redirect to login if not authenticated and not already on a public page.
@@ -61,20 +70,25 @@ export default function RootClientLayout({
 
   useEffect(() => {
     const onKitchenRoute = /^\/kitchen\/[^/]+/.test(pathname ?? "");
-    // Keep the URL honest: a manually edited /kitchen/<otherId>/... can't show
-    // another restaurant's data (the backend serves only the session's scope),
-    // so bounce back to the caller's own restaurant.
-    if (
-      !isAuthChecking &&
-      isAuthenticated &&
-      onKitchenRoute &&
-      kitchenId !== sessionKitchenId
-    ) {
-      router.replace(`/kitchen/${sessionKitchenId}/mesas`);
+    const onAdminRoute = /^\/admin\/[^/]+/.test(pathname ?? "");
+    // Keep the URL honest: a manually edited /kitchen/<otherId>/... or
+    // /admin/<otherId>/... can't show another restaurant's data (the backend
+    // serves only the session's scope), so bounce back to the caller's own
+    // restaurant scope.
+    if (!isAuthChecking && isAuthenticated && (onKitchenRoute || onAdminRoute) && kitchenId !== sessionKitchenId) {
+      router.replace(
+        onAdminRoute
+          ? `/admin/${sessionKitchenId}`
+          : `/kitchen/${sessionKitchenId}/mesas`
+      );
     }
   }, [isAuthChecking, isAuthenticated, pathname, kitchenId, sessionKitchenId, router]);
 
   const handleTabChange = (tab: BodyTabs) => {
+    if (tab === BodyTabs.admin) {
+      router.push(`/admin/${sessionKitchenId}`);
+      return;
+    }
     router.push(`/kitchen/${kitchenId}/${tab}`);
   };
 
@@ -91,6 +105,11 @@ export default function RootClientLayout({
   // Public pages (marketing site + login) render without the app chrome so they
   // can scroll normally and use their own marketing navbar/footer.
   if (isPublicPath) {
+    return <>{children}</>;
+  }
+
+  // Standalone admin dashboard: no app Navbar, no app chrome.
+  if (isAdminPath) {
     return <>{children}</>;
   }
 

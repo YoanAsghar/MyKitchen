@@ -107,7 +107,7 @@ export default function MesasPage() {
         table={selectedTable}
         tableNumber={selectedTableNumber}
         onUpdateTable={handleUpdateTable}
-         setIsLoading={setIsLoading}
+        setIsLoading={setIsLoading}
       />
     </div>
   );

@@ -2,6 +2,17 @@
 
 Una solución integral para la gestión de restaurantes, permitiendo el control de mesas, toma de pedidos y administración de inventario en tiempo real.
 
+## 📚 Especificaciones (spec-driven development)
+
+El proyecto se documenta con **spec-driven development**: cada feature tiene su
+spec en [`docs/specs/`](./docs/specs/README.md) (contexto, alcance, criterios de
+aceptación, contrato de API, modelo de datos y eventos en tiempo real). El índice
+y la plantilla están en [`docs/specs/README.md`](./docs/specs/README.md) y
+[`docs/specs/_template.md`](./docs/specs/_template.md).
+
+Antes de programar una feature nueva, se escribe su spec; los criterios de
+aceptación se traducen en tests del backend.
+
 ## 🚀 Tecnologías Utilizadas
 
 ### Frontend
@@ -41,11 +52,11 @@ Las rutas de la app (business) viven bajo `/kitchen/{id}/` (mesas, cocina, carta
 ### 2. Toma de Pedidos
 - Registro de comensales y gestión de propinas.
 - Selección de productos desde el inventario.
-- Múltiples métodos de pago (Efectivo, Tarjeta, Transferencia).
+- El borrador es **local**: agregar/quitar productos o cambiar la propina no se envía todavía. El panel derecho tiene dos pestanas (`currentTab`): en **"Agregar productos"** está el botón púrpura **"Crear orden"** (único punto que envía a Cocina; un borrador vacío cancela/limpia la orden abierta de esa mesa), y en **"Pedidos actuales"** (la lista de elementos) vive el bloque **"Métodos de pago" + "Procesar pago" + "Editar orden"**, visible solo si la mesa seleccionada ya tiene una orden abierta creada. "Editar orden" vuelve a la pestana de agregar productos para seguir editando; **"Procesar pago"** finaliza la orden (pasa a `PAID` / historial).
 
 ### 3. Cocina
 - Todos los pedidos **activos** (mesas con orden abierta) llegan a Cocina al instante.
-- Se actualizan en vivo conforme los meseros agregan/quitan productos.
+- Una orden entra a Cocina cuando el mesero presiona **"Crear orden"** (o la actualiza con "Editar orden"); los cambios previos al envío nunca llegan a Cocina.
 
 ### 4. Inventario (Productos)
 - CRUD completo de productos.
@@ -56,7 +67,7 @@ Las rutas de la app (business) viven bajo `/kitchen/{id}/` (mesas, cocina, carta
 
 ### 6. Sincronización en Tiempo Real
 - Los pedidos abiertos viven en el backend (`Status = OPEN`) y se comparten entre **todos los clientes** vía WebSockets (SignalR).
-- Cada cambio de un mesero (agregar/quitar productos, comensales, propina) emite `OrderUpdated`; pagar emite `OrderClosed`.
+- La composición de una orden es **local** hasta pulsar "Crear orden"/"Editar orden" en Mesas; ese envío emite `OrderUpdated` y solo entonces Cocina y los demás clientes ven el cambio. Pagar emite `OrderClosed`.
 - Mesas y Cocina leen un **estado global de órdenes** (`OrdersContext`) alimentado por el hub, así que todos ven lo mismo al instante, sin refrescar.
 
 ---

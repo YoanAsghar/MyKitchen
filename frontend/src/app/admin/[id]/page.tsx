@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import AdminPanel from "./AdminPanel";
 
 export default function AdminPage() {

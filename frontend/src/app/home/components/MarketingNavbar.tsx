@@ -4,12 +4,18 @@ import { useState } from "react";
 import { Menu, X, ChefHat } from "lucide-react";
 import { GhostBtn, PrimaryBtn, marketingPath, type MarketingPage } from "./ui";
 import { useRouter } from "next/navigation";
+import { useGlobalContext } from "../../GlobalContext";
 
 export function MarketingNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
+  const { isAuthenticated, isAuthChecking, role, restaurantId } = useGlobalContext();
+
+  const canManage = role === "admin" || role === "owner";
 
   const navigate = (page: MarketingPage) => router.push(marketingPath(page));
+  const goToRestaurant = () => router.push(`/kitchen/${restaurantId || 1}/mesas`);
+  const goToManagement = () => router.push(`/admin/${restaurantId || 1}`);
 
   const goToLandingWithFeatures = () => {
     router.push(marketingPath("landing"));
@@ -68,12 +74,29 @@ export function MarketingNavbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-3 shrink-0">
-          <GhostBtn onClick={() => navigate("login")} className="text-sm py-2 px-5">
-            Iniciar sesión
-          </GhostBtn>
-          <PrimaryBtn onClick={() => navigate("registro")} className="text-sm py-2 px-5">
-            Crear tu restaurante
-          </PrimaryBtn>
+          {isAuthChecking ? (
+            <div className="w-[280px] h-10" />
+          ) : isAuthenticated ? (
+            <>
+              {canManage && (
+                <GhostBtn onClick={goToManagement} className="text-sm py-2 px-5">
+                  Gestionar mi restaurante
+                </GhostBtn>
+              )}
+              <PrimaryBtn onClick={goToRestaurant} className="text-sm py-2 px-5">
+                Ir a mi restaurante
+              </PrimaryBtn>
+            </>
+          ) : (
+            <>
+              <GhostBtn onClick={() => navigate("login")} className="text-sm py-2 px-5">
+                Iniciar sesión
+              </GhostBtn>
+              <PrimaryBtn onClick={() => navigate("registro")} className="text-sm py-2 px-5">
+                Crear tu restaurante
+              </PrimaryBtn>
+            </>
+          )}
         </div>
 
         <button
@@ -106,24 +129,51 @@ export function MarketingNavbar() {
               {l.label}
             </button>
           ))}
-          <GhostBtn
-            onClick={() => {
-              setMobileOpen(false);
-              navigate("login");
-            }}
-            className="w-full mt-1"
-          >
-            Iniciar sesión
-          </GhostBtn>
-          <PrimaryBtn
-            onClick={() => {
-              setMobileOpen(false);
-              navigate("registro");
-            }}
-            className="w-full"
-          >
-            Crear tu restaurante
-          </PrimaryBtn>
+          {isAuthenticated ? (
+            <>
+              {canManage && (
+                <GhostBtn
+                  onClick={() => {
+                    setMobileOpen(false);
+                    goToManagement();
+                  }}
+                  className="w-full mt-1"
+                >
+                  Gestionar mi restaurante
+                </GhostBtn>
+              )}
+              <PrimaryBtn
+                onClick={() => {
+                  setMobileOpen(false);
+                  goToRestaurant();
+                }}
+                className="w-full"
+              >
+                Ir a mi restaurante
+              </PrimaryBtn>
+            </>
+          ) : (
+            <>
+              <GhostBtn
+                onClick={() => {
+                  setMobileOpen(false);
+                  navigate("login");
+                }}
+                className="w-full mt-1"
+              >
+                Iniciar sesión
+              </GhostBtn>
+              <PrimaryBtn
+                onClick={() => {
+                  setMobileOpen(false);
+                  navigate("registro");
+                }}
+                className="w-full"
+              >
+                Crear tu restaurante
+              </PrimaryBtn>
+            </>
+          )}
         </div>
       )}
     </nav>
