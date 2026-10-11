@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { colorPalette } from "../../../../colorPallete";
 import { Product } from "../../../../models/product";
-import { Order, PaymentMethod } from "../../../../models/order";
-import { OrderServices } from "../../../../services/OrderServices";
+import { Order } from "../../../../models/order";
 import { Table } from "../../../../models/table";
 import { orderDetail } from "../../../../models/orderDetails";
+import TablePayment from "./TablePayment";
 
 interface TableInformationProps{
   table: Table | undefined;
@@ -15,7 +15,6 @@ interface TableInformationProps{
 }
 
 const TableInformation = ({table, tableNumber, onUpdateTable, setIsLoading, products }: TableInformationProps) => {
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
   const [amountOfPersons, setAmountOfPersons] = useState(table?.order?.guests || 0);
   const [propina, setPropina] = useState(table?.order?.tip || 0);
   const [currentTab, setCurrenTab] = useState(false);
@@ -29,11 +28,11 @@ const TableInformation = ({table, tableNumber, onUpdateTable, setIsLoading, prod
 
   // Keep the draft in sync with the shared real-time order state: whenever the
   // *content* of the selected table's order changes (a hub broadcast from
-  // another connection, or the canonical result of our own debounced edit),
-  // re-seed the form instead of staling on the last selection. Guests, tip and
-  // products all travel in that payload, so a tip set on laptop A shows up on
-  // laptop B's selected-table panel too. (Last-write-wins: a peer editing the
-  // same table simultaneously overwrites the local draft.)
+  // another connection, or the canonical result of our own commit), re-seed the
+  // form instead of staling on the last selection. Guests, tip and products all
+  // travel in that payload, so a tip set on laptop A shows up on laptop B's
+  // selected-table panel too. (Last-write-wins: a peer editing the same table
+  // simultaneously overwrites the local draft.)
   useEffect(() => {
     const o = table?.order;
     const key = JSON.stringify([
@@ -58,29 +57,36 @@ const TableInformation = ({table, tableNumber, onUpdateTable, setIsLoading, prod
     return products.filter(product => product.name.toLowerCase().includes(searchBarValue));
   }, [searchBarValue, products])
 
-  // Función para sincronizar los datos locales con el componente padre (y las tarjetas)
-  const syncWithParent = (guests: number, orderDetail: orderDetail[], tip: number) => {
-    if (!table) return;
-    const updatedOrder = new Order(table.id, table.restaurantId);
-    updatedOrder.guests = guests;
-    updatedOrder.orderDetail = orderDetail;
-    updatedOrder.tip = tip;
-    updatedOrder.totalPrice = orderDetail.reduce((sum, item) => sum + ((item.product?.price || 0) * item.quantity), 0) + tip;
-
-    onUpdateTable({
-      ...table,
-      order: updatedOrder
-    });
+  // Builds the Order from the local draft. Nothing is sent to the backend from
+  // here — it is only committed when the user presses the "Crear orden" button
+  // in the add-products tab (PESTAÑA 2). "Editar orden" lives in the
+  // list-of-elements tab (PESTAÑA 1) and only switches this panel to editing.
+  const buildOrderDraft = (): Order => {
+    const draft = new Order(table?.id ?? 0, table?.restaurantId ?? 0);
+    draft.guests = amountOfPersons;
+    draft.orderDetail = currentProducts;
+    draft.tip = propina;
+    draft.totalPrice = currentProducts.reduce((sum, item) => sum + ((item.product?.price || 0) * item.quantity), 0) + propina;
+    return draft;
   };
 
-  function handlePersonsChange(value: number) {
-    setAmountOfPersons(value);
-    syncWithParent(value, currentProducts, propina);
+  // The single commit point for a table's order: composing products/guests/tip
+  // is purely local until this is pressed. It both creates (no order yet) and
+  // updates (table already has an OPEN order) — the label never changes here.
+  // An empty draft cancels the table's OPEN order.
+  function handleCreateOrder() {
+    if (!table) return;
+
+    if (currentProducts.length === 0) {
+      onUpdateTable({ ...table, order: undefined });
+      return;
+    }
+
+    onUpdateTable({ ...table, order: buildOrderDraft() });
   }
 
   function handlePropinaChange(value: number) {
     setPropina(value);
-    syncWithParent(amountOfPersons, currentProducts, value);
   }
 
   function addProductToTable(item: Product){
@@ -99,7 +105,6 @@ const TableInformation = ({table, tableNumber, onUpdateTable, setIsLoading, prod
     }
 
     setCurrentProducts(newDetails);
-    syncWithParent(amountOfPersons, newDetails, propina);
   }
 
   function removeProductFromTable(index: number){
@@ -116,45 +121,6 @@ const TableInformation = ({table, tableNumber, onUpdateTable, setIsLoading, prod
     }
 
     setCurrentProducts(newDetails);
-    syncWithParent(amountOfPersons, newDetails, propina);
-  }
-
-  function resetTableData(){
-    setAmountOfPersons(0);
-    setCurrentProducts([]);
-    setPropina(0);
-
-    if(table){
-      onUpdateTable({
-        ...table,
-        order: undefined
-      })
-    }
-  }
-
-  async function handleProcessPayment() {
-    if (!table) return;
-    if (currentProducts.length === 0) return;
-
-    const finalOrder = new Order(table.id, table.restaurantId);
-    finalOrder.totalPrice = totalPrice;
-    finalOrder.guests = amountOfPersons;
-    finalOrder.tip = propina;
-    finalOrder.paymentMethod = paymentMethod;
-    finalOrder.orderDetail = currentProducts;
-
-    setIsLoading(true);
-    try{
-      await OrderServices.createOrder(finalOrder);
-    }catch(err){
-      throw new Error(`Error creating order ${err}`);
-    }finally{
-      setIsLoading(false);
-    }
-
-    // The backend clears the table's open order and broadcasts OrderClosed,
-    // so the global state removes it — no need to re-push the paid order here.
-    resetTableData();
   }
 
   return (
@@ -240,6 +206,20 @@ const TableInformation = ({table, tableNumber, onUpdateTable, setIsLoading, prod
                 <span>${totalPrice.toFixed(0)}</span>
               </div>
             </div>
+
+            {/* PAYMENT + ACTIONS — lives only in this "list of elements" tab
+                (PESTAÑA 1), never in the add-products tab, and only when the
+                selected table already has a created OPEN order. */}
+            {table?.order && (
+              <div className="shrink-0 ">
+                <TablePayment
+                  table={table}
+                  tableNumber={tableNumber}
+                  onEditOrder={() => setCurrenTab(false)}
+                  setIsLoading={setIsLoading}
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -283,55 +263,23 @@ const TableInformation = ({table, tableNumber, onUpdateTable, setIsLoading, prod
                 </li>
               ))}
             </ul>
+
+            {/* CREAR ORDEN — only lives in this add-products tab (PESTAÑA 2):
+                the single commit point that sends the local draft to the
+                kitchen. Payment/actions never appear here. */}
+            <div className="shrink-0 px-5 pb-4">
+              <button
+                onClick={handleCreateOrder}
+                className="cursor-pointer w-full bg-[#22007c] hover:bg-[#140152] h-14 rounded-2xl text-white font-bold text-xl transition-colors"
+              >
+                Crear orden
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* MÉTODOS DE PAGO */}
-      <div className="shrink-0 bg-black p-5 space-y-4">
-        <h2 className="text-2xl font-semibold text-white">Métodos de pago</h2>
-        <div className="grid grid-cols-3 gap-3">
-          <PaymentButton
-            active={paymentMethod === PaymentMethod.CASH}
-            onClick={() => setPaymentMethod(PaymentMethod.CASH)}
-            icon="/dollar_icon.png"
-            label="Efectivo"
-          />
-          <PaymentButton
-            active={paymentMethod === PaymentMethod.BANK_TRANS}
-            onClick={() => setPaymentMethod(PaymentMethod.BANK_TRANS)}
-            icon="/currency_icon.png"
-            label="Transferencia"
-          />
-          <PaymentButton
-            active={paymentMethod === PaymentMethod.CARD}
-            onClick={() => setPaymentMethod(PaymentMethod.CARD)}
-            icon="/credit_card.png"
-            label="Tarjeta"
-          />
-        </div>
-        <button 
-          onClick={handleProcessPayment} 
-          className="cursor-pointer w-full bg-[#22007c] hover:bg-[#140152] h-14 rounded-2xl text-white font-bold text-xl transition-colors"
-        >
-          Procesar pago
-        </button>
       </div>
     </div>
   );
 };
-
-const PaymentButton = ({ active, onClick, icon, label }: any) => (
-  <div
-    onClick={onClick}
-    className={`flex flex-col items-center justify-center p-3 rounded-2xl cursor-pointer transition-all
-${active 
-? "bg-[#22007c] scale-105" 
-: "bg-zinc-900 hover:bg-zinc-800"}`}
-  >
-    <img className="w-8 h-8 mb-1" src={icon} alt={label} />
-    <p className="text-white text-sm font-medium">{label}</p>
-  </div>
-);
 
 export default TableInformation;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo, useEffect, useCallback, useRef } from "react";
+import React, { createContext, useContext, useState, useMemo, useEffect, useCallback } from "react";
 import { useGlobalContext } from "./GlobalContext";
 import { Order } from "../models/order";
 import { OrderServices, toOrder } from "../services/OrderServices";
@@ -30,15 +30,11 @@ interface OrdersContextType {
 
 const OrdersContext = createContext<OrdersContextType | undefined>(undefined);
 
-// Coalesce keystroke-level draft changes into a single PUT per table.
-const DEBOUNCE_MS = 500;
-
 export function OrdersProvider({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useGlobalContext();
   const [openOrders, setOpenOrders] = useState<Order[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
   const [isLive, setIsLive] = useState(false);
-  const debounceTimers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   // 1-based "Mesa N" position per table (tables ordered by id), kept consistent
   // with the floor numbering so Cocina/Ordenes label tables the same way.
@@ -96,16 +92,6 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
     setTables(currentTables);
   }, []);
 
-  const scheduleDebounced = useCallback((key: number, fn: () => void) => {
-    const timers = debounceTimers.current;
-    const existing = timers.get(key);
-    if (existing) clearTimeout(existing);
-    timers.set(key, setTimeout(() => {
-      timers.delete(key);
-      fn();
-    }, DEBOUNCE_MS));
-  }, []);
-
   const persist = useCallback(async (order: Order) => {
     try {
       const saved = await OrderServices.saveOpenOrder(order);
@@ -125,24 +111,22 @@ export function OrdersProvider({ children }: { children: React.ReactNode }) {
     }
   }, [removeLocal]);
 
-  // Optimistic update so the originator's UI is instant; the debounced PUT
-  // persists, then the hub broadcast keeps every client (including this one)
-  // on the canonical server shape.
+  // Sent when the user commits a table's draft ("Crear orden"/"Editar orden").
+  // The local state updates instantly; the PUT persists the order and the hub
+  // broadcast keeps every client (this one included) on the canonical shape.
   const syncOpenOrder = useCallback((order: Order) => {
     upsertLocal(order);
-    scheduleDebounced(order.tableId, () => persist(order));
-  }, [upsertLocal, scheduleDebounced, persist]);
+    persist(order);
+  }, [upsertLocal, persist]);
 
   const clearOpenOrder = useCallback((tableId: number) => {
     removeLocal(tableId);
-    scheduleDebounced(tableId, () => clearPersist(tableId));
-  }, [removeLocal, scheduleDebounced, clearPersist]);
+    clearPersist(tableId);
+  }, [removeLocal, clearPersist]);
 
   // On auth: load the snapshots, then open the hub connection and stay in sync.
   useEffect(() => {
     if (!isAuthenticated) {
-      debounceTimers.current.forEach((timer) => clearTimeout(timer));
-      debounceTimers.current.clear();
       setOpenOrders([]);
       setTables([]);
       setIsLive(false);
