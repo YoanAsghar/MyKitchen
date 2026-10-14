@@ -6,14 +6,11 @@ import { Table } from "../../../../models/table";
 interface TablePaymentProps {
   table: Table;
   tableNumber: number;
-  onEditOrder: () => void;
   setIsLoading: (isLoading: boolean) => void;
 }
 
-// Payment section for the LIST view: only rendered for a table that already has
-// a created OPEN order (something to pay). Never shown in the create-order
-// panel — that only has the "Crear orden" send button.
-const TablePayment = ({ table, tableNumber, onEditOrder, setIsLoading }: TablePaymentProps) => {
+// Payment section for a table that already has a created OPEN order.
+const TablePayment = ({ table, tableNumber, setIsLoading }: TablePaymentProps) => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
 
   async function handleProcessPayment() {
@@ -40,10 +37,9 @@ const TablePayment = ({ table, tableNumber, onEditOrder, setIsLoading }: TablePa
   }
 
   return (
-    <div className="bg-black p-5 space-y-4">
-      <h2 className="text-2xl font-semibold text-white">{`Métodos de pago — Mesa ${tableNumber}`}</h2>
+    <div className="bg-black p-3 space-y-2">
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2">
         <PaymentButton
           active={paymentMethod === PaymentMethod.CASH}
           onClick={() => setPaymentMethod(PaymentMethod.CASH)}
@@ -66,17 +62,11 @@ const TablePayment = ({ table, tableNumber, onEditOrder, setIsLoading }: TablePa
 
       <button
         onClick={handleProcessPayment}
-        className="cursor-pointer w-full bg-[#22007c] hover:bg-[#140152] h-12 rounded-2xl text-white font-bold text-lg transition-colors"
+        className="cursor-pointer w-full bg-[#22007c] hover:bg-[#140152] h-10 rounded-2xl text-white font-bold text-sm transition-colors"
       >
         Procesar pago
       </button>
 
-      <button
-        onClick={onEditOrder}
-        className="cursor-pointer w-full bg-[#22007c] hover:bg-[#140152] h-12 rounded-2xl text-white font-bold text-lg transition-colors"
-      >
-        Editar orden
-      </button>
     </div>
   );
 };
@@ -84,13 +74,13 @@ const TablePayment = ({ table, tableNumber, onEditOrder, setIsLoading }: TablePa
 const PaymentButton = ({ active, onClick, icon, label }: any) => (
   <div
     onClick={onClick}
-    className={`flex flex-col items-center justify-center p-3 rounded-2xl cursor-pointer transition-all
+    className={`flex flex-col items-center justify-center p-2 rounded-2xl cursor-pointer transition-all
 ${active
     ? "bg-[#22007c] scale-105"
     : "bg-zinc-900 hover:bg-zinc-800"}`}
   >
-    <img className="w-8 h-8 mb-1" src={icon} alt={label} />
-    <p className="text-white text-sm font-medium">{label}</p>
+    <img className="w-6 h-6 mb-1" src={icon} alt={label} />
+    <p className="text-white text-xs font-medium">{label}</p>
   </div>
 );
 
