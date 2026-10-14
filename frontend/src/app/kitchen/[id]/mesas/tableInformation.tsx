@@ -1,26 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { colorPalette } from "../../../../colorPallete";
 import { Product } from "../../../../models/product";
+import { Category } from "../../../../models/category";
 import { Order } from "../../../../models/order";
 import { Table } from "../../../../models/table";
 import { orderDetail } from "../../../../models/orderDetails";
 import TablePayment from "./TablePayment";
 
-interface TableInformationProps{
+interface TableInformationProps {
   table: Table | undefined;
   tableNumber: number;
   onUpdateTable: (updatedTable: Table) => void;
   setIsLoading: (isLoading: boolean) => void;
   products: Product[];
+  categories: Category[];
 }
 
-const TableInformation = ({table, tableNumber, onUpdateTable, setIsLoading, products }: TableInformationProps) => {
-  const [amountOfPersons, setAmountOfPersons] = useState(table?.order?.guests || 0);
+const TableInformation = ({ table, tableNumber, onUpdateTable, setIsLoading, products, categories }: TableInformationProps) => {
+  const [amountOfPersons, setAmountOfPersons] = useState(table?.order?.guests || 0); // kept to avoid type/flow issues; not displayed
   const [propina, setPropina] = useState(table?.order?.tip || 0);
-  const [currentTab, setCurrenTab] = useState(false);
   const [searchBarValue, setSearchBarValue] = useState("");
   const [currentProducts, setCurrentProducts] = useState<orderDetail[]>([]);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [openCategoryIds, setOpenCategoryIds] = useState<number[]>([]);
 
   // Content signature of the last order we applied to the draft, so we can tell
   // "a real change arrived over the wire" apart from harmless re-render noise.
@@ -53,28 +55,34 @@ const TableInformation = ({table, tableNumber, onUpdateTable, setIsLoading, prod
   }, [currentProducts, propina]);
 
   const filteredProducts = useMemo(() => {
-    if(!searchBarValue.trim()) return products
-    return products.filter(product => product.name.toLowerCase().includes(searchBarValue));
-  }, [searchBarValue, products])
+    if (!searchBarValue.trim()) return products;
+    return products.filter((product) => product.name.toLowerCase().includes(searchBarValue));
+  }, [searchBarValue, products]);
 
-  // Builds the Order from the local draft. Nothing is sent to the backend from
-  // here — it is only committed when the user presses the "Crear orden" button
-  // in the add-products tab (PESTAÑA 2). "Editar orden" lives in the
-  // list-of-elements tab (PESTAÑA 1) and only switches this panel to editing.
+  const sortedCategories = useMemo(() => {
+    return [...categories].sort((a, b) => a.id - b.id);
+  }, [categories]);
+
+  const toggleCategory = (categoryId: number) => {
+    setOpenCategoryIds((prev) =>
+      prev.includes(categoryId) ? prev.filter((id) => id !== categoryId) : [...prev, categoryId]
+    );
+  };
+
+  // Builds the Order from the local draft. Nothing is sent to the backend until
+  // the user presses the Save/Update button.
   const buildOrderDraft = (): Order => {
     const draft = new Order(table?.id ?? 0, table?.restaurantId ?? 0);
-    draft.guests = amountOfPersons;
+    draft.guests = 0;
     draft.orderDetail = currentProducts;
     draft.tip = propina;
     draft.totalPrice = currentProducts.reduce((sum, item) => sum + ((item.product?.price || 0) * item.quantity), 0) + propina;
     return draft;
   };
 
-  // The single commit point for a table's order: composing products/guests/tip
-  // is purely local until this is pressed. It both creates (no order yet) and
-  // updates (table already has an OPEN order) — the label never changes here.
+  // Single commit point: creates when no open order exists, updates when it does.
   // An empty draft cancels the table's OPEN order.
-  function handleCreateOrder() {
+  function handleSaveOrder() {
     if (!table) return;
 
     if (currentProducts.length === 0) {
@@ -123,161 +131,159 @@ const TableInformation = ({table, tableNumber, onUpdateTable, setIsLoading, prod
     setCurrentProducts(newDetails);
   }
 
+  const hasOpenOrder = Boolean(table?.order);
+
   return (
-    <div className="h-full w-full lg:w-[30%] flex flex-col overflow-hidden">
-      {/* CABECERA */}
-      <div 
-        className="shrink-0 p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
-        style={{ backgroundColor: colorPalette.Navy }}
-      >
-        <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-white">{`Mesa ${tableNumber}`}</h2>
-        </div>
-
-        <div className="flex flex-wrap gap-4">
-          <div className="flex items-center gap-2">
-            <label className="text-white text-sm">Propina:</label>
-            <input
-              type="text"
-              value={propina}
-              onChange={(e) => handlePropinaChange(Number(e.target.value) || 0)}
-              className="bg-black text-white text-center w-20 h-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
+    <div className="h-full w-full lg:w-[45%] xl:w-[42%] max-w-[760px] shrink-0 flex flex-col overflow-hidden" style={{ backgroundColor: colorPalette.DeepTwilight }}>
+      {/* TOP ROW: SEARCH/CATEGORIES + ORDER DETAILS */}
+      <div className="flex-1 flex flex-row overflow-hidden">
+        {/* LEFT: PRODUCT LIST */}
+        <div className="h-full w-1/2 flex flex-col border-r border-white/10">
+          <div className="shrink-0 p-3">
+            <h2 className="text-base font-bold text-white mb-2">{`Mesa ${tableNumber} — Productos`}</h2>
+            <div className="relative">
+              <img
+                src="/search_icon.png"
+                alt="Buscar"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none brightness-0 invert"
+              />
+              <input
+                onChange={(e) => setSearchBarValue(e.target.value.toLowerCase())}
+                type="text"
+                placeholder="Buscar producto"
+                className="w-full bg-white text-black text-sm rounded-lg p-1.5 pl-8 border-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* CONTENEDOR DE PESTAÑAS ANIMADAS */}
-      <div className="flex-1 flex flex-col overflow-hidden relative" style={{ backgroundColor: colorPalette.DeepTwilight }}>
-        
-        {/* PESTAÑA 1: PEDIDOS ACTUALES */}
-        <div className={`tab-pane-vertical ${currentTab ? "active" : ""}`}>
-          <div className="inner-content-vertical">
-            {/* Botón integrado */}
-            <div className="flex justify-center w-full shrink-0">
-              <button 
-                className="cursor-pointer rounded-b-lg w-16 flex items-center justify-center transition-transform hover:scale-110" 
-                style={{backgroundColor: colorPalette.Navy}} 
-                onClick={() => setCurrenTab(false)}
-              >
-                <img className="p-1" src="/swap_icon.png" alt="Cambiar" />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-auto p-4">
-              <table className="w-full text-white">
-                <thead className="sticky top-0 z-10" style={{ backgroundColor: colorPalette.DeepTwilight }}>
-                  <tr>
-                    <th className="text-left py-3 px-2">Artículo</th>
-                    <th className="text-center py-3 px-2">Precio</th>
-                    <th className="text-center py-3 px-2">Cant.</th>
-                    <th className="w-10"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentProducts.map((detail: orderDetail, index: number) => (
-                    <tr key={index} className="border-b border-white/10">
-                      <td className="py-3 px-2">{detail.product?.name}</td>
-                      <td className="py-3 px-2 text-center">${detail.product?.price}</td>
-                      <td className="py-3 px-2 text-center">{detail.quantity}</td>
-                      <td className="py-3 px-2">
-                        <img
-                          className="cursor-pointer mx-auto hover:scale-110 transition-transform"
-                          src="/trash_icon.png"
-                          alt="Eliminar"
-                          onClick={() => removeProductFromTable(index)}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                  {propina !== 0 && (
-                    <tr>
-                      <td colSpan={4} className="py-3 px-2 font-medium">
-                        Propina: ${propina}
-                      </td>
-                    </tr>
+          <div className="flex-1 flex flex-col overflow-y-auto p-2 gap-2">
+            {sortedCategories.map((category) => {
+              const categoryProducts = filteredProducts.filter(
+                (p) => p.categoryId === category.id
+              );
+              if (categoryProducts.length === 0 && searchBarValue.trim()) return null;
+              const isOpen = openCategoryIds.includes(category.id) || searchBarValue.trim();
+              return (
+                <div key={category.id} className="flex flex-col rounded-lg overflow-hidden border border-white/10">
+                  <button
+                    onClick={() => toggleCategory(category.id)}
+                    className="flex flex-row items-center justify-between p-2 text-white cursor-pointer"
+                    style={{ backgroundColor: colorPalette.Navy }}
+                  >
+                    <p className="font-bold text-sm">{category.name}</p>
+                    <span className="text-base">{isOpen ? "−" : "+"}</span>
+                  </button>
+                  {isOpen && (
+                    <ul className="flex flex-col gap-1.5 p-1.5" style={{ backgroundColor: colorPalette.DeepTwilight }}>
+                      {categoryProducts.map((product) => (
+                        <li
+                          key={product.id}
+                          className="flex flex-row justify-between items-center rounded-lg text-black p-2 bg-white shadow-sm hover:bg-gray-50 transition-colors"
+                        >
+                          <div className="flex flex-col">
+                            <p className="font-bold text-sm leading-tight">{product.name}</p>
+                            <p className="text-xs opacity-60 font-medium">${product.price}</p>
+                          </div>
+                          <button
+                            onClick={() => addProductToTable(product)}
+                            className="rounded-lg cursor-pointer transition-transform hover:scale-110 shadow-md"
+                          >
+                            <img className="bg-stone-950 rounded-lg size-7 p-1.5" src="/plus.png" alt="Agregar" />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
                   )}
-                </tbody>
-              </table>
-            </div>
-            <div className="p-5 bg-black/20">
-              <div className="flex justify-between items-center text-xl font-bold text-white">
-                <span>Total:</span>
-                <span>${totalPrice.toFixed(0)}</span>
-              </div>
-            </div>
-
-            {/* PAYMENT + ACTIONS — lives only in this "list of elements" tab
-                (PESTAÑA 1), never in the add-products tab, and only when the
-                selected table already has a created OPEN order. */}
-            {table?.order && (
-              <div className="shrink-0 ">
-                <TablePayment
-                  table={table}
-                  tableNumber={tableNumber}
-                  onEditOrder={() => setCurrenTab(false)}
-                  setIsLoading={setIsLoading}
-                />
-              </div>
+                </div>
+              );
+            })}
+            {!searchBarValue.trim() && sortedCategories.length === 0 && (
+              <p className="text-white/50 text-xs text-center mt-4">No hay categorías</p>
+            )}
+            {searchBarValue.trim() && filteredProducts.length === 0 && (
+              <p className="text-white/50 text-xs text-center mt-4">No se encontraron productos</p>
             )}
           </div>
         </div>
 
-        {/* PESTAÑA 2: AGREGAR PRODUCTOS */}
-        <div className={`tab-pane-vertical ${!currentTab ? "active" : ""}`}>
-          <div className="inner-content-vertical bg-stone-950">
-            {/* Botón integrado */}
-            <div className="flex justify-center w-full shrink-0">
-              <button 
-                className="cursor-pointer rounded-b-lg w-16 flex items-center justify-center transition-transform hover:scale-110" 
-                style={{backgroundColor: colorPalette.Navy}} 
-                onClick={() => setCurrenTab(true)}
-              >
-                <img className="p-1 rotate-180" src="/swap_icon.png" alt="Cambiar" />
-              </button>
-            </div>
-
-            <div className="relative w-full px-15 mt-3 mb-4">
-              <img 
-                src="/search_icon.png" 
-                alt="Buscar" 
-                className="absolute left-7 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none brightness-0 invert"
-              />
-              <input 
-                onChange={(e) => setSearchBarValue(e.target.value.toLowerCase())}
-                type="text" 
-                placeholder="Buscar producto"
-                className="w-full bg-white text-black rounded-lg p-3 pl-14 border-none focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            <ul className="flex-1 flex flex-col w-full overflow-y-auto px-15 gap-2 pb-4">
-              {filteredProducts.map((product) => (
-                <li key={product.id} className="flex flex-row justify-between items-center rounded-lg text-black p-3 bg-white shadow-sm hover:bg-gray-50 transition-colors">
-                  <div className="flex flex-col">
-                    <p className="font-bold text-lg leading-tight">{product.name}</p>
-                    <p className="text-sm opacity-60 font-medium">${product.price}</p>
-                  </div>
-                  <button onClick={() => addProductToTable(product)} className="rounded-lg cursor-pointer transition-transform hover:scale-110 shadow-md"> 
-                    <img className="bg-stone-950 rounded-lg size-10 p-2.5" src="/plus.png" alt="Agregar" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-
-            {/* CREAR ORDEN — only lives in this add-products tab (PESTAÑA 2):
-                the single commit point that sends the local draft to the
-                kitchen. Payment/actions never appear here. */}
-            <div className="shrink-0 px-5 pb-4">
-              <button
-                onClick={handleCreateOrder}
-                className="cursor-pointer w-full bg-[#22007c] hover:bg-[#140152] h-14 rounded-2xl text-white font-bold text-xl transition-colors"
-              >
-                Crear orden
-              </button>
+        {/* RIGHT: ORDER DETAILS */}
+        <div className="h-full w-1/2 flex flex-col">
+          <div className="shrink-0 p-3 flex flex-col gap-2">
+            <h2 className="text-base font-bold text-white">{`Mesa ${tableNumber} — Pedido`}</h2>
+            <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-2">
+                <label className="text-white text-xs">Propina:</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={propina}
+                  onChange={(e) => handlePropinaChange(Number(e.target.value) || 0)}
+                  className="bg-black text-white text-sm text-center w-16 h-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
             </div>
           </div>
+
+          <div className="flex-1 overflow-auto p-2">
+            <table className="w-full text-white">
+              <thead className="sticky top-0 z-10" style={{ backgroundColor: colorPalette.DeepTwilight }}>
+                <tr>
+                  <th className="text-left py-1.5 px-1.5 text-xs">Artículo</th>
+                  <th className="text-center py-1.5 px-1.5 text-xs">Precio</th>
+                  <th className="text-center py-1.5 px-1.5 text-xs">Cant.</th>
+                  <th className="w-6"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentProducts.map((detail: orderDetail, index: number) => (
+                  <tr key={index} className="border-b border-white/10">
+                    <td className="py-1.5 px-1.5 text-xs">{detail.product?.name}</td>
+                    <td className="py-1.5 px-1.5 text-center text-xs">${detail.product?.price}</td>
+                    <td className="py-1.5 px-1.5 text-center text-xs">{detail.quantity}</td>
+                    <td className="py-1.5 px-1.5">
+                      <img
+                        className="cursor-pointer mx-auto hover:scale-110 transition-transform size-4"
+                        src="/trash_icon.png"
+                        alt="Eliminar"
+                        onClick={() => removeProductFromTable(index)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              {propina !== 0 && (
+                <tr>
+                  <td colSpan={4} className="py-1.5 px-1.5 text-xs font-medium">
+                    Propina: ${propina}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
         </div>
       </div>
+
+      {/* TOTAL + SAVE (full width, spans both sections) */}
+      <div className="shrink-0 p-2 bg-black/20 border-t border-white/10">
+        <div className="flex justify-between items-center text-base font-bold text-white mb-1.5">
+          <span>Total:</span>
+          <span>${totalPrice.toFixed(0)}</span>
+        </div>
+
+        <button
+          onClick={handleSaveOrder}
+          className="cursor-pointer w-full bg-[#22007c] hover:bg-[#140152] h-9 rounded-xl text-white font-bold text-sm transition-colors"
+        >
+          {hasOpenOrder ? "Actualizar orden" : "Crear orden"}
+        </button>
+      </div>
+
+      {/* BOTTOM: PAYMENT SECTION */}
+      {table?.order && (
+        <div className="shrink-0">
+          <TablePayment table={table} tableNumber={tableNumber} setIsLoading={setIsLoading} />
+        </div>
+      )}
     </div>
   );
 };

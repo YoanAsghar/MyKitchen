@@ -3,7 +3,9 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Table } from "../../../../models/table";
 import { Product } from "../../../../models/product";
+import { Category } from "../../../../models/category";
 import { ProductServices } from "../../../../services/ProductServices";
+import { CategoryServices } from "../../../../services/CategoryServices";
 import TablesContent from "./TablesContent";
 import TableInformation from "./tableInformation";
 import { useGlobalContext } from "../../../GlobalContext";
@@ -80,14 +82,18 @@ export default function MesasPage() {
     }
   };
 
-  // Product states (needed for TableInformation)
+  // Product and category states (needed for TableInformation)
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated || isAuthChecking) return;
     ProductServices.getAll()
       .then(setProducts)
       .catch(console.error);
+    CategoryServices.getAll()
+      .then(setCategories)
+      .catch(() => setCategories([]));
   }, [isAuthenticated, isAuthChecking]);
 
   return (
@@ -103,6 +109,7 @@ export default function MesasPage() {
       />
       <TableInformation
         products={products}
+        categories={categories}
         key={currentTableSelectedId}
         table={selectedTable}
         tableNumber={selectedTableNumber}
