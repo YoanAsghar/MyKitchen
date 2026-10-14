@@ -94,7 +94,9 @@ sincronizados**.
 
 - El hub está `[Authorize]`; sin cookie válida la conexión falla.
 - Los emisores son los controllers vía `IHubContext<RestaurantHub>`, no llamadas
-  de cliente (el método `SendOrderUpdated` existe pero no es el camino usado).
+  de cliente. El hub **no expone métodos invocables por el cliente** (un método
+  público permitiría a cualquier usuario autenticado falsificar eventos a otros
+  tenants).
 - El cliente aplica optimismo local en la acción propia, y el broadcast
   posterior es la fuente canónica (puede sobreescribir el estado local).
 - Si falla el resync (`getActive`/`getAll`), el contexto cae a `[]` sin romper.

@@ -68,7 +68,9 @@ Cobrar la orden abierta de una mesa eligiendo método de pago, pasarla a `PAID`
 
 El backend fuerza `Id = 0`, `Status = PAID`, `RestaurantId` del claim y estampa
 los detalles. Valida que la mesa (si viene `tableId`) sea del restaurante antes de
-limpiar. Tras guardar, elimina las órdenes `OPEN` de esa mesa y emite
+limpiar. **Recalcula `TotalPrice` server-side** a partir de los precios reales en
+BD (`Σ product.Price × quantity + tip`); el `totalPrice` que manda el cliente se
+ignora. Tras guardar, elimina las órdenes `OPEN` de esa mesa y emite
 `OrderClosed { tableId }`.
 
 ## 6. Modelo de datos
@@ -87,6 +89,8 @@ histórica). `PaymentMethod` enum `CASH | CARD | BANK_TRANS` (string en el wire)
 - Referencia a mesa de otro restaurante → `404` (y **no** se limpia la orden de
   esa mesa ajena — probado).
 - El `Status` y el `RestaurantId` del payload se ignoran.
+- El `TotalPrice` del payload se ignora: se recalcula con los precios de BD
+  (`Σ precio × cantidad + propina`). Productos inexistentes/ajenos → `400`.
 - El frontend **no** reenvía la orden pagada al hub; espera el `OrderClosed`.
 
 ## 9. UI / Flujo
@@ -108,6 +112,8 @@ histórica). `PaymentMethod` enum `CASH | CARD | BANK_TRANS` (string en el wire)
 | `CreateOrder_InvalidQuantity_ReturnsBadRequest` | idem | HU-5 |
 | `CreateOrder_Valid_ReturnsOkAndPersists` | idem | HU-1 |
 | `CreateOrder_PaymentMethodIsSerializedAsString` | idem | enum en wire |
+| `CreateOrder_IgnoresClientSentTotalPrice` | idem | total recalculado |
+| `CreateOrder_UnknownProduct_ReturnsBadRequest` | idem | producto inválido |
 | `PaymentDoesNotClear_AnotherRestaurantsOpenOrder` | `backend.Tests/RestaurantScopingTests.cs` | caso borde |
 
 ## 11. Preguntas abiertas / Backlog

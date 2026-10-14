@@ -58,9 +58,10 @@ Las rutas de la app (business) viven bajo `/kitchen/{id}/` (mesas, cocina, carta
 - Todos los pedidos **activos** (mesas con orden abierta) llegan a Cocina al instante.
 - Una orden entra a Cocina cuando el mesero presiona **"Crear orden"** (o la actualiza con "Editar orden"); los cambios previos al envío nunca llegan a Cocina.
 
-### 4. Inventario (Productos)
-- CRUD completo de productos.
-- Búsqueda filtrada de artículos.
+### 4. Inventario (Productos y Categorías)
+- CRUD completo de productos y búsqueda filtrada de artículos.
+- **Categorías** como entidad propia por restaurante (`Category`: nombre + `restaurantId`), con CRUD en `/admin/{id}/categorias` (backend `/api/v1/Category`). Cada producto referencia una categoría (`categoryId`, opcional); no se puede borrar una categoría en uso ni duplicar su nombre.
+- La carta arma sus pestañas desde la tabla de categorías y filtra por `categoryId`.
 
 ### 5. Historial de Órdenes
 - Registro detallado de transacciones con paginación.

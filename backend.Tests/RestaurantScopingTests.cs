@@ -51,7 +51,7 @@ public class RestaurantScopingTests : IDisposable
     private async Task<int> CreateProductAsync(HttpClient client, string name, double price)
     {
         var response = await client.PostAsJsonAsync("/api/v1/Product",
-            new { name, price, category = "Food", description = "test", image = "" });
+            new { name, price, description = "test", image = "" });
         response.EnsureSuccessStatusCode();
         return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetInt32();
     }

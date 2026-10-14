@@ -1,14 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Pencil, Plus, Trash2, X } from "lucide-react";
 import { ProductServices } from "../../../../services/ProductServices";
+import { CategoryServices } from "../../../../services/CategoryServices";
 import { Product } from "../../../../models/product";
+import { Category } from "../../../../models/category";
 import { useGlobalContext } from "../../../GlobalContext";
 
 export default function Productos() {
   const { restaurantId } = useGlobalContext();
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [modal, setModal] = useState<"closed" | "create" | "edit">("closed");
@@ -16,21 +19,21 @@ export default function Productos() {
   const [form, setForm] = useState({
     name: "",
     price: "",
-    category: "",
+    categoryId: "",
     description: "",
     image: "",
   });
-
-  const categories = useMemo(
-    () => Array.from(new Set(products.map((p) => p.category).filter(Boolean))),
-    [products]
-  );
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      setProducts(await ProductServices.getAll());
+      const [productsData, categoriesData] = await Promise.all([
+        ProductServices.getAll(),
+        CategoryServices.getAll(),
+      ]);
+      setProducts(productsData);
+      setCategories(categoriesData);
     } catch {
       setError("No se pudieron cargar los productos.");
     } finally {
@@ -44,7 +47,7 @@ export default function Productos() {
 
   const openCreate = () => {
     setEditingId(null);
-    setForm({ name: "", price: "", category: "", description: "", image: "" });
+    setForm({ name: "", price: "", categoryId: "", description: "", image: "" });
     setModal("create");
   };
 
@@ -53,7 +56,7 @@ export default function Productos() {
     setForm({
       name: product.name,
       price: String(product.price),
-      category: product.category,
+      categoryId: product.categoryId != null ? String(product.categoryId) : "",
       description: product.description,
       image: product.image,
     });
@@ -66,11 +69,14 @@ export default function Productos() {
     const price = Number(form.price);
     if (isNaN(price) || price < 0) return setError("Precio inválido.");
 
+    const categoryId = form.categoryId === "" ? null : Number(form.categoryId);
+
     const product = new Product(
       editingId ?? 0,
       form.name.trim(),
       price,
-      form.category.trim(),
+      categoryId,
+      null,
       form.description.trim(),
       form.image.trim(),
       restaurantId || 1
@@ -85,8 +91,8 @@ export default function Productos() {
       }
       setModal("closed");
       load();
-    } catch {
-      setError("No se pudo guardar el producto.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo guardar el producto.");
     }
   };
 
@@ -139,7 +145,7 @@ export default function Productos() {
                   </p>
                 </div>
                 <span className="text-xs px-2.5 py-1 rounded-full border border-white/10 bg-white/[0.04] text-white/60 shrink-0">
-                  {product.category || "Sin categoría"}
+                  {product.category?.name || "Sin categoría"}
                 </span>
                 <span className="text-sm font-semibold shrink-0 w-20 text-right">
                   ${product.price.toFixed(2)}
@@ -215,19 +221,20 @@ export default function Productos() {
                   <label className="block text-xs text-white/40 uppercase tracking-widest mb-1.5">
                     Categoría
                   </label>
-                  <input
-                    type="text"
-                    list="admin-product-categories"
-                    value={form.category}
-                    onChange={(e) => setForm({ ...form, category: e.target.value })}
-                    placeholder="Ej: Burgers"
-                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.04] border border-white/10 text-sm focus:outline-none focus:border-[#22c55e]"
-                  />
-                  <datalist id="admin-product-categories">
+                  <select
+                    value={form.categoryId}
+                    onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-lg bg-white/[0.04] border border-white/10 text-sm focus:outline-none focus:border-[#22c55e] text-white"
+                  >
+                    <option value="" className="bg-[#0a0a0f]">
+                      Sin categoría
+                    </option>
                     {categories.map((c) => (
-                      <option key={c} value={c} />
+                      <option key={c.id} value={String(c.id)} className="bg-[#0a0a0f]">
+                        {c.name}
+                      </option>
                     ))}
-                  </datalist>
+                  </select>
                 </div>
               </div>
 

@@ -36,8 +36,11 @@ export default function RootClientLayout({
 
   // The admin dashboard (/admin/[id]) is a fully standalone section: it still
   // requires a session but renders its own chrome (sidebar/topbar in its layout),
-  // without the app Navbar.
+  // without the app Navbar. Only managers (admin/owner) may view it — the same
+  // gate the backend enforces via the ManagerOnly policy, so a staff `user`
+  // can't open the shell by typing the URL.
   const isAdminPath = pathname.startsWith("/admin");
+  const isManager = role === "admin" || role === "owner";
 
   useEffect(() => {
     // Redirect to login if not authenticated and not already on a public page.
@@ -84,6 +87,14 @@ export default function RootClientLayout({
     }
   }, [isAuthChecking, isAuthenticated, pathname, kitchenId, sessionKitchenId, router]);
 
+  // Managers only: bounce a staff `user` off the admin section back to their
+  // kitchen (the backend would 403 the data calls anyway).
+  useEffect(() => {
+    if (!isAuthChecking && isAuthenticated && isAdminPath && !isManager) {
+      router.replace(`/kitchen/${sessionKitchenId}/mesas`);
+    }
+  }, [isAuthChecking, isAuthenticated, isAdminPath, isManager, sessionKitchenId, router]);
+
   const handleTabChange = (tab: BodyTabs) => {
     if (tab === BodyTabs.admin) {
       router.push(`/admin/${sessionKitchenId}`);
@@ -108,8 +119,16 @@ export default function RootClientLayout({
     return <>{children}</>;
   }
 
-  // Standalone admin dashboard: no app Navbar, no app chrome.
+  // Standalone admin dashboard: no app Navbar, no app chrome. Non-managers
+  // never see the shell; hold on the loader while the redirect above runs.
   if (isAdminPath) {
+    if (!isManager) {
+      return (
+        <div className="flex h-screen w-screen items-center justify-center bg-primary">
+          <LoadingOverlay isVisible={true} message="Cargando..." />
+        </div>
+      );
+    }
     return <>{children}</>;
   }
 

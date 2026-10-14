@@ -91,6 +91,9 @@ Ver [realtime.md](./realtime.md).
 - `DELETE` por id explícito (no "la última"); si no existe → `404`.
 - El `DELETE` limpia la orden `OPEN` de la mesa para no dejar huérfanos en
   `/Order/active`.
+- `GetTables` agrupa las órdenes `OPEN` por mesa (`GroupBy` + la más reciente):
+  si una carrera o datos preexistentes dejan dos `OPEN` en la misma mesa, no
+  revienta (antes un `ToDictionary` lanzaba 500).
 - La numeración se calcula en el frontend ordenando por `Id`
   (`OrdersContext.tableNumbers`); el id de la URL/DB nunca se usa como etiqueta.
 
@@ -111,6 +114,8 @@ Ver [realtime.md](./realtime.md).
 |---|---|---|
 | `GetTables_EmptyDatabase_ReturnsEmptyList` | `backend.Tests/TableControllerTests.cs` | HU-1 |
 | `GetTables_ReturnsPersistedTablesWithRealIds` | idem | HU-1 |
+| `GetTables_IncludesTheOpenOrderPerTable` | idem | orden abierta por mesa |
+| `GetTables_DuplicateOpenOrders_DoesNotThrow` | idem | caso borde (duplicados) |
 | `CreateTable_ValidTableNumber_ReturnsOkAndPersists` | idem | HU-2 |
 | `CreateTable_MissingTableNumber_ReturnsBadRequest` | idem | caso borde |
 | `DeleteTable_ExistingId_RemovesOnlyThatTable` | idem | HU-3 |

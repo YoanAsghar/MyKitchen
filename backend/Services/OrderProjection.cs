@@ -29,7 +29,7 @@ namespace MyKitchen.Services
                         Id = od.Product!.Id,
                         Name = od.Product.Name,
                         Price = od.Product.Price,
-                        Category = od.Product.Category,
+                        CategoryId = od.Product.CategoryId,
                         Description = od.Product.Description,
                         Image = null
                     },

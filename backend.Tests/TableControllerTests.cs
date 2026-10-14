@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
+using MyKitchen.Data;
+using MyKitchen.Models;
 
 namespace backend.Tests;
 
@@ -121,13 +124,40 @@ public class TableControllerTests : IDisposable
     }
 
     [Fact]
+    public async Task DeleteTable_DuplicateOpenOrders_RemovesThemAll()
+    {
+        var table = await CreateTableAsync(1);
+        var tableId = table.GetProperty("id").GetInt32();
+
+        // Two OPEN rows on the same table (race / pre-existing data). Deleting the
+        // table must collapse ALL of them, not just the first, so no ghost order
+        // is left stranded in /Order/active.
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Orders.Add(new Order { TableId = tableId, RestaurantId = 0, Status = OrderStatus.OPEN, OrderDate = DateTime.UtcNow, Guests = 1, TotalPrice = 5 });
+            db.Orders.Add(new Order { TableId = tableId, RestaurantId = 0, Status = OrderStatus.OPEN, OrderDate = DateTime.UtcNow, Guests = 3, TotalPrice = 9 });
+            db.SaveChanges();
+        }
+
+        var response = await _client.DeleteAsync($"/api/v1/Table/{tableId}");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            Assert.Empty(db.Orders.Where(o => o.TableId == tableId && o.Status == OrderStatus.OPEN));
+        }
+    }
+
+    [Fact]
     public async Task GetTables_IncludesTheOpenOrderPerTable()
     {
         var table = await CreateTableAsync(1);
         var tableId = table.GetProperty("id").GetInt32();
 
         var productResponse = await _client.PostAsJsonAsync("/api/v1/Product",
-            new { name = "Pasta", price = 9.5, category = "Food", description = "test", image = "" });
+            new { name = "Pasta", price = 9.5, description = "test", image = "" });
         productResponse.EnsureSuccessStatusCode();
         var product = await productResponse.Content.ReadFromJsonAsync<JsonElement>();
         var pid = product.GetProperty("id").GetInt32();
@@ -151,5 +181,30 @@ public class TableControllerTests : IDisposable
         Assert.Equal(4, order.GetProperty("guests").GetInt32());
         Assert.Equal(21.0, order.GetProperty("totalPrice").GetDouble());
         Assert.Equal(2, order.GetProperty("orderDetail")[0].GetProperty("quantity").GetInt32());
+    }
+
+    [Fact]
+    public async Task GetTables_DuplicateOpenOrders_DoesNotThrow()
+    {
+        var table = await CreateTableAsync(1);
+        var tableId = table.GetProperty("id").GetInt32();
+
+        // Two OPEN rows on the same table (race / pre-existing data). GetTables
+        // must not 500; it picks the latest order for the table.
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Orders.Add(new Order { TableId = tableId, Status = OrderStatus.OPEN, OrderDate = DateTime.UtcNow, Guests = 1, TotalPrice = 5 });
+            db.Orders.Add(new Order { TableId = tableId, Status = OrderStatus.OPEN, OrderDate = DateTime.UtcNow, Guests = 3, TotalPrice = 9 });
+            db.SaveChanges();
+        }
+
+        var response = await _client.GetAsync("/api/v1/Table");
+        var tables = await response.Content.ReadFromJsonAsync<JsonElement[]>();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Single(tables!);
+        Assert.True(tables![0].TryGetProperty("order", out var order), "The table must still expose one open order");
+        Assert.Equal(3, order.GetProperty("guests").GetInt32());
     }
 }

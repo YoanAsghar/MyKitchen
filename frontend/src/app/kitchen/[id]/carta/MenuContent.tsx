@@ -3,19 +3,20 @@
 import { useState, useMemo } from "react";
 import ProductCards from "../../../../components/ProductCards";
 import { Product } from "../../../../models/product";
+import { Category } from "../../../../models/category";
 import { colorPalette } from "../../../../colorPallete";
 
 interface MenuContentProps {
   products: Product[];
-  productCategories: string[];
+  categories: Category[];
 }
 
-const MenuContent = ({ products, productCategories }: MenuContentProps) => {
+const MenuContent = ({ products, categories }: MenuContentProps) => {
   // Searchbar status
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Current category tab
-  const [currentCategoryTab, setCurrentCategoryTab] = useState<string>("");
+  // Current category tab (null = "Todas")
+  const [currentCategoryTab, setCurrentCategoryTab] = useState<number | null>(null);
 
   // Show images toggle state
   const [showImages, setShowImages] = useState(false);
@@ -24,7 +25,7 @@ const MenuContent = ({ products, productCategories }: MenuContentProps) => {
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = currentCategoryTab === "" || p.category === currentCategoryTab;
+      const matchesCategory = currentCategoryTab === null || p.categoryId === currentCategoryTab;
       return matchesSearch && matchesCategory;
     });
   }, [products, searchQuery, currentCategoryTab]);
@@ -75,32 +76,32 @@ const MenuContent = ({ products, productCategories }: MenuContentProps) => {
           {/* Categorias */}
           <div className="flex flex-row ml-8 mb-4">
             <button
-              onClick={() => setCurrentCategoryTab("")}
+              onClick={() => setCurrentCategoryTab(null)}
               className={`font-bold m-2 rounded-lg p-3 transition-transform hover:scale-90 cursor-pointer ${
-                currentCategoryTab === "" ? "text-black" : "text-white"
+                currentCategoryTab === null ? "text-black" : "text-white"
               }`}
               style={{
                 backgroundColor:
-                  currentCategoryTab === "" ? colorPalette.White : colorPalette.Charcoal,
+                  currentCategoryTab === null ? colorPalette.White : colorPalette.Charcoal,
               }}
             >
               Todas
             </button>
-            {productCategories.map((category, index) => (
+            {categories.map((category) => (
               <button
-                key={index}
-                onClick={() => setCurrentCategoryTab(category)}
+                key={category.id}
+                onClick={() => setCurrentCategoryTab(category.id)}
                 className={`font-bold m-2 rounded-lg p-3 transition-transform hover:scale-90 cursor-pointer ${
-                  currentCategoryTab === category ? "text-black" : "text-white"
+                  currentCategoryTab === category.id ? "text-black" : "text-white"
                 }`}
                 style={{
                   backgroundColor:
-                    currentCategoryTab === category
+                    currentCategoryTab === category.id
                       ? colorPalette.White
                       : colorPalette.Charcoal,
                 }}
               >
-                {category}
+                {category.name}
               </button>
             ))}
           </div>

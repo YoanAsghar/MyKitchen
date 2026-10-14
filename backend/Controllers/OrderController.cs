@@ -189,6 +189,23 @@ public class OrderController : RestaurantScopedController
                 return NotFound($"Table with id {orderTableId} doesn't exist");
             }
         }
+
+        // The total is always recomputed from the persisted product prices; a
+        // client-sent TotalPrice is never trusted (a tampered client could
+        // otherwise charge any amount). Same rule as SaveOpenOrder.
+        var paidProductIds = order.OrderDetail.Select(od => od.ProductId).Distinct().ToList();
+        var paidProducts = await _context.Products
+            .Where(p => paidProductIds.Contains(p.Id) && p.RestaurantId == CurrentRestaurantId)
+            .AsNoTracking()
+            .ToDictionaryAsync(p => p.Id);
+
+        if (paidProducts.Count != paidProductIds.Count)
+        {
+            return BadRequest("One or more products don't exist");
+        }
+
+        order.TotalPrice = order.OrderDetail.Sum(od => (float)(paidProducts[od.ProductId].Price * od.Quantity)) + order.Tip;
+
         foreach (var detail in order.OrderDetail)
         {
             detail.RestaurantId = CurrentRestaurantId;

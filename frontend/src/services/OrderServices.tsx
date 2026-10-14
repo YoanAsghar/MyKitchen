@@ -22,7 +22,8 @@ export function toOrder(raw: any): Order {
           detail.product.id,
           detail.product.name,
           detail.product.price,
-          detail.product.category,
+          detail.product.categoryId ?? null,
+          detail.product.category ?? null,
           detail.product.description,
           detail.product.image,
           detail.product.restaurantId ?? 0

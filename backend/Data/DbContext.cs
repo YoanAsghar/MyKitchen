@@ -13,6 +13,7 @@ namespace MyKitchen.Data
         public DbSet<Table> Tables { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<Product> Products { get; set; }
+        public DbSet<Category> Categories { get; set; }
         public DbSet<OrderDetail> OrdersDetails { get; set; }
         public DbSet<Expense> Expenses { get; set; }
         public DbSet<Restaurants> Restaurants { get; set; }

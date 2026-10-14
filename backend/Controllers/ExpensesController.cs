@@ -19,7 +19,7 @@ public class ExpensesController : RestaurantScopedController
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<Expense[]>>> GetExpenses([FromQuery] int pageSize, [FromQuery] int page)
+    public async Task<ActionResult<List<Expense[]>>> GetExpenses([FromQuery] int pageSize = 20, [FromQuery] int page = 1)
     {
         try
         {

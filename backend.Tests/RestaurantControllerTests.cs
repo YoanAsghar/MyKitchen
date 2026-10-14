@@ -284,7 +284,6 @@ public class RestaurantControllerTests : IDisposable
             {
                 name = "Milanesa",
                 price = 12.5,
-                category = "Plato",
                 description = "Con papas",
                 restaurantId
             });

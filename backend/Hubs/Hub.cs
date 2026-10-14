@@ -43,11 +43,9 @@ namespace MyKitchen.Hubs
             await base.OnConnectedAsync();
         }
 
-        // Broadcast triggers live in the controllers via IHubContext<RestaurantHub>;
-        // client-callable methods (like this one) are available for direct pushes.
-        public async Task SendOrderUpdated(object order)
-        {
-            await Clients.All.SendAsync(HubEvents.OrderUpdated, order);
-        }
+        // Broadcast triggers live in the controllers via IHubContext<RestaurantHub>
+        // targeting GroupFor(restaurantId). The hub intentionally exposes NO
+        // client-callable methods: a public method would let any authenticated
+        // user invoke it and spoof events to other tenants.
     }
 }
