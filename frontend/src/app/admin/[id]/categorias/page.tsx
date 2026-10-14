@@ -1,10 +1,6 @@
-import ComingSoon from "../../components/ComingSoon";
+"use client";
+import Categorias from "./Categorias";
 
 export default function CategoriasPage() {
-  return (
-    <ComingSoon
-      title="Categorías de la carta"
-      description="Administrar las categorías del menú y su disponibilidad."
-    />
-  );
+  return <Categorias />;
 }

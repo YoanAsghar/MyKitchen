@@ -34,12 +34,16 @@ public class TableController : RestaurantScopedController
             .ToListAsync();
 
         // Attach each table's current OPEN order (if any) so every client
-        // boots with the same "who has an active order" picture.
+        // boots with the same "who has an active order" picture. Group defensively:
+        // a race or pre-existing data could leave more than one OPEN order on a
+        // table, and ToDictionary would otherwise throw (500). Keep the latest.
         var openOrders = await OrderProjection.Project(_context.Orders
             .Where(o => o.Status == OrderStatus.OPEN && o.TableId != null && o.RestaurantId == CurrentRestaurantId))
             .ToListAsync();
 
-        var openByTable = openOrders.ToDictionary(o => o.TableId!.Value);
+        var openByTable = openOrders
+            .GroupBy(o => o.TableId!.Value)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(o => o.Id).First());
 
         var result = tables.Select(t => new TableResponseDto
         {
@@ -90,13 +94,16 @@ public class TableController : RestaurantScopedController
 
         _context.Tables.Remove(tableToDelete);
 
-        // Removing a table must also clear its in-progress order so no orphan
-        // OPEN order lingers in /Order/active (and therefore in Cocina).
-        var openOrder = await _context.Orders
-            .FirstOrDefaultAsync(o => o.TableId == id && o.Status == OrderStatus.OPEN && o.RestaurantId == CurrentRestaurantId);
-        if (openOrder != null)
+        // Removing a table must also clear its in-progress order(s) so no orphan
+        // OPEN order lingers in /Order/active (and therefore in Cocina). Collapse
+        // any strays: races/pre-existing data could leave more than one OPEN
+        // order on a table, and leaving them behind would strand ghost orders.
+        var openOrders = await _context.Orders
+            .Where(o => o.TableId == id && o.Status == OrderStatus.OPEN && o.RestaurantId == CurrentRestaurantId)
+            .ToListAsync();
+        if (openOrders.Count > 0)
         {
-            _context.Orders.Remove(openOrder);
+            _context.Orders.RemoveRange(openOrders);
         }
 
         try
@@ -108,7 +115,7 @@ public class TableController : RestaurantScopedController
             await _hubContext.Clients.Group(RestaurantHub.GroupFor(CurrentRestaurantId))
                 .SendAsync(HubEvents.TableDeleted, new { tableId = id });
 
-            if (openOrder != null)
+            if (openOrders.Count > 0)
             {
                 await _hubContext.Clients.Group(RestaurantHub.GroupFor(CurrentRestaurantId))
                     .SendAsync(HubEvents.OrderClosed, new { tableId = id });

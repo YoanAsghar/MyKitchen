@@ -53,7 +53,8 @@ Backlog* de cada spec.
 | SPEC-012 | Carta / Productos (catálogo) | Implementado (backend + CRUD UI Admin) | [catalog.md](./catalog.md) |
 | SPEC-013 | Gastos (Expenses) | Implementado (backend) · UI pendiente | [expenses.md](./expenses.md) |
 | SPEC-014 | Sitio de marketing público | Implementado | [marketing-site.md](./marketing-site.md) |
-| SPEC-015 | Panel de administración | En progreso (estructura standalone + Empleados/Productos) | [admin-panel.md](./admin-panel.md) |
+| SPEC-015 | Panel de administración | En progreso (estructura standalone + Empleados/Productos/Categorías) | [admin-panel.md](./admin-panel.md) |
+| SPEC-016 | Categorías de productos (entidad propia) | Implementado (backend + UI Admin + carta) | [categories.md](./categories.md) |
 
 ## Plantilla
 

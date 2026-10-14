@@ -1,7 +1,18 @@
 import { Product } from "../models/product";
 import { config } from "../config";
 
-const API_URL = config.apiRoute + "/api/v1/Product"
+const API_URL = config.apiRoute + "/api/v1/Product";
+
+// Surfaces the backend's plain-text reason (e.g. category not found) instead of
+// a generic message, so the admin form can show something actionable.
+async function readError(response: Response, fallback: string): Promise<string> {
+  try {
+    const text = await response.text();
+    return text?.trim() || fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 export const ProductServices = {
   getAll: async(searchTerm : string = ""): Promise<Product[]> =>{
@@ -26,8 +37,8 @@ export const ProductServices = {
       body : JSON.stringify(product)
     })
 
-    if(!response.ok) throw new Error("Error creating product");
-    
+    if(!response.ok) throw new Error(await readError(response, "Error creating product"));
+
   return await response.json();
   },
   
@@ -39,11 +50,9 @@ export const ProductServices = {
       body: JSON.stringify(product)
     })
     
-    const data = await response.json();
+    if(!response.ok) throw new Error(await readError(response, `Error editing product to ${product.name}`));
 
-    if(!response.ok) throw  new Error (`Error editing product to ${product.name}`);
-
-  return data;
+    return await response.json();
   },
   
   deleteProduct: async(id: number): Promise<Product> => {

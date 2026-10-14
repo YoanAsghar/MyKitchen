@@ -22,7 +22,7 @@ const ProductCards = ({product, showImages} :ProductCardsProps)  => {
       )}
       <div className="flex flex-row items-center p-5 min-h-20">
         <div className="flex flex-col w-full">
-          <h2 className="mt-1 mb-1 text-xs rounded-lg p-2 w-fit " style={{backgroundColor: colorPalette.DeepTwilight}}>{product.category}</h2>
+          <h2 className="mt-1 mb-1 text-xs rounded-lg p-2 w-fit " style={{backgroundColor: colorPalette.DeepTwilight}}>{product.category?.name ?? "Sin categoría"}</h2>
           <h2 className="text-white text-lg font-bold">{product.name}</h2>
           <h2 className="text-gray-500 text-sm font-semibold">${product.price.toLocaleString()}</h2>
         </div>

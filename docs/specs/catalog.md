@@ -19,6 +19,8 @@ de carta con filtro por categoría.
 
 **Incluye**
 - CRUD de productos (nombre, precio, categoría, descripción, imagen).
+- Categorías como entidad propia (`Category`, un-a-muchos); el producto referencia
+  `categoryId` (ver [categories.md](./categories.md)).
 - Búsqueda por nombre (`/Product/search?search=`).
 - Vista de carta con filtro por categoría, buscador y toggle de imágenes.
 - Selección de productos al componer una orden.
@@ -71,13 +73,18 @@ de carta con filtro por categoría.
 | PUT | `/api/v1/Product/{id}` | `[Authorize]` | `Product` | `Product` | 400, 404 |
 | DELETE | `/api/v1/Product/{id}` | `[Authorize]` | — | `Product` | 404 |
 
-Sin `search` devuelve todos los del restaurante. `PUT` actualiza nombre, precio,
-descripción e imagen (no la categoría — gap).
+Sin `search` devuelve todos del restaurante. `PUT` actualiza nombre, precio,
+`categoryId`, descripción e imagen. Un `categoryId` ajeno o inexistente → `400`.
 
 ## 6. Modelo de datos
 
-`Product` (`[Table("products")]`): `Id`, `Name`, `Price` (double), `Category`
-(string), `Description` (string), `Image` (string?), `RestaurantId`.
+`Product` (`[Table("products")]`): `Id`, `Name`, `Price` (double),
+`CategoryId` (`int?`, FK → `categories`), `Description` (string), `Image`
+(string?), `RestaurantId`. En el wire viaja `categoryId` + `category`
+(`{ id, name, restaurantId }` o `null`).
+
+`Category` (`[Table("categories")]`): `Id`, `Name`, `RestaurantId` (ver
+[categories.md](./categories.md)). El antiguo string `Category` fue **eliminado**.
 
 ## 7. Eventos en tiempo real
 
@@ -86,10 +93,9 @@ N/A (los productos no se sincronizan por hub; la carta se recarga al entrar).
 ## 8. Reglas de negocio y casos borde
 
 - Todas las consultas filtran por `RestaurantId`; creates/updates lo estampan.
-- `PUT` **no** actualiza `Category` (solo nombre/precio/descripción/imagen) —
-  inconsistencia a revisar.
-- La carta solo muestra (no edita); `MenuContent` deriva categorías únicas no
-  vacías del listado.
+- `PUT` actualiza también `CategoryId`; un `categoryId` de otro restaurante → `400`.
+- La carta solo muestra (no edita); `MenuContent` arma las pestañas desde la tabla
+  de categorías (no desde los productos) y filtra por `CategoryId`.
 - `Image` se muestra solo con el toggle "Mostrar imágenes" activo.
 
 ## 9. UI / Flujo
@@ -103,8 +109,8 @@ N/A (los productos no se sincronizan por hub; la carta se recarga al entrar).
 - `frontend/src/services/ProductServices.tsx`: `getAll`, `createProduct`,
   `editProduct`, `deleteProduct`.
 - **Admin (CRUD):** `frontend/src/app/admin/[id]/productos/Productos.tsx` (listado
-  con categoría/precio, modal crear/editar con autocompletado de categorías y
-  campos opcionales). Ver [admin-panel.md](./admin-panel.md).
+  con categoría/precio, modal crear/editar con `<select>` de categorías desde la
+  tabla `categories` y campos opcionales). Ver [admin-panel.md](./admin-panel.md).
 
 ## 10. Cobertura de tests
 
@@ -117,8 +123,6 @@ N/A (los productos no se sincronizan por hub; la carta se recarga al entrar).
 
 ## 11. Preguntas abiertas / Backlog
 
-- [ ] Arreglar `PUT /Product` para que actualice **también `Category`** (hoy la
-      ignora; la UI de Admin ya envía la categoría al editar).
 - [ ] Validar campos obligatorios y precio > 0 en el backend.
 - [ ] Stock / disponibilidad y marcar agotado.
 - [ ] Subida real de imágenes (storage) en vez de URL/base64.

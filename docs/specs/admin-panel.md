@@ -2,8 +2,8 @@
 
 - **ID:** SPEC-015
 - **Área:** Admin
-- **Estado:** En progreso (estructura standalone + Empleados/Productos implementados; resto de secciones en `ComingSoon`)
-- **Última actualización:** 2026-10-11
+- **Estado:** En progreso (estructura standalone + Empleados/Productos/Categorías implementados; resto de secciones en `ComingSoon`)
+- **Última actualización:** 2026-10-13
 
 ## 1. Contexto y problema
 
@@ -28,12 +28,14 @@ ni el chrome de la app) con secciones por área de gestión, arrancando con
 - **Empleados**: listar, crear, editar (contraseña opcional) y eliminar usuarios,
   con asignación de rol (`user`/`owner`, más `admin` solo para admin global).
 - **Productos**: listar, crear, editar y eliminar productos (nombre, precio,
-  categoría, descripción, imagen) con autocompletado de categorías.
+  categoría, descripción, imagen) eligiendo la categoría desde un `<select>`.
+- **Categorías**: listar, crear, editar y eliminar categorías (ver
+  [categories.md](./categories.md)).
 - Acceso por rol: gating `owner`/`admin` en el sidebar (los endpoints ya son
   manager-only en backend).
 
 **No incluye (fuera de alcance, en backlog)**
-- Mesas, Historial/Ventas, Gastos, Reportes/Métricas, Categorías y Configuración
+- Mesas, Historial/Ventas, Gastos, Reportes/Métricas y Configuración
   (hoy `ComingSoon`).
 - Panel de super-admin cross-restaurant / multi-local.
 - Facturación del SaaS / planes.
@@ -70,6 +72,12 @@ ni el chrome de la app) con secciones por área de gestión, arrancando con
 - **Cuando** crea, edita o borra un producto
 - **Entonces** el catálogo se actualiza (y la carta lo refleja al recargar).
 
+### HU-5b — CRUD de categorías
+- **Dado** un `owner`/`admin` en /admin/{id}/categorias
+- **Cuando** crea, edita o borra una categoría
+- **Entonces** se persiste vía `CategoryServices`; un duplicado o una categoría en
+  uso devuelven `409` y se muestran al usuario.
+
 ### HU-6 — Navbar de la app
 - **Dado** el `Navbar` de la app en una página de salón
 - **Cuando** soy `owner`/`admin`
@@ -84,6 +92,7 @@ Se reutilizan los endpoints existentes:
 |---|---|
 | Usuarios | `GET/POST/PUT/DELETE /api/v1/User` (mutaciones `ManagerOnly`) |
 | Productos | `GET/POST/PUT/DELETE /api/v1/Product` |
+| Categorías | `GET/POST/PUT/DELETE /api/v1/Category` (mutaciones `ManagerOnly`) |
 | Restaurante | `GET/PUT /api/v1/Restaurant` (perfil — sección pendiente) |
 
 Detalles en [staff-management.md](./staff-management.md) y [catalog.md](./catalog.md).
@@ -106,9 +115,8 @@ la carta en vivo.
 - **Eliminar** usa confirmación del navegador; backend protege owner/self.
 - **Producto con precio inválido** no se envía (validación cliente: numérico ≥ 0);
   nombre obligatorio.
-- Nota: el `PUT /Product` del backend **no actualiza `Category`** (gap conocido,
-  ver [catalog.md](./catalog.md)) — la UI manda categoría pero hoy el backend la
-  ignora en edición. Pendiente de corregir.
+- **Categoría con nombre duplicado** (case-insensitive) o **en uso** (tiene
+  productos) devuelve `409` y la UI lo muestra.
 - `DELETE /User` del propio usuario → `400` backend; la UI lo permite pero el
   backend lo rechaza (mejora: ocultar el botón en el propio registro).
 
@@ -120,11 +128,14 @@ la carta en vivo.
   - `/admin/{id}` → `page.tsx` → `AdminPanel.tsx` (placeholder "Panel").
   - `/admin/{id}/empleados` → `Empleados.tsx` (CRUD + roles, `UserServices`).
   - `/admin/{id}/productos` → `Productos.tsx` (CRUD, `ProductServices`).
-  - `/admin/{id}/{mesas,historial,gastos,reportes,categorias,configuracion}` →
+  - `/admin/{id}/categorias` → `Categorias.tsx` (CRUD, `CategoryServices`).
+  - `/admin/{id}/{mesas,historial,gastos,reportes,configuracion}` →
     `ComingSoon` (`admin/components/ComingSoon.tsx`).
 - `RootClientLayout`: `/admin*` es standalone (requiere sesión, sin app chrome) y
   rebota `/admin/<otroId>` a `/admin/{restaurantIdSesión}`; el tab Admin del
-  `Navbar` apunta a `/admin/{restaurantId}`.
+  `Navbar` apunta a `/admin/{restaurantId}`. Además hace **guard de rol**: sólo
+  `admin`/`owner` pueden renderizar el shell; un `user` (staff) es redirigido a
+  `/kitchen/{restaurantId}/mesas` (mismo gate que el `ManagerOnly` del backend).
 - `MarketingNavbar`: con sesión muestra "Ir a mi restaurante" y (si `owner`/`admin`)
   "Gestionar mi restaurante" → `/admin/{restaurantId}`.
 
@@ -136,10 +147,10 @@ Verificación frontend por `npx tsc --noEmit`.
 
 ## 11. Preguntas abiertas / Backlog
 
-- [ ] Construir secciones restantes: Mesas, Historial/Ventas, Gastos, Reportes/Métricas, Categorías, Configuración.
+- [ ] Construir secciones restantes: Mesas, Historial/Ventas, Gastos, Reportes/Métricas, Configuración.
 - [ ] Definir el **Panel** (resumen con métricas del local).
 - [ ] Gate visual: ocultar eliminar/editar sobre la propia cuenta en Empleados.
-- [ ] Guard de ruta estricto por rol en el layout admin (hoy solo visual + backend).
+- [x] Guard de ruta por rol en el layout admin (sólo `admin`/`owner`; staff → `/kitchen/{id}/mesas`).
 - [ ] Subida real de imágenes de productos.
 
 > **Relacionadas:** [staff-management.md](./staff-management.md),

@@ -24,24 +24,25 @@ public class OrderControllerTests : IDisposable
         _factory.Dispose();
     }
 
-    private async Task<JsonElement> CreateProductAsync(string name, double price, string category = "Drinks")
+    private async Task<JsonElement> CreateProductAsync(string name, double price, int? categoryId = null)
     {
         var response = await _client.PostAsJsonAsync("/api/v1/Product",
-            new { name, price, category, description = "test", image = "" });
+            new { name, price, categoryId, description = "test", image = "" });
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<JsonElement>();
     }
 
     private async Task<JsonElement> CreateOrderAsync(
         string orderDateIso, int productId, string paymentMethod = "CASH",
-        int guests = 2, int quantity = 1, double totalPrice = 12.5, int? tableIdParam = null)
+        int guests = 2, int quantity = 1, double totalPrice = 12.5, int? tableIdParam = null,
+        int tip = 0)
     {
         var body = new
         {
             totalPrice,
             orderDate = orderDateIso,
             guests,
-            tip = 0,
+            tip,
             PaymentMethod = paymentMethod,
             tableId = tableIdParam,
             orderDetail = new[]
@@ -233,6 +234,36 @@ public class OrderControllerTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateOrder_IgnoresClientSentTotalPrice()
+    {
+        var product = await CreateProductAsync("Steak", 20);
+        var pid = product.GetProperty("id").GetInt32();
+
+        // A tampered client sends a bogus total; the server must recompute it
+        // from the persisted price (20 * 2) + tip (5) = 45.
+        var created = await CreateOrderAsync(DateTime.UtcNow.ToString("o"), pid,
+            quantity: 2, totalPrice: 0.01, tip: 5);
+
+        Assert.Equal(45.0, created.GetProperty("totalPrice").GetDouble());
+    }
+
+    [Fact]
+    public async Task CreateOrder_UnknownProduct_ReturnsBadRequest()
+    {
+        var response = await _client.PostAsJsonAsync("/api/v1/Order", new
+        {
+            totalPrice = 1,
+            orderDate = DateTime.UtcNow,
+            guests = 1,
+            tip = 0,
+            paymentMethod = "CASH",
+            orderDetail = new[] { new { id = 0, orderId = 0, productId = 999999, quantity = 1 } }
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task GetOrders_DefaultDate_ReturnsOnlyOrdersFromToday()
     {
         var product = await CreateProductAsync("Pizza", 10);
@@ -269,7 +300,12 @@ public class OrderControllerTests : IDisposable
     [Fact]
     public async Task GetOrders_IncludesOrderDetailsAndProducts()
     {
-        var product = await CreateProductAsync("Sushi", 15, category: "Food");
+        var categoryResponse = await _client.PostAsJsonAsync("/api/v1/Category", new { name = "Food" });
+        categoryResponse.EnsureSuccessStatusCode();
+        var categoryId = (await categoryResponse.Content.ReadFromJsonAsync<JsonElement>())
+            .GetProperty("id").GetInt32();
+
+        var product = await CreateProductAsync("Sushi", 15, categoryId);
         var pid = product.GetProperty("id").GetInt32();
         await CreateOrderAsync(DateTime.UtcNow.ToString("o"), pid, quantity: 3);
 
@@ -283,6 +319,6 @@ public class OrderControllerTests : IDisposable
         Assert.Equal(pid, detail.GetProperty("productId").GetInt32());
         Assert.Equal(3, detail.GetProperty("quantity").GetInt32());
         Assert.Equal("Sushi", detail.GetProperty("product").GetProperty("name").GetString());
-        Assert.Equal("Food", detail.GetProperty("product").GetProperty("category").GetString());
+        Assert.Equal(categoryId, detail.GetProperty("product").GetProperty("categoryId").GetInt32());
     }
 }
