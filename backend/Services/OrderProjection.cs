@@ -18,6 +18,7 @@ namespace MyKitchen.Services
                 Tip = o.Tip,
                 PaymentMethod = o.PaymentMethod,
                 Status = o.Status,
+                Comment = o.Comment,
                 TableId = o.TableId,
                 OrderDetail = o.OrderDetail.Select(od => new OrderDetail
                 {

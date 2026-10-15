@@ -16,6 +16,7 @@ export function toOrder(raw: any): Order {
   order.tip = raw.tip ?? 0;
   order.paymentMethod = (raw.paymentMethod as PaymentMethod) ?? PaymentMethod.CASH;
   order.status = (raw.status as OrderStatus) ?? OrderStatus.OPEN;
+  order.comment = raw.comment ?? "";
   order.orderDetail = (raw.orderDetail ?? []).map((detail: any) => {
     const product = detail.product
       ? new Product(
@@ -73,6 +74,7 @@ export const OrderServices = {
         guests: order.guests,
         tip: order.tip,
         paymentMethod: order.paymentMethod,
+        comment: order.comment,
         orderDetail: order.orderDetail.map(detail => ({
           productId: detail.productId,
           quantity: detail.quantity
@@ -94,6 +96,7 @@ export const OrderServices = {
       guests: order.guests,
       tip: order.tip,
       paymentMethod: order.paymentMethod,
+      comment: order.comment,
       tableId: order.tableId,
       restaurantId: order.restaurantId,
       orderDetail: order.orderDetail.map(detail => ({

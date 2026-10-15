@@ -9,6 +9,7 @@ namespace MyKitchen.Models
         public int Guests { get; set; }
         public int Tip { get; set; }
         public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.CASH;
+        public string? Comment { get; set; }
         public List<SaveOrderDetailRequest> OrderDetail { get; set; } = new();
     }
 

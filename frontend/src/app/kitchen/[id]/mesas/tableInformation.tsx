@@ -19,6 +19,7 @@ interface TableInformationProps {
 const TableInformation = ({ table, tableNumber, onUpdateTable, setIsLoading, products, categories }: TableInformationProps) => {
   const [amountOfPersons, setAmountOfPersons] = useState(table?.order?.guests || 0); // kept to avoid type/flow issues; not displayed
   const [propina, setPropina] = useState(table?.order?.tip || 0);
+  const [comment, setComment] = useState(table?.order?.comment || "");
   const [searchBarValue, setSearchBarValue] = useState("");
   const [currentProducts, setCurrentProducts] = useState<orderDetail[]>([]);
   const [totalPrice, setTotalPrice] = useState(0);
@@ -40,12 +41,14 @@ const TableInformation = ({ table, tableNumber, onUpdateTable, setIsLoading, pro
     const key = JSON.stringify([
       o?.guests ?? 0,
       o?.tip ?? 0,
+      o?.comment ?? "",
       (o?.orderDetail ?? []).map((d) => `${d.productId}x${d.quantity}`).join(","),
     ]);
     if (key === appliedKeyRef.current) return;
     appliedKeyRef.current = key;
     setAmountOfPersons(o?.guests ?? 0);
     setPropina(o?.tip ?? 0);
+    setComment(o?.comment ?? "");
     setCurrentProducts(o?.orderDetail || []);
   }, [table]);
 
@@ -76,6 +79,7 @@ const TableInformation = ({ table, tableNumber, onUpdateTable, setIsLoading, pro
     draft.guests = 0;
     draft.orderDetail = currentProducts;
     draft.tip = propina;
+    draft.comment = comment;
     draft.totalPrice = currentProducts.reduce((sum, item) => sum + ((item.product?.price || 0) * item.quantity), 0) + propina;
     return draft;
   };
@@ -261,6 +265,22 @@ const TableInformation = ({ table, tableNumber, onUpdateTable, setIsLoading, pro
           </table>
         </div>
         </div>
+      </div>
+
+      {/* KITCHEN NOTE (local draft, only persisted on commit) */}
+      <div className="shrink-0 p-2 bg-black/20 border-t border-white/10">
+        <label htmlFor="kitchen-comment" className="block text-white/70 text-xs font-medium mb-1">
+          Nota para la cocina
+        </label>
+        <textarea
+          id="kitchen-comment"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          maxLength={500}
+          rows={2}
+          placeholder="Ej: sin cebolla, servir primero a los niños…"
+          className="w-full resize-none bg-black/40 text-white text-xs rounded-lg p-2 border border-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder:text-white/30"
+        />
       </div>
 
       {/* TOTAL + SAVE (full width, spans both sections) */}

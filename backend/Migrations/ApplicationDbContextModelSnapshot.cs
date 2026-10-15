@@ -84,6 +84,9 @@ namespace MyKitchen.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("Comment")
+                        .HasColumnType("text");
+
                     b.Property<int>("Guests")
                         .HasColumnType("integer");
 

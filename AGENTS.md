@@ -48,6 +48,10 @@ MyKitchen: `backend/` (.NET API) + `frontend/` (Next.js). Local-only app, no CI.
 ## TODO / tracking list
 - (Maintained here — update after each task.)
 
+**Done (this session): order-level comment ("nota para la cocina") shown to the kitchen and history.**
+- **Backend:** `Order.Comment` (`string?`) added; `SaveOpenOrderRequest.Comment` added; `OrderProjection` projects `Comment`; `SaveOpenOrder` trims/validates (>500 → 400, empty → null); `CreateOrder` validates and keeps `Comment` on `PAID`; migration `AddOrderComment` applied. Tests 82 → 87.
+- **Frontend:** `order.model` has `comment`; `OrderServices` maps and sends/receives it; Mesas draft seeds/includes `comment` (textarea above the commit bar), with `appliedKeyRef` signature including `comment` for last-write-wins re-seeding; `TablePayment` forwards `comment` to payment; Cocina shows an amber highlighted note block when present; Ordenes shows the note when present. `npx tsc --noEmit` clean, `npm run build` OK. Specs updated: order-composition, kitchen-display, order-history.
+
 **Done (this session): admin **Configuración** tab — restaurant profile form, owner-only.**
 - **Backend:** new `OwnerOnly` policy (`RequireRole(owner)`) in `Program.cs`; `PUT /api/v1/Restaurant/{id}` moved from `ManagerOnly` → `OwnerOnly` and now binds a dedicated `UpdateRestaurantRequest` DTO (`name`, `nombreDelEncargado`, `email`, `phoneNumber`) instead of `RegisterRestaurantRequest` (the ignored `password` field is gone from the wire shape). Same validation + owner-email-sync logic. A staff `user` **and a global `admin`** now get `403` on the profile PUT.
 - **Frontend:** new `admin/[id]/configuracion/Configuracion.tsx` (wired by `page.tsx`, replacing `ComingSoon`): loads `RestaurantServices.getMy()`, shows name/encargado/email/teléfono in a form + a header with `ID`/creation date; saves via `RestaurantServices.update`. If `role !== "owner"` the inputs are read-only and the save button is hidden, with a "solo el owner puede editar" notice. Success/error banners (server `409` email-in-use bubbles up).
