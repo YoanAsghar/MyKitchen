@@ -155,6 +155,14 @@ export const OrdersContent = ({orders, setOrdersDateQuery, orderDatesQuery, tabl
                               Sin items
                             </div>
                           )}
+                          {order.comment && order.comment.trim() !== "" && (
+                            <div
+                              className="mt-2 text-xs italic break-words"
+                              style={{ color: "#fbbf24" }}
+                            >
+                              Nota: {order.comment}
+                            </div>
+                          )}
                         </div>
                       </td>
 

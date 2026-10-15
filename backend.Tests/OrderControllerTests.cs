@@ -63,7 +63,8 @@ public class OrderControllerTests : IDisposable
     }
 
     private async Task<HttpResponseMessage> SaveOpenOrderAsync(
-        int tableId, int productId, int quantity, int guests = 4, int tip = 0)
+        int tableId, int productId, int quantity, int guests = 4, int tip = 0,
+        string? comment = null)
     {
         var body = new
         {
@@ -71,6 +72,7 @@ public class OrderControllerTests : IDisposable
             guests,
             tip,
             paymentMethod = "CASH",
+            comment,
             orderDetail = new[] { new { productId, quantity } }
         };
         return await _client.PutAsJsonAsync($"/api/v1/Order/table/{tableId}", body);
@@ -155,6 +157,102 @@ public class OrderControllerTests : IDisposable
 
         var active = await _client.GetFromJsonAsync<JsonElement[]>("/api/v1/Order/active");
         Assert.Empty(active!);
+    }
+
+    [Fact]
+    public async Task SaveOpenOrder_PersistsAndRoundTripsComment_Trimmed()
+    {
+        var table = await CreateTableAsync(1);
+        var tableId = table.GetProperty("id").GetInt32();
+        var product = await CreateProductAsync("Soup", 5);
+        var pid = product.GetProperty("id").GetInt32();
+
+        var response = await SaveOpenOrderAsync(tableId, pid, 1, comment: "  Sin cebolla  ");
+        response.EnsureSuccessStatusCode();
+
+        var active = await _client.GetFromJsonAsync<JsonElement[]>("/api/v1/Order/active");
+        var activeOrder = Assert.Single(active!);
+        Assert.Equal("Sin cebolla", activeOrder.GetProperty("comment").GetString());
+    }
+
+    [Fact]
+    public async Task SaveOpenOrder_WhitespaceOrOmittedComment_StaysEmpty()
+    {
+        var table = await CreateTableAsync(1);
+        var tableId = table.GetProperty("id").GetInt32();
+        var product = await CreateProductAsync("Bread", 2);
+        var pid = product.GetProperty("id").GetInt32();
+
+        // Whitespace-only comment normalizes to no note.
+        await SaveOpenOrderAsync(tableId, pid, 1, comment: "   ");
+
+        var active = await _client.GetFromJsonAsync<JsonElement[]>("/api/v1/Order/active");
+        var activeOrder = Assert.Single(active!);
+        Assert.True(activeOrder.GetProperty("comment").ValueKind == JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task SaveOpenOrder_CommentTooLong_ReturnsBadRequest()
+    {
+        var table = await CreateTableAsync(1);
+        var tableId = table.GetProperty("id").GetInt32();
+        var product = await CreateProductAsync("Fish", 9);
+        var pid = product.GetProperty("id").GetInt32();
+
+        var response = await SaveOpenOrderAsync(tableId, pid, 1, comment: new string('a', 501));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateOrder_CommentSurvivesPayment()
+    {
+        var table = await CreateTableAsync(1);
+        var tableId = table.GetProperty("id").GetInt32();
+        var product = await CreateProductAsync("Pasta", 11);
+        var pid = product.GetProperty("id").GetInt32();
+
+        // Commit an OPEN order with a kitchen note, then pay it (as Mesas does:
+        // the payment carries the committed order's comment onto the PAID order).
+        await SaveOpenOrderAsync(tableId, pid, 2, guests: 3, comment: "Para llevar");
+
+        var paymentBody = new
+        {
+            totalPrice = 0,
+            orderDate = DateTime.UtcNow,
+            guests = 3,
+            tip = 0,
+            paymentMethod = "CASH",
+            tableId,
+            comment = "Para llevar",
+            orderDetail = new[] { new { id = 0, orderId = 0, productId = pid, quantity = 2 } }
+        };
+        var payment = await _client.PostAsJsonAsync("/api/v1/Order", paymentBody);
+        payment.EnsureSuccessStatusCode();
+
+        var history = await _client.GetFromJsonAsync<JsonElement[]>("/api/v1/Order");
+        var paid = Assert.Single(history!);
+        Assert.Equal("Para llevar", paid.GetProperty("comment").GetString());
+    }
+
+    [Fact]
+    public async Task CreateOrder_CommentTooLong_ReturnsBadRequest()
+    {
+        var product = await CreateProductAsync("Rice", 4);
+        var pid = product.GetProperty("id").GetInt32();
+
+        var response = await _client.PostAsJsonAsync("/api/v1/Order", new
+        {
+            totalPrice = 0,
+            orderDate = DateTime.UtcNow,
+            guests = 1,
+            tip = 0,
+            paymentMethod = "CASH",
+            comment = new string('a', 501),
+            orderDetail = new[] { new { id = 0, orderId = 0, productId = pid, quantity = 1 } }
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]

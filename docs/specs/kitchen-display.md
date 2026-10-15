@@ -3,7 +3,7 @@
 - **ID:** SPEC-011
 - **Área:** Operación
 - **Estado:** Implementado
-- **Última actualización:** 2026-10-11
+- **Última actualización:** 2026-10-14
 
 ## 1. Contexto y problema
 
@@ -20,6 +20,8 @@ identificando la mesa y los productos/cantidades, actualizado por el hub.
 **Incluye**
 - Tarjetas por orden activa: `Mesa N`, hora, ítems × cantidad y estado
   "En preparación".
+- **Nota para la cocina** resaltada (bloque ámbar) cuando la orden tiene
+  `comment`.
 - Estado vacío cuando no hay pedidos.
 - Actualización en vivo vía `OrderUpdated`/`OrderClosed`.
 
@@ -55,6 +57,15 @@ identificando la mesa y los productos/cantidades, actualizado por el hub.
 - **Cuando** miro Cocina
 - **Entonces** no aparece (solo llega lo commiteado).
 
+### HU-6 — Ver la nota para la cocina
+- **Dado** una orden `OPEN` con `comment`
+- **Cuando** se muestra la tarjeta en Cocina
+- **Entonces** la nota se ve en un bloque resaltado (ámbar); si no hay nota, no
+  se renderiza nada.
+- **Dado** un mozo que edita la nota y commitea
+- **Cuando** llega `OrderUpdated`
+- **Entonces** la tarjeta se actualiza sin refrescar (last-write-wins).
+
 ## 5. Contrato de API
 
 Consume el estado global del hub (no hace fetch propio):
@@ -76,6 +87,8 @@ Consume el estado global del hub (no hace fetch propio):
 
 - Filtra solo órdenes con ≥ 1 ítem.
 - La numeración `Mesa N` sale de `OrdersContext.tableNumbers`, no del id.
+- La nota (`order.comment`) se renderiza solo si es no vacía; el bloque acota el
+  alto (`max-h-24 overflow-y-auto`) para notas largas.
 - No hay acciones de cocina: el pedido solo cambia al editar/cobrar en Mesas.
 
 ## 9. UI / Flujo
@@ -83,7 +96,8 @@ Consume el estado global del hub (no hace fetch propio):
 - `frontend/src/app/kitchen/[id]/cocina/page.tsx`: `activeOrders = openOrders
   .filter(detail.length > 0)`; pasa `tableNumbers`.
 - `frontend/src/app/kitchen/[id]/cocina/KitchenView.tsx`: grilla de tarjetas
-  (`colorPalette.DeepTwilight`), hora, ítems y punto verde "En preparación".
+  (`colorPalette.DeepTwilight`), hora, ítems y punto verde "En preparación"; bajo
+  el header, un bloque ámbar con la nota si `order.comment` no está vacío.
 
 ## 10. Cobertura de tests
 

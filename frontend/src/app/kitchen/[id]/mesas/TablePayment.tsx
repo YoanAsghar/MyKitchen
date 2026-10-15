@@ -23,6 +23,7 @@ const TablePayment = ({ table, tableNumber, setIsLoading }: TablePaymentProps) =
     finalOrder.tip = order.tip;
     finalOrder.paymentMethod = paymentMethod;
     finalOrder.orderDetail = order.orderDetail;
+    finalOrder.comment = order.comment;
 
     setIsLoading(true);
     try {

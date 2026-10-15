@@ -3,7 +3,7 @@
 - **ID:** SPEC-010
 - **Área:** Operación
 - **Estado:** Implementado
-- **Última actualización:** 2026-10-11
+- **Última actualización:** 2026-10-14
 
 ## 1. Contexto y problema
 
@@ -22,6 +22,8 @@ total, más un total general del día.
 - Filtro por fecha (por defecto hoy, en UTC).
 - Tabla con id, mesa (`Mesa N`), comensales, ítems, fecha/hora, pago y total.
 - Total general de las órdenes listadas.
+- La **nota para la cocina** (`comment`) de la orden se conserva y se muestra en
+  el historial cuando existe.
 
 **No incluye (fuera de alcance)**
 - Paginación (el backend soporte `?date=` pero no page/size para historial).
@@ -56,6 +58,11 @@ total, más un total general del día.
 - **Cuando** uno consulta su historial
 - **Entonces** solo ve sus órdenes.
 
+### HU-6 — La nota sobrevive al pago
+- **Dado** una orden cobrada que tenía una nota para la cocina
+- **Cuando** la miro en Ordenes/Historial
+- **Entonces** la nota sigue visible junto a los ítems.
+
 ## 5. Contrato de API
 
 | Método | Ruta | Auth | Request | Response | Errores |
@@ -67,7 +74,9 @@ Sin `date`, usa el día UTC actual. La proyección
 
 ## 6. Modelo de datos
 
-`Order` (`Status = PAID`) + `OrderDetail`. Ver [order-payment.md](./order-payment.md).
+`Order` (`Status = PAID`) + `OrderDetail`. El campo `Comment` (nota de la orden)
+persiste en la fila `PAID` y se proyecta en `GET /Order`. Ver
+[order-payment.md](./order-payment.md).
 
 ## 7. Eventos en tiempo real
 
@@ -87,7 +96,8 @@ mientras está abierto).
   `ordersDateQuery` (hoy por defecto), llama `OrderServices.getAll(date)`;
   `tableNumbers` viene de `OrdersContext`.
 - `frontend/src/app/kitchen/[id]/ordenes/OrdersContent.tsx`: tabla, filtro
-  `type="date"` y pie con "Total Órdenes" y "TOTAL GENERAL".
+  `type="date"` y pie con "Total Órdenes" y "TOTAL GENERAL"; la nota (si existe)
+  se muestra en ámbar bajo los ítems.
 
 ## 10. Cobertura de tests
 

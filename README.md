@@ -52,11 +52,12 @@ Las rutas de la app (business) viven bajo `/kitchen/{id}/` (mesas, cocina, carta
 ### 2. Toma de Pedidos
 - Registro de comensales y gestión de propinas.
 - Selección de productos desde el inventario.
-- El borrador es **local**: agregar/quitar productos o cambiar la propina no se envía todavía. El panel derecho tiene dos pestanas (`currentTab`): en **"Agregar productos"** está el botón púrpura **"Crear orden"** (único punto que envía a Cocina; un borrador vacío cancela/limpia la orden abierta de esa mesa), y en **"Pedidos actuales"** (la lista de elementos) vive el bloque **"Métodos de pago" + "Procesar pago" + "Editar orden"**, visible solo si la mesa seleccionada ya tiene una orden abierta creada. "Editar orden" vuelve a la pestana de agregar productos para seguir editando; **"Procesar pago"** finaliza la orden (pasa a `PAID` / historial).
+- El borrador es **local**: agregar/quitar productos, cambiar la propina o escribir la **"nota para la cocina"** no se envía todavía. El panel derecho tiene dos pestanas (`currentTab`): en **"Agregar productos"** está el botón púrpura **"Crear orden"** (único punto que envía a Cocina; un borrador vacío cancela/limpia la orden abierta de esa mesa), y en **"Pedidos actuales"** (la lista de elementos) vive el bloque **"Métodos de pago" + "Procesar pago" + "Editar orden"**, visible solo si la mesa seleccionada ya tiene una orden abierta creada. "Editar orden" vuelve a la pestana de agregar productos para seguir editando; **"Procesar pago"** finaliza la orden (pasa a `PAID` / historial).
 
 ### 3. Cocina
 - Todos los pedidos **activos** (mesas con orden abierta) llegan a Cocina al instante.
 - Una orden entra a Cocina cuando el mesero presiona **"Crear orden"** (o la actualiza con "Editar orden"); los cambios previos al envío nunca llegan a Cocina.
+- Las tarjetas de cocina muestran la **"nota para la cocina"** resaltada cuando el pedido la incluye.
 
 ### 4. Inventario (Productos y Categorías)
 - CRUD completo de productos y búsqueda filtrada de artículos.
@@ -64,7 +65,7 @@ Las rutas de la app (business) viven bajo `/kitchen/{id}/` (mesas, cocina, carta
 - La carta arma sus pestañas desde la tabla de categorías y filtra por `categoryId`.
 
 ### 5. Historial de Órdenes
-- Registro detallado de transacciones con paginación.
+- Registro detallado de transacciones con paginación, incluyendo la **nota para la cocina** conservada en cada orden pagada.
 
 ### 6. Sincronización en Tiempo Real
 - Los pedidos abiertos viven en el backend (`Status = OPEN`) y se comparten entre **todos los clientes** vía WebSockets (SignalR).

@@ -14,6 +14,9 @@ namespace MyKitchen.Controllers;
 [Authorize]
 public class OrderController : RestaurantScopedController
 {
+    // Max length of the free-text "nota para la cocina" (order-level comment).
+    private const int MaxCommentLength = 500;
+
     private readonly ApplicationDbContext _context;
     private readonly IHubContext<RestaurantHub> _hubContext;
 
@@ -84,6 +87,14 @@ public class OrderController : RestaurantScopedController
             return BadRequest("Order items must have a valid productId and a positive quantity");
         }
 
+        // Trim the optional kitchen note; empty means "no note" (null on the wire).
+        var comment = request.Comment?.Trim();
+        if (comment != null && comment.Length > MaxCommentLength)
+        {
+            return BadRequest($"Comment cannot exceed {MaxCommentLength} characters");
+        }
+        if (string.IsNullOrEmpty(comment)) comment = null;
+
         if (details.Count == 0)
         {
             return await ClearOpenOrder(tableId);
@@ -131,6 +142,7 @@ public class OrderController : RestaurantScopedController
         existing.Guests = request.Guests;
         existing.Tip = request.Tip;
         existing.PaymentMethod = request.PaymentMethod;
+        existing.Comment = comment;
         existing.TotalPrice = details.Sum(d => (float)(products[d.ProductId].Price * d.Quantity)) + request.Tip;
 
         _context.OrdersDetails.RemoveRange(existing.OrderDetail);
@@ -172,6 +184,15 @@ public class OrderController : RestaurantScopedController
         {
             return BadRequest("Guests and tip cannot be negative");
         }
+
+        // Trim the optional kitchen note and validate it the same way as the
+        // open-order endpoint; it is kept on the PAID (history) order.
+        order.Comment = order.Comment?.Trim();
+        if (order.Comment != null && order.Comment.Length > MaxCommentLength)
+        {
+            return BadRequest($"Comment cannot exceed {MaxCommentLength} characters");
+        }
+        if (string.IsNullOrEmpty(order.Comment)) order.Comment = null;
 
         order.Id = 0;
         order.Status = OrderStatus.PAID;
