@@ -12,6 +12,17 @@ namespace MyKitchen.Models
         public string PhoneNumber { get; set; } = string.Empty;
     }
 
+    // Profile edit payload (Configuración). Unlike signup it carries no
+    // password: credentials belong to the Owner user and are changed elsewhere
+    // (PUT /User/{id}). Only the restaurant's own owner may send this.
+    public class UpdateRestaurantRequest
+    {
+        public string Name { get; set; } = string.Empty;
+        public string NombreDelEncargado { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+    }
+
     // Wire shape for a restaurant profile. Credentials live on the Owner user,
     // never on the restaurant row.
     public class RestaurantResponseDto

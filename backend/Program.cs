@@ -83,10 +83,14 @@ builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy =>
         policy.RequireAuthenticatedUser().RequireRole(Roles.Admin));
-    // Restaurant management: user CRUD + restaurant profile edits. Both global
-    // admins and the restaurant's owner may do these within their scope.
+    // Restaurant management: user CRUD. Both global admins and the restaurant's
+    // owner may do these within their scope.
     options.AddPolicy("ManagerOnly", policy =>
         policy.RequireAuthenticatedUser().RequireRole(Roles.Admin, Roles.Owner));
+    // Owner-only: the restaurant profile (Configuración). Even a global admin is
+    // refused — only the restaurant's principal may edit its own profile.
+    options.AddPolicy("OwnerOnly", policy =>
+        policy.RequireAuthenticatedUser().RequireRole(Roles.Owner));
     options.AddPolicy("Authenticated", policy =>
         policy.RequireAuthenticatedUser());
 });

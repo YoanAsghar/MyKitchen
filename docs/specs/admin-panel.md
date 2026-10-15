@@ -2,8 +2,8 @@
 
 - **ID:** SPEC-015
 - **Área:** Admin
-- **Estado:** En progreso (estructura standalone + Empleados/Productos/Categorías implementados; resto de secciones en `ComingSoon`)
-- **Última actualización:** 2026-10-13
+- **Estado:** En progreso (estructura standalone + Empleados/Productos/Categorías/Configuración implementados; resto de secciones en `ComingSoon`)
+- **Última actualización:** 2026-10-14
 
 ## 1. Contexto y problema
 
@@ -31,12 +31,14 @@ ni el chrome de la app) con secciones por área de gestión, arrancando con
   categoría, descripción, imagen) eligiendo la categoría desde un `<select>`.
 - **Categorías**: listar, crear, editar y eliminar categorías (ver
   [categories.md](./categories.md)).
+- **Configuración**: formulario con el perfil del restaurante (nombre, encargado,
+  email, teléfono) editable por el `owner` (ver
+  [restaurant-onboarding.md](./restaurant-onboarding.md)).
 - Acceso por rol: gating `owner`/`admin` en el sidebar (los endpoints ya son
-  manager-only en backend).
+  manager-only en backend); la edición de Configuración es **solo `owner`**.
 
 **No incluye (fuera de alcance, en backlog)**
-- Mesas, Historial/Ventas, Gastos, Reportes/Métricas y Configuración
-  (hoy `ComingSoon`).
+- Mesas, Historial/Ventas, Gastos y Reportes/Métricas (hoy `ComingSoon`).
 - Panel de super-admin cross-restaurant / multi-local.
 - Facturación del SaaS / planes.
 
@@ -78,6 +80,14 @@ ni el chrome de la app) con secciones por área de gestión, arrancando con
 - **Entonces** se persiste vía `CategoryServices`; un duplicado o una categoría en
   uso devuelven `409` y se muestran al usuario.
 
+### HU-5c — Configuración del restaurante
+- **Dado** un `owner` en /admin/{id}/configuracion
+- **Cuando** edita nombre, encargado, email o teléfono y guarda
+- **Entonces** se persiste vía `RestaurantServices.update` (y, si cambia el email,
+  también el login del owner); `409` en email en uso se muestra al usuario.
+- **Y** si el rol no es `owner`, los campos se ven en modo lectura y no hay botón
+  de guardar (el backend responde `403` con la política `OwnerOnly`).
+
 ### HU-6 — Navbar de la app
 - **Dado** el `Navbar` de la app en una página de salón
 - **Cuando** soy `owner`/`admin`
@@ -93,7 +103,7 @@ Se reutilizan los endpoints existentes:
 | Usuarios | `GET/POST/PUT/DELETE /api/v1/User` (mutaciones `ManagerOnly`) |
 | Productos | `GET/POST/PUT/DELETE /api/v1/Product` |
 | Categorías | `GET/POST/PUT/DELETE /api/v1/Category` (mutaciones `ManagerOnly`) |
-| Restaurante | `GET/PUT /api/v1/Restaurant` (perfil — sección pendiente) |
+| Restaurante | `GET/PUT /api/v1/Restaurant` (perfil; PUT `OwnerOnly`, ver [restaurant-onboarding.md](./restaurant-onboarding.md)) |
 
 Detalles en [staff-management.md](./staff-management.md) y [catalog.md](./catalog.md).
 
@@ -129,7 +139,9 @@ la carta en vivo.
   - `/admin/{id}/empleados` → `Empleados.tsx` (CRUD + roles, `UserServices`).
   - `/admin/{id}/productos` → `Productos.tsx` (CRUD, `ProductServices`).
   - `/admin/{id}/categorias` → `Categorias.tsx` (CRUD, `CategoryServices`).
-  - `/admin/{id}/{mesas,historial,gastos,reportes,configuracion}` →
+  - `/admin/{id}/configuracion` → `Configuracion.tsx` (perfil del restaurante,
+    `RestaurantServices`; edición sólo `owner`, resto en modo lectura).
+  - `/admin/{id}/{mesas,historial,gastos,reportes}` →
     `ComingSoon` (`admin/components/ComingSoon.tsx`).
 - `RootClientLayout`: `/admin*` es standalone (requiere sesión, sin app chrome) y
   rebota `/admin/<otroId>` a `/admin/{restaurantIdSesión}`; el tab Admin del
@@ -147,7 +159,7 @@ Verificación frontend por `npx tsc --noEmit`.
 
 ## 11. Preguntas abiertas / Backlog
 
-- [ ] Construir secciones restantes: Mesas, Historial/Ventas, Gastos, Reportes/Métricas, Configuración.
+- [ ] Construir secciones restantes: Mesas, Historial/Ventas, Gastos, Reportes/Métricas.
 - [ ] Definir el **Panel** (resumen con métricas del local).
 - [ ] Gate visual: ocultar eliminar/editar sobre la propia cuenta en Empleados.
 - [x] Guard de ruta por rol en el layout admin (sólo `admin`/`owner`; staff → `/kitchen/{id}/mesas`).
