@@ -45,7 +45,8 @@ export const RestaurantServices = {
       credentials: "include",
       headers: { "Content-Type": "application/json" },
     });
-    if (!response.ok) throw new Error("No se pudo obtener el restaurante");
+    if (!response.ok)
+      throw new Error(await readError(response, "No se pudo obtener el restaurante"));
     return await response.json();
   },
 
@@ -56,7 +57,8 @@ export const RestaurantServices = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(restaurant),
     });
-    if (!response.ok) throw new Error("No se pudo actualizar el restaurante");
+    if (!response.ok)
+      throw new Error(await readError(response, "No se pudo actualizar el restaurante"));
     return await response.json();
   },
 

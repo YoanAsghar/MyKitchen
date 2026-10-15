@@ -219,16 +219,16 @@ public class RestaurantController : RestaurantScopedController
 
     //
     // PUT /api/v1/Restaurant/{id}
-    // Update restaurant profile fields. Only the restaurant's own owner (or a
-    // global admin), per the cookie claim, may do this — cross-restaurant edits
-    // are refused. Changing the owner password is intentionally not part of
-    // this endpoint. When the restaurant email changes, the primary Owner
-    // user's login username (which = email at signup) is kept in sync so the
-    // owner can still log in.
+    // Update restaurant profile fields. Only the restaurant's own owner, per
+    // the cookie claim, may do this — even a global admin is refused (OwnerOnly)
+    // and cross-restaurant edits are refused. Changing the owner password is
+    // intentionally not part of this endpoint. When the restaurant email
+    // changes, the primary Owner user's login username (which = email at
+    // signup) is kept in sync so the owner can still log in.
     //
     [HttpPut("{id:int}")]
-    [Authorize(Policy = "ManagerOnly")]
-    public async Task<ActionResult<RestaurantResponseDto>> UpdateRestaurant(int id, [FromBody] RegisterRestaurantRequest updatedData)
+    [Authorize(Policy = "OwnerOnly")]
+    public async Task<ActionResult<RestaurantResponseDto>> UpdateRestaurant(int id, [FromBody] UpdateRestaurantRequest updatedData)
     {
         if (id != CurrentRestaurantId)
             return Forbid();

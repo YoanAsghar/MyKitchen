@@ -1,10 +1,5 @@
-import ComingSoon from "../../components/ComingSoon";
+import Configuracion from "./Configuracion";
 
 export default function ConfiguracionPage() {
-  return (
-    <ComingSoon
-      title="Configuración del restaurante"
-      description="Perfil del restaurante: nombre, encargado, email y teléfono."
-    />
-  );
+  return <Configuracion />;
 }

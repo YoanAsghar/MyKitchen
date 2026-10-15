@@ -26,6 +26,8 @@ el email del restaurante.
 - Consulta del propio restaurante (`GET /Restaurant`).
 - Edición (`PUT /Restaurant/{id}`) y borrado en cascada (`DELETE /Restaurant/{id}`).
 - Sincronización del username del owner al cambiar el email.
+- Pantalla de edición del perfil en la sección **Configuración** del panel admin
+  (`/admin/{id}/configuracion`), sólo para el rol `owner`.
 
 **No incluye (fuera de alcance)**
 - Cambio de contraseña del owner desde el perfil (se hace vía `PUT /User/{id}`).
@@ -57,6 +59,8 @@ el email del restaurante.
 - **Dado** un owner de su restaurante
 - **Cuando** hace `PUT /Restaurant/{id}` con su propio id
 - **Entonces** el perfil se actualiza; con id ajeno → `403`.
+- **Y** sólo el `owner` puede hacerlo: un `user` (staff) o un `admin` global
+  reciben `403` (política `OwnerOnly`).
 
 ### HU-5 — El email nuevo sigue el login
 - **Dado** un owner cuyo login es el email actual
@@ -77,7 +81,7 @@ el email del restaurante.
 | POST | `/api/v1/Restaurant/register` | Anónimo | `RegisterRestaurantRequest` | `{ userId, userName, role, restaurantId, restaurant }` | 400, 409 |
 | POST | `/api/v1/Restaurant` | `AdminOnly` | `RegisterRestaurantRequest` | `RestaurantResponseDto` | 400, 409 |
 | GET | `/api/v1/Restaurant` | `[Authorize]` | — | `RestaurantResponseDto` | 404 |
-| PUT | `/api/v1/Restaurant/{id}` | `ManagerOnly` | `RegisterRestaurantRequest` | `RestaurantResponseDto` | 400, 403, 404, 409 |
+| PUT | `/api/v1/Restaurant/{id}` | `OwnerOnly` | `UpdateRestaurantRequest` | `RestaurantResponseDto` | 400, 403, 404, 409 |
 | DELETE | `/api/v1/Restaurant/{id}` | `ManagerOnly` | — | `{ message, deletedId }` | 403, 404 |
 
 Payload de registro (`frontend/src/services/RestaurantServices.tsx`):
@@ -113,6 +117,9 @@ N/A.
 - Cambio de email: se busca al owner "primario" (`Role=owner` y
   `UserName == restaurant.Email`); si no existe (p. ej. borrado por un admin) se
   actualiza el email sin tocar usuarios.
+- La edición de perfil es **solo del owner** (`OwnerOnly`): ni un `user` (staff)
+  ni un `admin` global pueden modificarlo. El borrado del restaurante sigue en
+  `ManagerOnly`.
 - `UserName` es clave de login **global**: el email nuevo no puede pertenecer a
   ningún otro usuario.
 
@@ -122,8 +129,11 @@ N/A.
   cliente y llama `RestaurantServices.register`; setea el contexto, muestra
   "Restaurante creado correctamente" y redirige en 1.5 s.
 - `frontend/src/services/RestaurantServices.tsx`: `register`, `getMy`, `update`,
-  `remove`. `readError` extrae `{ message }`.
-- **Sin UI de edición de perfil** (existe `update` pero ninguna pantalla lo usa).
+  `remove`. `readError` extrae `{ message }` (también en `getMy`/`update`).
+- **Pantalla de perfil**: `/admin/{id}/configuracion` (`Configuracion.tsx`) muestra
+  nombre, encargado, email y teléfono en un formulario; guarda con
+  `RestaurantServices.update`. Si el rol no es `owner`, los campos quedan en modo
+  lectura y no se muestra el botón de guardar (política `OwnerOnly` en backend).
 
 ## 10. Cobertura de tests
 
@@ -135,6 +145,7 @@ N/A.
 | `Register_MissingName` / `InvalidEmail` / `ShortPassword` | idem | HU-3 |
 | `GetRestaurant_Authenticated_ReturnsOwnRestaurant` / `Anonymous_401` | idem | HU-4 |
 | `UpdateRestaurant_Own_ReturnsUpdated` | idem | HU-4 |
+| `UpdateRestaurant_AsStaff_ReturnsForbidden` / `_AsGlobalAdmin_...` | idem | HU-4 (sólo owner) |
 | `UpdateRestaurant_ChangingEmail_AlsoUpdatesOwnerLogin` | idem | HU-5 |
 | `UpdateRestaurant_NewEmailConflictingWithAnotherUser_ReturnsConflict` | idem | HU-5 |
 | `UpdateRestaurant_OtherRestaurant_ReturnsForbidden` | idem | HU-4 |
@@ -142,7 +153,5 @@ N/A.
 
 ## 11. Preguntas abiertas / Backlog
 
-- [ ] Pantalla de perfil de restaurante (editar nombre/encargado/teléfono/email)
-      usando `RestaurantServices.update`.
 - [ ] Campos de perfil ampliados (dirección, logo, moneda, horarios).
 - [ ] Onboarding post-registro (crear primeras mesas/carta).

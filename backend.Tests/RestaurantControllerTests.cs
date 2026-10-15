@@ -258,6 +258,41 @@ public class RestaurantControllerTests : IDisposable
     }
 
     [Fact]
+    public async Task UpdateRestaurant_AsStaff_ReturnsForbidden()
+    {
+        await RegisterAsync();
+        var restaurantId = await GetCurrentRestaurantIdAsync();
+
+        // The owner creates a regular staff user, then we log in as that user.
+        await _client.PostAsJsonAsync("/api/v1/User",
+            new { userName = "cocinero", passwordHash = "staffpass123", role = Roles.User });
+        await _client.PostAsync("/api/v1/User/logout", null);
+        var login = await _client.PostAsJsonAsync("/api/v1/User/login",
+            new { userName = "cocinero", passwordHash = "staffpass123" });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+
+        // Staff may work the app but never edit the restaurant profile.
+        var response = await _client.PutAsJsonAsync($"/api/v1/Restaurant/{restaurantId}",
+            new { name = "Hackeado", nombreDelEncargado = "X", email = "x@x.com", phoneNumber = "1" });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateRestaurant_AsGlobalAdmin_ReturnsForbidden()
+    {
+        // Only the restaurant's own owner may edit its profile — not even a
+        // global admin (OwnerOnly policy).
+        await _client.PostAsJsonAsync("/api/v1/User/login",
+            new { userName = "admin", passwordHash = "admin123" });
+
+        var response = await _client.PutAsJsonAsync("/api/v1/Restaurant/1",
+            new { name = "Otra cosa", nombreDelEncargado = "X", email = "x@x.com", phoneNumber = "1" });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
     public async Task UpdateRestaurant_OtherRestaurant_ReturnsForbidden()
     {
         await RegisterAsync();
