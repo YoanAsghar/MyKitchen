@@ -3,7 +3,7 @@
 - **ID:** SPEC-016
 - **Área:** Catálogo
 - **Estado:** Implementado (backend + UI Admin + carta)
-- **Última actualización:** 2026-10-13
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -27,7 +27,7 @@ la categoría desde esa tabla.
 - `Product.CategoryId` (nullable) → FK a `categories` (un producto puede quedar
   sin categoría).
 - CRUD de categorías vía `/api/v1/Category`, scoped por restaurante.
-- Pestaña **Categorías** en `/admin/{id}/categorias` (listar/crear/editar/borrar).
+- Pestaña **Categorías** en `/admin/{slug}/categorias` (listar/crear/editar/borrar).
 - El formulario de producto usa un `<select>` con las categorías del restaurante.
 - Carta: pestañas derivadas de la tabla de categorías; filtrado por `CategoryId`.
 
@@ -80,7 +80,7 @@ la categoría desde esa tabla.
   `CategoryId` ("Todas" muestra todos).
 
 ### HU-8 — CRUD desde el admin
-- **Dado** un `owner`/`admin` en `/admin/{id}/categorias`
+- **Dado** un `owner`/`admin` en `/admin/{slug}/categorias`
 - **Cuando** crea/edita/borra una categoría
 - **Entonces** se persiste vía `CategoryServices`; los errores `409` (duplicado /
   en uso) se muestran al usuario.
@@ -126,10 +126,10 @@ N/A.
 ## 9. UI / Flujo
 
 - `frontend/src/models/category.tsx`, `frontend/src/services/CategoryServices.tsx`.
-- `frontend/src/app/admin/[id]/categorias/Categorias.tsx` (+ `page.tsx`): CRUD con
+- `frontend/src/app/admin/[slug]/categorias/Categorias.tsx` (+ `page.tsx`): CRUD con
   modal; muestra errores `409`.
-- `frontend/src/app/admin/[id]/productos/Productos.tsx`: `<select>` de categorías.
-- `frontend/src/app/kitchen/[id]/carta/page.tsx` + `MenuContent.tsx`: cargan
+- `frontend/src/app/admin/[slug]/productos/Productos.tsx`: `<select>` de categorías.
+- `frontend/src/app/kitchen/[slug]/carta/page.tsx` + `MenuContent.tsx`: cargan
   categorías y arman las pestañas; filtran por `categoryId`.
 - `frontend/src/components/ProductCards.tsx`: muestra `product.category?.name`.
 

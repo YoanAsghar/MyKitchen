@@ -3,7 +3,7 @@
 - **ID:** SPEC-011
 - **Área:** Operación
 - **Estado:** Implementado
-- **Última actualización:** 2026-10-14
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -93,9 +93,9 @@ Consume el estado global del hub (no hace fetch propio):
 
 ## 9. UI / Flujo
 
-- `frontend/src/app/kitchen/[id]/cocina/page.tsx`: `activeOrders = openOrders
+- `frontend/src/app/kitchen/[slug]/cocina/page.tsx`: `activeOrders = openOrders
   .filter(detail.length > 0)`; pasa `tableNumbers`.
-- `frontend/src/app/kitchen/[id]/cocina/KitchenView.tsx`: grilla de tarjetas
+- `frontend/src/app/kitchen/[slug]/cocina/KitchenView.tsx`: grilla de tarjetas
   (`colorPalette.DeepTwilight`), hora, ítems y punto verde "En preparación"; bajo
   el header, un bloque ámbar con la nota si `order.comment` no está vacío.
 

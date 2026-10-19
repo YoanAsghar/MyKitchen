@@ -274,6 +274,9 @@ public class UserControllerTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("admin", body.GetProperty("userName").GetString());
         Assert.Equal("admin", body.GetProperty("role").GetString());
+        // The seeded global admin has no restaurant (RestaurantId = 0), so the
+        // name used for URL slugs comes back empty instead of missing.
+        Assert.Equal("", body.GetProperty("restaurantName").GetString());
     }
 
     [Fact]

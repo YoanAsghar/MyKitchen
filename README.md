@@ -37,10 +37,10 @@ aceptación se traducen en tests del backend.
 - Estética neutra (blanco/negro) con acento verde `#22c55e`, tipografía DM Sans y componentes compartidos en `frontend/src/app/home/components/`.
 - `/home*` (marketing) y `/auth*` (login en `/auth/login`) son rutas públicas (sin autenticación); `/` redirige a `/home` cuando estás deslogueado.
 
-Las rutas de la app (business) viven bajo `/kitchen/{id}/` (mesas, cocina, carta, ordenes, admin), donde `{id}` es el id del restaurante (se toma de la sesión actual, no de un placeholder).
+Las rutas de la app (business) viven bajo `/kitchen/{slug}/` (mesas, cocina, carta, ordenes), donde `{slug}` es el **nombre del restaurante convertido en slug** (minúsculas, sin acentos, guiones; ej.: "La Parrilla del Centro" → `la-parrilla-del-centro`). El slug se calcula en el cliente (`restaurantSlug()` en `src/restaurantSlug.ts`) a partir del nombre que expone la sesión (`GET /User/me` / `login`), así que una URL con otro slug (o un bookmark viejo tipo `/kitchen/1/mesas`) rebota siempre al slug propio — el segmento es solo cosmético, los datos siguen scopeados por la cookie de sesión. El panel de administración usa la misma regla: `/admin/{slug}/...`.
 
 ### 7. Registro de restaurantes, autenticación y aislamiento por restaurante
-- `/home/registro` crea un restaurante real: `POST /api/v1/Restaurant/register` (anónimo) crea la fila `Restaurants` (nombre, encargado, email, teléfono — **sin credenciales propias**) **y** su `User` con rol **`owner`** (`UserName = email`, misma contraseña) en una sola transacción; auto-inicia sesión (cookie) y redirige a `/kitchen/{id}/mesas`. El Owner es quien inicia sesión desde ahora.
+- `/home/registro` crea un restaurante real: `POST /api/v1/Restaurant/register` (anónimo) crea la fila `Restaurants` (nombre, encargado, email, teléfono — **sin credenciales propias**) **y** su `User` con rol **`owner`** (`UserName = email`, misma contraseña) en una sola transacción; auto-inicia sesión (cookie) y redirige a `/kitchen/{slug}/mesas`. El Owner es quien inicia sesión desde ahora.
 - El cookie de sesión lleva los claims `restaurantId` + `userId` (fuente de verdad). `GET /User/me` los devuelve para restaurar el scope al refrescar la página; `GET /Expenses` estampa el autor (`CreatedByUserId`) desde el claim, nunca del payload.
 - `RestaurantController` expone además GET (propio restaurante), POST (alta admin; también crea el User owner), PUT y DELETE (gestores = admin|owner; scope por claim; el DELETE borra en cascada usuarios, mesas, productos, órdenes y gastos del restaurante). Al cambiar el email del restaurante, el username de login del Owner se actualiza junto (409 si ese email ya es el username de otro usuario).
 - Roles: `admin` (super-admin global), `owner` (principal del restaurante) y `user` (staff). Los usuarios creados (`POST /User`) se estampan con el `restaurantId` del llamador; solo un `admin` global puede crear admins y un `owner` crea owners/staff — sin escalada de privilegios. El login (`POST /User/login`) matchea el username (email) sin distinguir mayúsculas.
@@ -61,7 +61,7 @@ Las rutas de la app (business) viven bajo `/kitchen/{id}/` (mesas, cocina, carta
 
 ### 4. Inventario (Productos y Categorías)
 - CRUD completo de productos y búsqueda filtrada de artículos.
-- **Categorías** como entidad propia por restaurante (`Category`: nombre + `restaurantId`), con CRUD en `/admin/{id}/categorias` (backend `/api/v1/Category`). Cada producto referencia una categoría (`categoryId`, opcional); no se puede borrar una categoría en uso ni duplicar su nombre.
+- **Categorías** como entidad propia por restaurante (`Category`: nombre + `restaurantId`), con CRUD en `/admin/{slug}/categorias` (backend `/api/v1/Category`). Cada producto referencia una categoría (`categoryId`, opcional); no se puede borrar una categoría en uso ni duplicar su nombre.
 - La carta arma sus pestañas desde la tabla de categorías y filtra por `categoryId`.
 
 ### 5. Historial de Órdenes

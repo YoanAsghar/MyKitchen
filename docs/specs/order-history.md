@@ -3,7 +3,7 @@
 - **ID:** SPEC-010
 - **Área:** Operación
 - **Estado:** Implementado
-- **Última actualización:** 2026-10-14
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -92,10 +92,10 @@ mientras está abierto).
 
 ## 9. UI / Flujo
 
-- `frontend/src/app/kitchen/[id]/ordenes/page.tsx`: estado `orders` +
+- `frontend/src/app/kitchen/[slug]/ordenes/page.tsx`: estado `orders` +
   `ordersDateQuery` (hoy por defecto), llama `OrderServices.getAll(date)`;
   `tableNumbers` viene de `OrdersContext`.
-- `frontend/src/app/kitchen/[id]/ordenes/OrdersContent.tsx`: tabla, filtro
+- `frontend/src/app/kitchen/[slug]/ordenes/OrdersContent.tsx`: tabla, filtro
   `type="date"` y pie con "Total Órdenes" y "TOTAL GENERAL"; la nota (si existe)
   se muestra en ámbar bajo los ítems.
 

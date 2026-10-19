@@ -9,7 +9,7 @@ const inputClassName =
   "w-full px-3.5 py-2.5 rounded-lg bg-white/[0.04] border border-white/10 text-sm focus:outline-none focus:border-[#22c55e] disabled:opacity-60 disabled:cursor-not-allowed";
 
 export default function Configuracion() {
-  const { role, restaurantId } = useGlobalContext();
+  const { role, restaurantId, setRestaurantName } = useGlobalContext();
   const canEdit = role === "owner";
 
   const [loading, setLoading] = useState(true);
@@ -71,6 +71,9 @@ export default function Configuracion() {
         email: updated.email ?? "",
         phoneNumber: updated.phoneNumber ?? "",
       });
+      // Keep the session's name in sync: the {slug} in the URL derives from it,
+      // so the scope check rewrites the address bar to the new name right away.
+      setRestaurantName(updated.name ?? "");
       setSuccess("Cambios guardados correctamente.");
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudieron guardar los cambios.");

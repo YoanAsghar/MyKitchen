@@ -3,7 +3,7 @@
 - **ID:** SPEC-012
 - **Área:** Catálogo
 - **Estado:** Implementado (backend + lectura + CRUD UI en Admin)
-- **Última actualización:** 2026-10-11
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -59,7 +59,7 @@ de carta con filtro por categoría.
 - **Entonces** no ve los del otro.
 
 ### HU-6 — CRUD desde el admin
-- **Dado** un `owner`/`admin` en `/admin/{id}/productos`
+- **Dado** un `owner`/`admin` en `/admin/{slug}/productos`
 - **Cuando** crea/edita/borra un producto (nombre, precio, categoría, descripción, imagen)
 - **Entonces** se persiste vía `ProductServices` y la carta lo refleja al recargar;
   precio y nombre se validan en cliente.
@@ -100,15 +100,15 @@ N/A (los productos no se sincronizan por hub; la carta se recarga al entrar).
 
 ## 9. UI / Flujo
 
-- `frontend/src/app/kitchen/[id]/carta/page.tsx`: carga `ProductServices.getAll()`
+- `frontend/src/app/kitchen/[slug]/carta/page.tsx`: carga `ProductServices.getAll()`
   y deriva `productCategories`.
-- `frontend/src/app/kitchen/[id]/carta/MenuContent.tsx`: buscador, tabs de
+- `frontend/src/app/kitchen/[slug]/carta/MenuContent.tsx`: buscador, tabs de
   categoría, toggle de imágenes, grilla.
 - `frontend/src/components/ProductCards.tsx`: tarjeta de producto.
 - Selección en Mesas: `tableInformation.tsx` filtra `products` por nombre.
 - `frontend/src/services/ProductServices.tsx`: `getAll`, `createProduct`,
   `editProduct`, `deleteProduct`.
-- **Admin (CRUD):** `frontend/src/app/admin/[id]/productos/Productos.tsx` (listado
+- **Admin (CRUD):** `frontend/src/app/admin/[slug]/productos/Productos.tsx` (listado
   con categoría/precio, modal crear/editar con `<select>` de categorías desde la
   tabla `categories` y campos opcionales). Ver [admin-panel.md](./admin-panel.md).
 

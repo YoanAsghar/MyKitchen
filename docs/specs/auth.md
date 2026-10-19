@@ -3,7 +3,7 @@
 - **ID:** SPEC-001
 - **Área:** Plataforma
 - **Estado:** Implementado
-- **Última actualización:** 2026-10-11
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -24,6 +24,9 @@ todo el backend pueda autorizar y scopear sin confiar en ids del cliente.
 - Cookie de sesión `AuthorizationCookies` (HttpOnly, 30 min, SameSite=Lax).
 - Claims: `Name`, `Role`, `restaurantId`, `userId`.
 - Restauración de sesión (`/me`) y cierre (`/logout`).
+- `restaurantName` en `login` y `/me` (lookup en `Restaurants`, no es un claim):
+  el frontend lo usa para armar el slug de las URLs
+  (ver [navigation-layout.md](./navigation-layout.md)).
 - Redirect de rutas privadas a `/auth/login` y gating por rol en el layout.
 
 **No incluye (fuera de alcance)**
@@ -38,7 +41,7 @@ todo el backend pueda autorizar y scopear sin confiar en ids del cliente.
 - **Dado** un usuario registrado con `UserName` = email y una contraseña válida
 - **Cuando** envía `POST /api/v1/User/login`
 - **Entonces** el backend verifica con BCrypt, firma la cookie y responde
-  `{ userName, role, restaurantId }`.
+  `{ userName, role, restaurantId, restaurantName }`.
 
 ### HU-2 — Login case-insensitive
 - **Dado** un usuario `owner@x.com`
@@ -48,8 +51,8 @@ todo el backend pueda autorizar y scopear sin confiar en ids del cliente.
 ### HU-3 — Sesión persiste tras recargar
 - **Dado** una sesión activa (cookie válida)
 - **Cuando** el frontend arranca y llama `GET /api/v1/User/me`
-- **Entonces** recibe `{ userId, userName, role, restaurantId }` y restaura el
-  estado sin pedir login.
+- **Entonces** recibe `{ userId, userName, role, restaurantId, restaurantName }`
+  y restaura el estado sin pedir login.
 
 ### HU-4 — Cambio de email del restaurante sigue el login del owner
 - **Dado** un owner cuyo `UserName` es el email del restaurante
@@ -66,12 +69,17 @@ todo el backend pueda autorizar y scopear sin confiar en ids del cliente.
 
 | Método | Ruta | Auth | Request | Response | Errores |
 |---|---|---|---|---|---|
-| POST | `/api/v1/User/login` | Anónimo | `{ userName, passwordHash }`¹ | `{ userName, role, restaurantId }` | 401 |
-| GET | `/api/v1/User/me` | `[Authorize]` | — | `{ userId, userName, role, restaurantId }` | 401 |
+| POST | `/api/v1/User/login` | Anónimo | `{ userName, passwordHash }`¹ | `{ userName, role, restaurantId, restaurantName }` | 401 |
+| GET | `/api/v1/User/me` | `[Authorize]` | — | `{ userId, userName, role, restaurantId, restaurantName }` | 401 |
 | POST | `/api/v1/User/logout` | `[Authorize]` | — | `{ message }` | 401 |
 
 ¹ El campo se llama `passwordHash` en el wire (reutiliza el modelo `User`), pero
 el valor es la contraseña en texto plano que se verifica con BCrypt.
+
+`restaurantName` es un lookup por PK en `Restaurants` (no es un claim, así que
+un rename del restaurante se refleja al instante en la próxima
+`/me`/`login`); vacío (`""`) cuando el usuario no tiene restaurante (ej. un
+`admin` global con `restaurantId = 0`).
 
 Los claims se agregan al firmar la cookie:
 `ClaimTypes.Name = UserName`, `ClaimTypes.Role = Role`,
@@ -111,9 +119,11 @@ N/A.
 ## 9. UI / Flujo
 
 - `frontend/src/app/auth/login/Login.tsx` → `handleLoginButton` llama
-  `UserServices.logIn`, setea el `GlobalContext` y el layout redirige.
+  `UserServices.logIn`, setea el `GlobalContext` (incluido `restaurantName`) y
+  el layout redirige.
 - `frontend/src/app/GlobalContext.tsx` → restaura con `getMe()` al montar
-  (`isAuthChecking` evita el flash de redirect a login).
+  (`isAuthChecking` evita el flash de redirect a login); expone
+  `restaurantName`, que el cliente convierte en slug con `restaurantSlug()`.
 - `frontend/src/app/RootClientLayout.tsx` → redirige a `/auth/login` si no hay
   sesión y la ruta no es pública (`/home*`, `/auth*`).
 
@@ -127,6 +137,7 @@ se consume en el cliente.
 |---|---|---|
 | `Login_IsCaseInsensitive_OnUsername` | `backend.Tests/RestaurantControllerTests.cs` | HU-2 |
 | `Register_ThenLogin_MeReturnsRestaurantId` | `backend.Tests/RestaurantControllerTests.cs` | HU-3 / scope |
+| `MeAndLogin_ReturnRestaurantName` | `backend.Tests/RestaurantControllerTests.cs` | `restaurantName` en `/me` y `login` (HU-1, HU-3) |
 | Tests de auth (401 anónimo, `/me`, logout) | `backend.Tests/UserControllerTests.cs` | HU-1, HU-3, HU-5 |
 
 ## 11. Preguntas abiertas / Backlog

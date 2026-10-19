@@ -3,7 +3,7 @@
 - **ID:** SPEC-006
 - **Área:** Cuenta
 - **Estado:** Implementado (backend + UI de gestión en Admin)
-- **Última actualización:** 2026-10-11
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -64,7 +64,7 @@ mismo).
 - **Entonces** recibe `403`.
 
 ### HU-7 — Gestión desde el admin
-- **Dado** un `owner`/`admin` en `/admin/{id}/empleados`
+- **Dado** un `owner`/`admin` en `/admin/{slug}/empleados`
 - **Cuando** lista, crea, edita (con/sin nueva contraseña) o elimina empleados y asigna rol
 - **Entonces** la UI refleja el rol del llamador (selector `user`/`owner`, y `admin`
   solo si es admin global) y se respetan las normalizaciones/protecciones del backend.
@@ -104,7 +104,7 @@ N/A.
 
 - `frontend/src/services/UserServices.tsx`: `getAll`, `createUser`, `editUser`,
   `deleteUser` (todos con `credentials: "include"`).
-- **Pantalla:** `frontend/src/app/admin/[id]/empleados/Empleados.tsx` (lista con
+- **Pantalla:** `frontend/src/app/admin/[slug]/empleados/Empleados.tsx` (lista con
   avatar, badge de rol, editar/eliminar; modal crear/editar con selector de rol
   según el llamador; contraseña vacía en editar conserva la actual).
 - Acceso por `owner`/`admin` (gating visual + `ManagerOnly` backend).

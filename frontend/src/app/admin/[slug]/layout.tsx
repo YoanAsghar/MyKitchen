@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useGlobalContext } from "../../GlobalContext";
+import { restaurantSlug } from "../../../restaurantSlug";
 
 const iconClassName = "w-4 h-4";
 
@@ -24,23 +25,25 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { username, role, restaurantId, logout } = useGlobalContext();
+  const { username, role, restaurantId, restaurantName, logout } = useGlobalContext();
   const router = useRouter();
   const pathname = usePathname();
 
-  const adminId = restaurantId || 1;
-  const restaurantPath = `/kitchen/${adminId}/mesas`;
+  // Same slug rule as the kitchen routes, so "Ir a mi restaurante" and every
+  // sidebar href point at this restaurant's own /admin/{slug} section.
+  const adminSlug = restaurantSlug(restaurantName, restaurantId);
+  const restaurantPath = `/kitchen/${adminSlug}/mesas`;
 
   const sections: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; activeWhen: string }[] = [
-    { href: `/admin/${adminId}`, label: "Panel", icon: LayoutDashboard, activeWhen: "" },
-    { href: `/admin/${adminId}/empleados`, label: "Empleados", icon: Users, activeWhen: "empleados" },
-    { href: `/admin/${adminId}/productos`, label: "Productos", icon: UtensilsCrossed, activeWhen: "productos" },
-    { href: `/admin/${adminId}/mesas`, label: "Mesas", icon: LayoutGrid, activeWhen: "mesas" },
-    { href: `/admin/${adminId}/historial`, label: "Historial / Ventas", icon: History, activeWhen: "historial" },
-    { href: `/admin/${adminId}/gastos`, label: "Gastos", icon: Wallet, activeWhen: "gastos" },
-    { href: `/admin/${adminId}/reportes`, label: "Reportes / Métricas", icon: BarChart3, activeWhen: "reportes" },
-    { href: `/admin/${adminId}/categorias`, label: "Categorías", icon: Tags, activeWhen: "categorias" },
-    { href: `/admin/${adminId}/configuracion`, label: "Configuración", icon: Settings, activeWhen: "configuracion" },
+    { href: `/admin/${adminSlug}`, label: "Panel", icon: LayoutDashboard, activeWhen: "" },
+    { href: `/admin/${adminSlug}/empleados`, label: "Empleados", icon: Users, activeWhen: "empleados" },
+    { href: `/admin/${adminSlug}/productos`, label: "Productos", icon: UtensilsCrossed, activeWhen: "productos" },
+    { href: `/admin/${adminSlug}/mesas`, label: "Mesas", icon: LayoutGrid, activeWhen: "mesas" },
+    { href: `/admin/${adminSlug}/historial`, label: "Historial / Ventas", icon: History, activeWhen: "historial" },
+    { href: `/admin/${adminSlug}/gastos`, label: "Gastos", icon: Wallet, activeWhen: "gastos" },
+    { href: `/admin/${adminSlug}/reportes`, label: "Reportes / Métricas", icon: BarChart3, activeWhen: "reportes" },
+    { href: `/admin/${adminSlug}/categorias`, label: "Categorías", icon: Tags, activeWhen: "categorias" },
+    { href: `/admin/${adminSlug}/configuracion`, label: "Configuración", icon: Settings, activeWhen: "configuracion" },
   ];
 
   const isActive = (section: (typeof sections)[number]) => {

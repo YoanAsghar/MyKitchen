@@ -3,7 +3,7 @@
 - **ID:** SPEC-015
 - **Área:** Admin
 - **Estado:** En progreso (estructura standalone + Empleados/Productos/Categorías/Configuración implementados; resto de secciones en `ComingSoon`)
-- **Última actualización:** 2026-10-14
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -14,14 +14,14 @@ independiente de la operación de salón, donde `owner`/`admin` gestionen el loc
 
 ## 2. Objetivo
 
-Tener un panel de administración **standalone** en `/admin/{id}` (sin el `Navbar`
+Tener un panel de administración **standalone** en `/admin/{slug}` (sin el `Navbar`
 ni el chrome de la app) con secciones por área de gestión, arrancando con
 **Empleados** y **Productos** con CRUD completo y rol `owner`/`admin`.
 
 ## 3. Alcance
 
 **Incluye**
-- Sección propia: `/admin/{id}`, con `layout.tsx` dedicado (sidebar + topbar
+- Sección propia: `/admin/{slug}`, con `layout.tsx` dedicado (sidebar + topbar
   móvil, logout, "Ir a mi restaurante"), fuera de `RootClientLayout`'s app chrome.
 - Sidebar con sub-rutas: Panel, Empleados, Productos, Mesas, Historial/Ventas,
   Gastos, Reportes/Métricas, Categorías, Configuración.
@@ -46,13 +46,13 @@ ni el chrome de la app) con secciones por área de gestión, arrancando con
 
 ### HU-1 — Acceso standalone sin navbar de la app
 - **Dado** un usuario con sesión
-- **Cuando** entra a `/admin/{id}`
+- **Cuando** entra a `/admin/{slug}`
 - **Entonces** ve el panel con su propia sidebar/topbar (sin el `Navbar` de la app)
   y el sidebar marca como activa la sección de la URL.
 
 ### HU-2 — Acceso por rol
 - **Dado** un usuario `user` (staff)
-- **Cuando** intenta entrar a `/admin/{id}`
+- **Cuando** intenta entrar a `/admin/{slug}`
 - **Entonces** aunque cargue la ruta, las APIs de mutación responden `403` (gating
   visual en sidebar + protección backend).
 
@@ -60,28 +60,28 @@ ni el chrome de la app) con secciones por área de gestión, arrancando con
 - **Dado** un usuario logueado
 - **Cuando** entra a `/`
 - **Entonces** siempre ve el landing `/home`, y desde el `MarketingNavbar` puede
-  elegir "Ir a mi restaurante" (→ `/kitchen/{id}/mesas`) o, si es `owner`/`admin`,
-  "Gestionar mi restaurante" (→ `/admin/{id}`).
+  elegir "Ir a mi restaurante" (→ `/kitchen/{slug}/mesas`) o, si es `owner`/`admin`,
+  "Gestionar mi restaurante" (→ `/admin/{slug}`).
 
 ### HU-4 — CRUD de empleados
-- **Dado** un `owner`/`admin` en /admin/{id}/empleados
+- **Dado** un `owner`/`admin` en /admin/{slug}/empleados
 - **Cuando** crea, edita (con/sin nueva contraseña) o elimina un empleado y asigna rol
 - **Entonces** se refleja vía `UserServices` respetando la normalización de rol y
   las protecciones del backend (owner no borrable por no-admin, sin auto-eliminación).
 
 ### HU-5 — CRUD de productos
-- **Dado** un `owner`/`admin` en /admin/{id}/productos
+- **Dado** un `owner`/`admin` en /admin/{slug}/productos
 - **Cuando** crea, edita o borra un producto
 - **Entonces** el catálogo se actualiza (y la carta lo refleja al recargar).
 
 ### HU-5b — CRUD de categorías
-- **Dado** un `owner`/`admin` en /admin/{id}/categorias
+- **Dado** un `owner`/`admin` en /admin/{slug}/categorias
 - **Cuando** crea, edita o borra una categoría
 - **Entonces** se persiste vía `CategoryServices`; un duplicado o una categoría en
   uso devuelven `409` y se muestran al usuario.
 
 ### HU-5c — Configuración del restaurante
-- **Dado** un `owner` en /admin/{id}/configuracion
+- **Dado** un `owner` en /admin/{slug}/configuracion
 - **Cuando** edita nombre, encargado, email o teléfono y guarda
 - **Entonces** se persiste vía `RestaurantServices.update` (y, si cambia el email,
   también el login del owner); `409` en email en uso se muestra al usuario.
@@ -92,7 +92,7 @@ ni el chrome de la app) con secciones por área de gestión, arrancando con
 - **Dado** el `Navbar` de la app en una página de salón
 - **Cuando** soy `owner`/`admin`
 - **Entonces** veo **Admin** a la izquierda del botón de cerrar sesión, que lleva a
-  `/admin/{restaurantId}`.
+  `/admin/{slug}`.
 
 ## 5. Contrato de API
 
@@ -132,24 +132,24 @@ la carta en vivo.
 
 ## 9. UI / Flujo
 
-- Ruta y layout: `frontend/src/app/admin/[id]/layout.tsx` (sidebar con `usePathname`
+- Ruta y layout: `frontend/src/app/admin/[slug]/layout.tsx` (sidebar con `usePathname`
   como activo; móvil usa topbar con `<select>` de secciones + botones restaurante/logout).
 - Páginas:
-  - `/admin/{id}` → `page.tsx` → `AdminPanel.tsx` (placeholder "Panel").
-  - `/admin/{id}/empleados` → `Empleados.tsx` (CRUD + roles, `UserServices`).
-  - `/admin/{id}/productos` → `Productos.tsx` (CRUD, `ProductServices`).
-  - `/admin/{id}/categorias` → `Categorias.tsx` (CRUD, `CategoryServices`).
-  - `/admin/{id}/configuracion` → `Configuracion.tsx` (perfil del restaurante,
+  - `/admin/{slug}` → `page.tsx` → `AdminPanel.tsx` (placeholder "Panel").
+  - `/admin/{slug}/empleados` → `Empleados.tsx` (CRUD + roles, `UserServices`).
+  - `/admin/{slug}/productos` → `Productos.tsx` (CRUD, `ProductServices`).
+  - `/admin/{slug}/categorias` → `Categorias.tsx` (CRUD, `CategoryServices`).
+  - `/admin/{slug}/configuracion` → `Configuracion.tsx` (perfil del restaurante,
     `RestaurantServices`; edición sólo `owner`, resto en modo lectura).
-  - `/admin/{id}/{mesas,historial,gastos,reportes}` →
+  - `/admin/{slug}/{mesas,historial,gastos,reportes}` →
     `ComingSoon` (`admin/components/ComingSoon.tsx`).
 - `RootClientLayout`: `/admin*` es standalone (requiere sesión, sin app chrome) y
-  rebota `/admin/<otroId>` a `/admin/{restaurantIdSesión}`; el tab Admin del
-  `Navbar` apunta a `/admin/{restaurantId}`. Además hace **guard de rol**: sólo
+  rebota `/admin/<otroSlug>` a `/admin/{slugSesión}`; el tab Admin del
+  `Navbar` apunta a `/admin/{slug}`. Además hace **guard de rol**: sólo
   `admin`/`owner` pueden renderizar el shell; un `user` (staff) es redirigido a
-  `/kitchen/{restaurantId}/mesas` (mismo gate que el `ManagerOnly` del backend).
+  `/kitchen/{slug}/mesas` (mismo gate que el `ManagerOnly` del backend).
 - `MarketingNavbar`: con sesión muestra "Ir a mi restaurante" y (si `owner`/`admin`)
-  "Gestionar mi restaurante" → `/admin/{restaurantId}`.
+  "Gestionar mi restaurante" → `/admin/{slug}`.
 
 ## 10. Cobertura de tests
 
@@ -162,7 +162,7 @@ Verificación frontend por `npx tsc --noEmit`.
 - [ ] Construir secciones restantes: Mesas, Historial/Ventas, Gastos, Reportes/Métricas.
 - [ ] Definir el **Panel** (resumen con métricas del local).
 - [ ] Gate visual: ocultar eliminar/editar sobre la propia cuenta en Empleados.
-- [x] Guard de ruta por rol en el layout admin (sólo `admin`/`owner`; staff → `/kitchen/{id}/mesas`).
+- [x] Guard de ruta por rol en el layout admin (sólo `admin`/`owner`; staff → `/kitchen/{slug}/mesas`).
 - [ ] Subida real de imágenes de productos.
 
 > **Relacionadas:** [staff-management.md](./staff-management.md),

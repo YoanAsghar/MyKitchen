@@ -3,7 +3,7 @@
 - **ID:** SPEC-014
 - **Área:** Marketing
 - **Estado:** Implementado
-- **Última actualización:** 2026-10-11
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -59,14 +59,14 @@ negocio, con estética propia y navegación consistente.
 - **Cuando** envío datos válidos
 - **Entonces** se crea el restaurante (ver
   [restaurant-onboarding.md](./restaurant-onboarding.md)), se inicia sesión y se
-  redirige a `/kitchen/{id}/mesas`.
+  redirige a `/kitchen/{slug}/mesas`.
 
 ### HU-6 — Navbar con sesión
 - **Dado** un usuario logueado navegando el marketing
 - **Cuando** mira el `MarketingNavbar`
-- **Entonces** ve **"Ir a mi restaurante"** (→ `/kitchen/{restaurantId}/mesas`) en
+- **Entonces** ve **"Ir a mi restaurante"** (→ `/kitchen/{slug}/mesas`) en
   lugar de Iniciar sesión/Crear cuenta; y si es `owner`/`admin`, además
-  **"Gestionar mi restaurante"** (→ `/admin/{restaurantId}`). Mientras se restaura
+  **"Gestionar mi restaurante"** (→ `/admin/{slug}`). Mientras se restaura
   la sesión se muestra un placeholder (sin flash de CTAs logueados).
 
 ### HU-7 — Raíz sin auto-redirección

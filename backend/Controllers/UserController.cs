@@ -124,7 +124,13 @@ namespace MyKitchen.Controllers
 
             await HttpContext.SignInAsync("cookie", principal);
 
-            return Ok(new { user.UserName, user.Role, user.RestaurantId });
+            // The restaurant name is a PK lookup (not a claim) so a rename is
+            // reflected on the next login; the frontend turns it into the URL slug.
+            var restaurantName = user.RestaurantId > 0
+                ? (await _context.Restaurants.FindAsync(user.RestaurantId))?.Name ?? ""
+                : "";
+
+            return Ok(new { user.UserName, user.Role, user.RestaurantId, restaurantName });
         }
 
         //
@@ -132,13 +138,16 @@ namespace MyKitchen.Controllers
         //
         [HttpGet("me")]
         [Authorize]
-        public ActionResult<object> Me()
+        public async Task<ActionResult<object>> Me()
         {
             var userName = User.FindFirstValue(ClaimTypes.Name) ?? "";
             var role = User.FindFirstValue(ClaimTypes.Role) ?? Roles.User;
             var restaurantId = int.TryParse(User.FindFirstValue(RestaurantClaims.Id), out var id) ? id : 0;
             var userId = int.TryParse(User.FindFirstValue(RestaurantClaims.UserId), out var uid) ? uid : 0;
-            return Ok(new { userId, userName, role, restaurantId });
+            // Same PK lookup as login: keeps the URL slug in sync after a rename.
+            var restaurant = restaurantId > 0 ? await _context.Restaurants.FindAsync(restaurantId) : null;
+            var restaurantName = restaurant?.Name ?? "";
+            return Ok(new { userId, userName, role, restaurantId, restaurantName });
         }
 
         //

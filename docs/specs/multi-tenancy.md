@@ -3,7 +3,7 @@
 - **ID:** SPEC-002
 - **Área:** Plataforma
 - **Estado:** Implementado
-- **Última actualización:** 2026-10-11
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -59,9 +59,11 @@ payload del cliente.
 - **Entonces** recibe `403`/`Forbid`.
 
 ### HU-5 — La URL no cambia de tenant
-- **Dado** un usuario cuyo restaurante es 5
-- **Cuando** navega manualmente a `/kitchen/9/mesas`
-- **Entonces** el layout lo redirige a `/kitchen/5/mesas`.
+- **Dado** un usuario cuyo restaurante se llama "La Parrilla" (slug `la-parrilla`)
+- **Cuando** navega manualmente a `/kitchen/otro-local/mesas` (o a un bookmark
+  legado tipo `/kitchen/9/mesas`)
+- **Entonces** el layout lo redirige a `/kitchen/la-parrilla/mesas`. El `{slug}`
+  es solo cosmético: el scope real siempre sale del claim de la cookie.
 
 ## 5. Contrato de API
 
@@ -101,8 +103,10 @@ Todas las emisiones del hub van a `RestaurantHub.GroupFor(CurrentRestaurantId)`
 
 ## 9. UI / Flujo
 
-- `frontend/src/app/RootClientLayout.tsx` compara el `{id}` de la URL con el
-  `restaurantId` de sesión y hace `router.replace` si difieren.
+- `frontend/src/app/RootClientLayout.tsx` compara el `{slug}` de la URL con
+  `restaurantSlug(nombreSesión, idSesión)` y hace `router.replace` si difieren
+  (ver [navigation-layout.md](./navigation-layout.md)). El id nunca se lee de
+  la URL.
 - El `Navbar` muestra la pestaña Admin solo si `role === "admin" || "owner"`; los
   botones Agregar/Quitar mesa igual.
 

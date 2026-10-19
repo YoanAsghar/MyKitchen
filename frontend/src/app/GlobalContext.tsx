@@ -12,6 +12,8 @@ interface GlobalContextType {
   setRole: (val: string) => void;
   restaurantId: number;
   setRestaurantId: (val: number) => void;
+  restaurantName: string;
+  setRestaurantName: (val: string) => void;
   isLoading: boolean;
   setIsLoading: (val: boolean) => void;
   isAuthChecking: boolean;
@@ -25,6 +27,9 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   const [username, setUsername] = useState("");
   const [role, setRole] = useState("");
   const [restaurantId, setRestaurantId] = useState(0);
+  // Restaurant display name from the session (/me, login, register) — the
+  // input for the {slug} in /kitchen/{slug}/... and /admin/{slug}/... URLs.
+  const [restaurantName, setRestaurantName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   // True while we verify the persisted session on first load; the app must not
   // redirect to /login before this resolves.
@@ -40,6 +45,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
         setUsername(session.userName);
         setRole(session.role);
         setRestaurantId(session.restaurantId ?? 0);
+        setRestaurantName(session.restaurantName ?? "");
         setIsAuthenticated(true);
       } catch {
         // No valid session — stay logged out.
@@ -61,6 +67,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     setUsername("");
     setRole("");
     setRestaurantId(0);
+    setRestaurantName("");
   }, []);
 
   const value = useMemo(() => ({
@@ -72,11 +79,13 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     setRole,
     restaurantId,
     setRestaurantId,
+    restaurantName,
+    setRestaurantName,
     isLoading,
     setIsLoading,
     isAuthChecking,
     logout,
-  }), [isAuthenticated, username, role, restaurantId, isLoading, isAuthChecking, logout]);
+  }), [isAuthenticated, username, role, restaurantId, restaurantName, isLoading, isAuthChecking, logout]);
 
   return (
     <GlobalContext.Provider value={value}>

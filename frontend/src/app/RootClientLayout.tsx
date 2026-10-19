@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import Navbar from "../components/Navbar";
 import LoadingOverlay from "../components/LoadingOverlay";
 import { BodyTabs } from "../models/BodyTabs";
 import { useRouter, usePathname, useParams } from "next/navigation";
 import { useGlobalContext } from "./GlobalContext";
+import { restaurantSlug } from "../restaurantSlug";
 
 export default function RootClientLayout({
   children,
@@ -17,6 +18,7 @@ export default function RootClientLayout({
     username,
     role,
     restaurantId,
+    restaurantName,
     isLoading,
     isAuthChecking,
     logout,
@@ -34,7 +36,7 @@ export default function RootClientLayout({
     pathname.startsWith("/auth") ||
     pathname.startsWith("/home");
 
-  // The admin dashboard (/admin/[id]) is a fully standalone section: it still
+  // The admin dashboard (/admin/[slug]) is a fully standalone section: it still
   // requires a session but renders its own chrome (sidebar/topbar in its layout),
   // without the app Navbar. Only managers (admin/owner) may view it — the same
   // gate the backend enforces via the ManagerOnly policy, so a staff `user`
@@ -52,55 +54,62 @@ export default function RootClientLayout({
   }, [isAuthenticated, pathname, isLoading, isAuthChecking, isPublicPath, router]);
 
   const getTabFromPathname = (path: string): BodyTabs => {
-    if (path.includes("mesas")) return BodyTabs.mesas;
-    if (path.includes("cocina")) return BodyTabs.cocina;
-    if (path.includes("ordenes")) return BodyTabs.ordenes;
-    if (path.includes("carta")) return BodyTabs.carta;
-    if (path.includes("admin")) return BodyTabs.admin;
+    // Exact third segment (/kitchen/{slug}/{tab}) — never a substring match:
+    // a slug like "mesas-bonitas" or "cocina-central" must not hijack the tab.
+    const tab = path.split("/")[2];
+    if (tab === "cocina") return BodyTabs.cocina;
+    if (tab === "ordenes") return BodyTabs.ordenes;
+    if (tab === "carta") return BodyTabs.carta;
+    if (tab === "admin") return BodyTabs.admin;
     return BodyTabs.mesas;
   };
 
   const currentTab = getTabFromPathname(pathname || "");
 
-  // The restaurant id for the current kitchen scope, from /kitchen/[id]/...
-  // Falls back to the session's restaurant so navigation still works even
-  // when directly landing on a kitchen page.
-  const kitchenId = typeof params?.id === "string" ? params.id : String(restaurantId || 1);
+  // The session's own restaurant slug — the single source of truth for the
+  // {slug} URL segment (kitchen + admin). The backend scopes every API call to
+  // the cookie's restaurantId claim, so the URL can never switch tenants; it
+  // only mirrors the session's restaurant name.
+  const sessionSlug = useMemo(
+    () => restaurantSlug(restaurantName, restaurantId),
+    [restaurantName, restaurantId]
+  );
 
-  // The session's own restaurant. The backend scopes every API call to the
-  // cookie's restaurantId claim, so the URL can never switch tenants.
-  const sessionKitchenId = String(restaurantId || 1);
+  // The {slug} currently in the URL (from /kitchen/[slug]/... or
+  // /admin/[slug]/...), falling back to the session slug when not on such a
+  // route. Never used to fetch data — only to detect a stale/foreign URL.
+  const urlSlug = typeof params?.slug === "string" ? params.slug : sessionSlug;
 
   useEffect(() => {
     const onKitchenRoute = /^\/kitchen\/[^/]+/.test(pathname ?? "");
     const onAdminRoute = /^\/admin\/[^/]+/.test(pathname ?? "");
-    // Keep the URL honest: a manually edited /kitchen/<otherId>/... or
-    // /admin/<otherId>/... can't show another restaurant's data (the backend
-    // serves only the session's scope), so bounce back to the caller's own
-    // restaurant scope.
-    if (!isAuthChecking && isAuthenticated && (onKitchenRoute || onAdminRoute) && kitchenId !== sessionKitchenId) {
+    // Keep the URL honest: a manually edited /kitchen/<otroSlug>/... or
+    // /admin/<otroSlug>/... (including legacy id URLs like /kitchen/1/mesas)
+    // can't show another restaurant's data (the backend serves only the
+    // session's scope), so bounce back to the caller's own restaurant slug.
+    if (!isAuthChecking && isAuthenticated && (onKitchenRoute || onAdminRoute) && urlSlug !== sessionSlug) {
       router.replace(
         onAdminRoute
-          ? `/admin/${sessionKitchenId}`
-          : `/kitchen/${sessionKitchenId}/mesas`
+          ? `/admin/${sessionSlug}`
+          : `/kitchen/${sessionSlug}/mesas`
       );
     }
-  }, [isAuthChecking, isAuthenticated, pathname, kitchenId, sessionKitchenId, router]);
+  }, [isAuthChecking, isAuthenticated, pathname, urlSlug, sessionSlug, router]);
 
   // Managers only: bounce a staff `user` off the admin section back to their
   // kitchen (the backend would 403 the data calls anyway).
   useEffect(() => {
     if (!isAuthChecking && isAuthenticated && isAdminPath && !isManager) {
-      router.replace(`/kitchen/${sessionKitchenId}/mesas`);
+      router.replace(`/kitchen/${sessionSlug}/mesas`);
     }
-  }, [isAuthChecking, isAuthenticated, isAdminPath, isManager, sessionKitchenId, router]);
+  }, [isAuthChecking, isAuthenticated, isAdminPath, isManager, sessionSlug, router]);
 
   const handleTabChange = (tab: BodyTabs) => {
     if (tab === BodyTabs.admin) {
-      router.push(`/admin/${sessionKitchenId}`);
+      router.push(`/admin/${sessionSlug}`);
       return;
     }
-    router.push(`/kitchen/${kitchenId}/${tab}`);
+    router.push(`/kitchen/${sessionSlug}/${tab}`);
   };
 
   // While verifying the persisted session, show nothing to avoid a redirect flash

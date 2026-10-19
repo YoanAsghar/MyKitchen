@@ -3,7 +3,7 @@
 - **ID:** SPEC-005
 - **Área:** Cuenta
 - **Estado:** Implementado
-- **Última actualización:** 2026-10-11
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -27,7 +27,7 @@ el email del restaurante.
 - Edición (`PUT /Restaurant/{id}`) y borrado en cascada (`DELETE /Restaurant/{id}`).
 - Sincronización del username del owner al cambiar el email.
 - Pantalla de edición del perfil en la sección **Configuración** del panel admin
-  (`/admin/{id}/configuracion`), sólo para el rol `owner`.
+  (`/admin/{slug}/configuracion`), sólo para el rol `owner`.
 
 **No incluye (fuera de alcance)**
 - Cambio de contraseña del owner desde el perfil (se hace vía `PUT /User/{id}`).
@@ -42,7 +42,7 @@ el email del restaurante.
   válidos (≥ 8)
 - **Cuando** envía el formulario de `/home/registro`
 - **Entonces** se crea el restaurante + owner, se inicia sesión y se redirige a
-  `/kitchen/{restaurantId}/mesas`.
+  `/kitchen/{slug}/mesas`.
 
 ### HU-2 — Nombre/email únicos
 - **Dado** un restaurante o email ya registrado
@@ -130,7 +130,7 @@ N/A.
   "Restaurante creado correctamente" y redirige en 1.5 s.
 - `frontend/src/services/RestaurantServices.tsx`: `register`, `getMy`, `update`,
   `remove`. `readError` extrae `{ message }` (también en `getMy`/`update`).
-- **Pantalla de perfil**: `/admin/{id}/configuracion` (`Configuracion.tsx`) muestra
+- **Pantalla de perfil**: `/admin/{slug}/configuracion` (`Configuracion.tsx`) muestra
   nombre, encargado, email y teléfono en un formulario; guarda con
   `RestaurantServices.update`. Si el rol no es `owner`, los campos quedan en modo
   lectura y no se muestra el botón de guardar (política `OwnerOnly` en backend).
