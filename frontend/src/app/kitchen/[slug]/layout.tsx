@@ -26,8 +26,9 @@ export default function KitchenLayout({
 
   // Exact third segment (/kitchen/{slug}/{tab}) — never a substring match:
   // a slug like "mesas-bonitas" or "cocina-central" must not hijack the tab.
+  // Note split("/") yields a leading "", so [0]="" [1]="kitchen" [2]=slug [3]=tab.
   const getTabFromPathname = (path: string): BodyTabs => {
-    const tab = path.split("/")[2];
+    const tab = path.split("/")[3];
     if (tab === "cocina") return BodyTabs.cocina;
     if (tab === "ordenes") return BodyTabs.ordenes;
     if (tab === "carta") return BodyTabs.carta;

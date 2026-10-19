@@ -1,5 +1,6 @@
 import { BodyTabs } from "../models/BodyTabs";
 import { useRouter } from "next/navigation";
+import NavbarItem from "./NavbarItem";
 
 interface SideBarProps {
   username: string;
@@ -31,50 +32,30 @@ const Navbar = ({role, username, setTabChange, onLogout, currentTab} : SideBarPr
       {/* Menú */}
       <nav className="flex-1 py-2 pl-10">
         <ul className="space-y-0.5 flex flex-row">
-          <li
-            onClick={() => {
-              setTabChange(BodyTabs.mesas);
-            }}
-            className={`flex flex-row items-center transition-transform hover:scale-110 hover:bg-black hover:invert px-3 py-3 w-40 rounded-lg cursor-pointer ${currentTab === BodyTabs.mesas ? "bg-black invert scale-90" : ""}`}
-          >
-            <img className="size-6 invert" src="/home_icon.png" alt="" />
-            <a href="#" className="flex items-center gap-2 px-4 text-white">
-              Mesas
-            </a>
-          </li>
-          <li
-            onClick={() => {
-              setTabChange(BodyTabs.cocina);
-            }}
-            className={`flex flex-row items-center transition-transform hover:scale-110 hover:bg-black hover:invert px-3 py-3 w-40 rounded-lg cursor-pointer ${currentTab === BodyTabs.cocina ? "bg-black invert scale-90" : ""}`}
-          >
-            <img className="size-6 invert" src="/kitchen.png" alt="" />
-            <a href="#" className="flex items-center gap-2 px-4 text-white">
-              Cocina
-            </a>
-          </li>
-          <li
-            onClick={() => {
-              setTabChange(BodyTabs.carta);
-            }}
-            className={`flex flex-row items-center transition-transform hover:scale-110 hover:bg-black hover:invert px-3 py-3 w-40 rounded-lg cursor-pointer ${currentTab === BodyTabs.carta ? "bg-black invert scale-90" : ""}`}
-          >
-            <img className="size-6 invert" src="/food.png" alt="" />
-            <a href="#" className="flex items-center gap-2 px-4 text-white">
-              Carta
-            </a>
-          </li>
-          <li
-            onClick={() => {
-              setTabChange(BodyTabs.ordenes);
-            }}
-            className={`flex flex-row items-center transition-transform hover:scale-110 hover:bg-black hover:invert px-3 py-3 w-40 rounded-lg cursor-pointer ${currentTab === BodyTabs.ordenes ? "bg-black invert scale-90" : ""}`}
-          >
-            <img className="size-6 invert" src="/orders.png" alt="" />
-            <a href="#" className="flex items-center gap-2 px-4 text-white ">
-              Ordenes
-            </a>
-          </li>
+          <NavbarItem
+            text="Mesas"
+            image="/home_icon.png"
+            active={currentTab === BodyTabs.mesas}
+            onClick={() => setTabChange(BodyTabs.mesas)}
+          />
+          <NavbarItem
+            text="Cocina"
+            image="/kitchen.png"
+            active={currentTab === BodyTabs.cocina}
+            onClick={() => setTabChange(BodyTabs.cocina)}
+          />
+          <NavbarItem
+            text="Carta"
+            image="/food.png"
+            active={currentTab === BodyTabs.carta}
+            onClick={() => setTabChange(BodyTabs.carta)}
+          />
+          <NavbarItem
+            text="Ordenes"
+            image="/orders.png"
+            active={currentTab === BodyTabs.ordenes}
+            onClick={() => setTabChange(BodyTabs.ordenes)}
+          />
         </ul>
       </nav>
 
