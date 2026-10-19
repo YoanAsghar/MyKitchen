@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { BodyTabs } from "../models/BodyTabs";
 import { useRouter } from "next/navigation";
 
@@ -10,8 +9,10 @@ interface SideBarProps {
   onLogout: () => void;
 }
 
-const Navbar = ({role, username, setTabChange, onLogout} : SideBarProps) => {
-  const [selectedTab, setSelectedTab] = useState(1);
+// The active highlight is driven by `currentTab` (derived from the URL by the
+// kitchen layout) instead of local click state, so it always matches the page
+// you're on — including after a round-trip through /admin.
+const Navbar = ({role, username, setTabChange, onLogout, currentTab} : SideBarProps) => {
   const router = useRouter();
 
   function handleLogout(){
@@ -33,9 +34,8 @@ const Navbar = ({role, username, setTabChange, onLogout} : SideBarProps) => {
           <li
             onClick={() => {
               setTabChange(BodyTabs.mesas);
-              setSelectedTab(1);
             }}
-            className={`flex flex-row items-center transition-transform hover:scale-110 hover:bg-black hover:invert px-3 py-3 w-40 rounded-lg cursor-pointer ${selectedTab === 1 ? "bg-black invert scale-90" : ""}`}
+            className={`flex flex-row items-center transition-transform hover:scale-110 hover:bg-black hover:invert px-3 py-3 w-40 rounded-lg cursor-pointer ${currentTab === BodyTabs.mesas ? "bg-black invert scale-90" : ""}`}
           >
             <img className="size-6 invert" src="/home_icon.png" alt="" />
             <a href="#" className="flex items-center gap-2 px-4 text-white">
@@ -45,9 +45,8 @@ const Navbar = ({role, username, setTabChange, onLogout} : SideBarProps) => {
           <li
             onClick={() => {
               setTabChange(BodyTabs.cocina);
-              setSelectedTab(2);
             }}
-            className={`flex flex-row items-center transition-transform hover:scale-110 hover:bg-black hover:invert px-3 py-3 w-40 rounded-lg cursor-pointer ${selectedTab === 2 ? "bg-black invert scale-90" : ""}`}
+            className={`flex flex-row items-center transition-transform hover:scale-110 hover:bg-black hover:invert px-3 py-3 w-40 rounded-lg cursor-pointer ${currentTab === BodyTabs.cocina ? "bg-black invert scale-90" : ""}`}
           >
             <img className="size-6 invert" src="/kitchen.png" alt="" />
             <a href="#" className="flex items-center gap-2 px-4 text-white">
@@ -57,9 +56,8 @@ const Navbar = ({role, username, setTabChange, onLogout} : SideBarProps) => {
           <li
             onClick={() => {
               setTabChange(BodyTabs.carta);
-              setSelectedTab(3);
             }}
-            className={`flex flex-row items-center transition-transform hover:scale-110 hover:bg-black hover:invert px-3 py-3 w-40 rounded-lg cursor-pointer ${selectedTab === 3 ? "bg-black invert scale-90" : ""}`}
+            className={`flex flex-row items-center transition-transform hover:scale-110 hover:bg-black hover:invert px-3 py-3 w-40 rounded-lg cursor-pointer ${currentTab === BodyTabs.carta ? "bg-black invert scale-90" : ""}`}
           >
             <img className="size-6 invert" src="/food.png" alt="" />
             <a href="#" className="flex items-center gap-2 px-4 text-white">
@@ -69,9 +67,8 @@ const Navbar = ({role, username, setTabChange, onLogout} : SideBarProps) => {
           <li
             onClick={() => {
               setTabChange(BodyTabs.ordenes);
-              setSelectedTab(4);
             }}
-            className={`flex flex-row items-center transition-transform hover:scale-110 hover:bg-black hover:invert px-3 py-3 w-40 rounded-lg cursor-pointer ${selectedTab === 4 ? "bg-black invert scale-90" : ""}`}
+            className={`flex flex-row items-center transition-transform hover:scale-110 hover:bg-black hover:invert px-3 py-3 w-40 rounded-lg cursor-pointer ${currentTab === BodyTabs.ordenes ? "bg-black invert scale-90" : ""}`}
           >
             <img className="size-6 invert" src="/orders.png" alt="" />
             <a href="#" className="flex items-center gap-2 px-4 text-white ">
@@ -87,7 +84,6 @@ const Navbar = ({role, username, setTabChange, onLogout} : SideBarProps) => {
           <button
             onClick={() => {
               setTabChange(BodyTabs.admin);
-              setSelectedTab(5);
             }}
             className="px-3 flex flex-row items-center cursor-pointer py-3 rounded-lg hover:bg-black hover:invert"
           >
