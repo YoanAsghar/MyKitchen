@@ -5,17 +5,19 @@ import { Menu, X, ChefHat } from "lucide-react";
 import { GhostBtn, PrimaryBtn, marketingPath, type MarketingPage } from "./ui";
 import { useRouter } from "next/navigation";
 import { useGlobalContext } from "../../GlobalContext";
+import { restaurantSlug } from "../../../restaurantSlug";
 
 export function MarketingNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
-  const { isAuthenticated, isAuthChecking, role, restaurantId } = useGlobalContext();
+  const { isAuthenticated, isAuthChecking, role, restaurantId, restaurantName } = useGlobalContext();
 
   const canManage = role === "admin" || role === "owner";
+  const slug = restaurantSlug(restaurantName, restaurantId);
 
   const navigate = (page: MarketingPage) => router.push(marketingPath(page));
-  const goToRestaurant = () => router.push(`/kitchen/${restaurantId || 1}/mesas`);
-  const goToManagement = () => router.push(`/admin/${restaurantId || 1}`);
+  const goToRestaurant = () => router.push(`/kitchen/${slug}/mesas`);
+  const goToManagement = () => router.push(`/admin/${slug}`);
 
   const goToLandingWithFeatures = () => {
     router.push(marketingPath("landing"));

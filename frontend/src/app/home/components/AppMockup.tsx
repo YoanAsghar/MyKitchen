@@ -32,7 +32,7 @@ export function AppMockup() {
           <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
         </div>
         <div className="flex-1 bg-white/5 rounded-md px-3 py-1 text-[10px] text-white/25 font-mono">
-          app.mykitchen.lat/kitchen/1/mesas
+          app.mykitchen.lat/kitchen/la-parrilla-del-centro/mesas
         </div>
         <Wifi className="w-3 h-3 opacity-70" style={{ color: colorPalette.Green }} />
       </div>

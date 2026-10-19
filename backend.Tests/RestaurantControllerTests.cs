@@ -98,6 +98,25 @@ public class RestaurantControllerTests : IDisposable
     }
 
     [Fact]
+    public async Task MeAndLogin_ReturnRestaurantName()
+    {
+        await RegisterAsync();
+
+        // /me carries the name right after the auto-login of the register.
+        var me = await _client.GetFromJsonAsync<JsonElement>("/api/v1/User/me");
+        Assert.Equal("La Parrilla", me.GetProperty("restaurantName").GetString());
+
+        // A fresh login must expose it too (the frontend builds the URL slug from it).
+        await _client.PostAsync("/api/v1/User/logout", null);
+        var login = await _client.PostAsJsonAsync("/api/v1/User/login",
+            new { userName = "owner@laparrilla.com", passwordHash = "secret123" });
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+
+        var body = await login.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("La Parrilla", body.GetProperty("restaurantName").GetString());
+    }
+
+    [Fact]
     public async Task Register_DuplicateName_ReturnsConflict()
     {
         await RegisterAsync("El Rincón");

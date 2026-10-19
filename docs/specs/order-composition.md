@@ -3,7 +3,7 @@
 - **ID:** SPEC-008
 - **Área:** Operación
 - **Estado:** Implementado
-- **Última actualización:** 2026-10-14
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -117,7 +117,7 @@ el commit).
 
 ## 9. UI / Flujo
 
-- `frontend/src/app/kitchen/[id]/mesas/tableInformation.tsx`:
+- `frontend/src/app/kitchen/[slug]/mesas/tableInformation.tsx`:
   - Pestaña 1 "Pedidos actuales": tabla de ítems, total y (si hay orden) el
     bloque de pago (`TablePayment`).
   - Pestaña 2 "Agregar productos": buscador, lista de productos y botón

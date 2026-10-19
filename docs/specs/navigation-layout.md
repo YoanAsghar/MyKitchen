@@ -3,7 +3,7 @@
 - **ID:** SPEC-004
 - **Área:** Plataforma
 - **Estado:** Implementado
-- **Última actualización:** 2026-10-11
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -20,11 +20,13 @@ Definir el enrutado, el layout (chrome vs. público) y los dos contextos globale
 ## 3. Alcance
 
 **Incluye**
-- Rutas públicas (`/`, `/home*`, `/auth*`) vs. privadas (`/kitchen/{id}/*`) y
-  standalone (`/admin/{id}`).
+- Rutas públicas (`/`, `/home*`, `/auth*`) vs. privadas (`/kitchen/{slug}/*`) y
+  standalone (`/admin/{slug}`), donde `{slug}` es el **nombre del restaurante
+  convertido en slug** (no el id): minúsculas, sin acentos, separado con `-`
+  (ej.: "El Rincón de Ana" → `/kitchen/el-rincon-de-ana/mesas`).
 - Redirecciones: `/` → siempre `/home`; privada sin sesión → `/auth/login`;
-  `/kitchen/<otroId>` → `/kitchen/{sesión}/mesas`; `/admin/<otroId>` →
-  `/admin/{sesión}`.
+  `/kitchen/<otroSlug>` → `/kitchen/{slugSesión}/mesas`; `/admin/<otroSlug>` →
+  `/admin/{slugSesión}`.
 - Layout con `Navbar` y overlay de carga (app) / sin app chrome (admin).
 - `GlobalProvider` (sesión) y `OrdersProvider` (tiempo real) envolviendo la app.
 
@@ -41,7 +43,7 @@ Definir el enrutado, el layout (chrome vs. público) y los dos contextos globale
 
 ### HU-2 — Ruta privada sin sesión
 - **Dado** un visitante sin cookie
-- **Cuando** entra a `/kitchen/1/mesas`
+- **Cuando** entra a `/kitchen/mi-restaurante/mesas`
 - **Entonces** es redirigido a `/auth/login` (tras resolver el chequeo de sesión).
 
 ### HU-3 — Raíz siempre al landing
@@ -52,10 +54,10 @@ Definir el enrutado, el layout (chrome vs. público) y los dos contextos globale
   [marketing-site.md](./marketing-site.md)) — nunca es automática.
 
 ### HU-4 — Pestaña activa desde la URL
-- **Dado** la ruta `/kitchen/3/ordenes`
+- **Dado** la ruta `/kitchen/la-parrilla/ordenes`
 - **Cuando** se pinta el `Navbar`
 - **Entonces** la pestaña Ordenes aparece seleccionada y las demás navegan con
-  `handleTabChange` preservando el `{id}`.
+  `handleTabChange` preservando el `{slug}` del restaurante.
 
 ### HU-5 — Estado único de órdenes
 - **Dado** una orden abierta
@@ -63,20 +65,37 @@ Definir el enrutado, el layout (chrome vs. público) y los dos contextos globale
 - **Entonces** todas leen el mismo `OrdersContext` (no hay estado por página).
 
 ### HU-6 — Admin standalone
-- **Dado** una ruta `/admin/{id}`
+- **Dado** una ruta `/admin/{slug}`
 - **Cuando** se renderiza un usuario con sesión
 - **Entonces** no se pinta el `Navbar` ni el chrome de la app (el layout propio del
-  admin provee sidebar/topbar/logout) y un `/admin/<otroId>` rebota a
-  `/admin/{restaurantIdSesión}`.
+  admin provee sidebar/topbar/logout) y un `/admin/<otroSlug>` rebota a
+  `/admin/{slugSesión}`.
+
+### HU-7 — La URL muestra el nombre del restaurante (slug)
+- **Dado** un usuario cuyo restaurante se llama "El Rincón de Ana"
+- **Cuando** navega por la app (login, registro, pestañas, CTAs del marketing,
+  sidebar del admin)
+- **Entonces** todas las URLs internas usan `/kitchen/el-rincon-de-ana/...` y
+  `/admin/el-rincon-de-ana/...` (slug: minúsculas, sin acentos, `-` como
+  separador; fallback `r-{id}` si el nombre no produce slug). Un
+  `/kitchen/<otroSlug>` o un bookmark legado tipo `/kitchen/1/mesas` rebota al
+  slug de la sesión; el `{slug}` es **solo cosmético** — el dato sigue
+  scopeado por la cookie, nunca por la URL.
 
 ## 5. Contrato de API
 
-N/A.
+El slug se calcula en el cliente a partir del **nombre** del restaurante, que la
+sesión expone: `GET /api/v1/User/me` y `POST /api/v1/User/login` devuelven
+`restaurantName` (ver [auth.md](./auth.md)); el registro lo trae en
+`restaurant.name`. Nueva ruta de la API no.
 
 ## 6. Modelo de datos
 
 - `BodyTabs` (`frontend/src/models/BodyTabs.tsx`): `mesas`, `cocina`, `ordenes`,
   `carta`, `domicilios`, `admin`. (`domicilios` no tiene página todavía.)
+- `restaurantSlug(nombre, id)` (`frontend/src/restaurantSlug.ts`): helper puro
+  que normaliza el nombre (NFD → sin acentos → minúsculas → no-alfanuméricos →
+  `-`, sin guiones al borde) y cae a `r-{id}` si queda vacío.
 
 ## 7. Eventos en tiempo real
 
@@ -90,8 +109,20 @@ N/A (los consume `OrdersContext`, ver [realtime.md](./realtime.md)).
 - La redirección a login espera a que `isAuthChecking` termine para no patear a
   login en un refresh con cookie válida.
 - Mientras `isAuthChecking`, el layout no renderiza children (evita el flash).
-- `kitchenId` sale de `useParams` y cae al `restaurantId` de sesión si no aplica.
-- `handleTabChange` manda `admin` a `/admin/{restaurantId}` (fuera de `/kitchen`).
+- El `{slug}` de la URL sale de `useParams` (carpetas `kitchen/[slug]` y
+  `admin/[slug]`) y cae al slug de sesión si no aplica; **la sesión
+  (`GlobalContext.restaurantName` + `restaurantId`) es la fuente de verdad**: la
+  comparación de scope es `slugDeURL !== restaurantSlug(nombreSesión, idSesión)`
+  → `router.replace` al slug propio. El id de la URL nunca se usa para pedir datos.
+- `getTabFromPathname` lee el **segmento exacto** de la pestaña
+  (`pathname.split("/")[2]`), no un `includes()`: un slug que contenga "mesas"
+  o "cocina" (ej. `mesas-bonitas`) no puede confundir la pestaña activa.
+- `handleTabChange` manda `admin` a `/admin/{slugSesión}` (fuera de `/kitchen`)
+  y las demás pestañas a `/kitchen/{slugSesión}/{tab}` (usa el slug de sesión,
+  no el de la URL).
+- Cambiar el nombre del restaurante en Configuración actualiza
+  `GlobalContext.restaurantName`, así que el slug de la URL se reescribe solo
+  (el chequeo de scope dispara el `replace`).
 
 ## 9. UI / Flujo
 
@@ -99,10 +130,11 @@ N/A (los consume `OrdersContext`, ver [realtime.md](./realtime.md)).
   `RootClientLayout` → children.
 - `frontend/src/app/RootClientLayout.tsx`: redirects, `isPublicPath`/`isAdminPath`,
   `getTabFromPathname`, `handleTabChange`, gating del `Navbar`.
+- `frontend/src/restaurantSlug.ts`: `restaurantSlug()` (fuente única del slug).
 - `frontend/src/components/Navbar.tsx`: logo, tabs, **Admin** (a la izquierda de
   logout, para `owner`/`admin`), usuario y logout. Acento púrpura `#22007c`
   (`colorPalette.Navy`).
-- `frontend/src/app/admin/[id]/layout.tsx`: chrome standalone del admin (ver
+- `frontend/src/app/admin/[slug]/layout.tsx`: chrome standalone del admin (ver
   [admin-panel.md](./admin-panel.md)).
 - `frontend/src/components/LoadingOverlay.tsx`: overlay cuando `isLoading`.
 
@@ -115,7 +147,8 @@ botones `#22007c`). El código es la fuente de verdad; ver
 ## 10. Cobertura de tests
 
 Sin tests de frontend (no hay suite). Verificación por `npx tsc --noEmit` y
-manual.
+manual. El contrato de `restaurantName` que alimenta el slug sí tiene tests de
+backend (ver [auth.md](./auth.md) §10).
 
 ## 11. Preguntas abiertas / Backlog
 

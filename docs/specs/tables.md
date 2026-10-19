@@ -3,7 +3,7 @@
 - **ID:** SPEC-007
 - **Área:** Operación
 - **Estado:** Implementado
-- **Última actualización:** 2026-10-11
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -99,9 +99,9 @@ Ver [realtime.md](./realtime.md).
 
 ## 9. UI / Flujo
 
-- `frontend/src/app/kitchen/[id]/mesas/page.tsx`: deriva `tablesWithOrders`
+- `frontend/src/app/kitchen/[slug]/mesas/page.tsx`: deriva `tablesWithOrders`
   (merge de `tables` + `openOrders`), `selectedTable` y `selectedTableNumber`.
-- `frontend/src/app/kitchen/[id]/mesas/TablesContent.tsx`: grilla + botones
+- `frontend/src/app/kitchen/[slug]/mesas/TablesContent.tsx`: grilla + botones
   Agregar/Quitar (gated por `role`).
 - `frontend/src/components/TableCards.tsx`: tarjeta con estado Activa/Inactiva,
   comensales y total.

@@ -5,10 +5,11 @@ import { Eye, EyeOff, ChevronLeft, ArrowRight, ChefHat } from "lucide-react";
 import { PrimaryBtn, FieldInput, marketingPath } from "./ui";
 import { RestaurantServices } from "../../../services/RestaurantServices";
 import { useGlobalContext } from "../../GlobalContext";
+import { restaurantSlug } from "../../../restaurantSlug";
 import { useRouter } from "next/navigation";
 
 export default function RegistroView() {
-  const { setUsername, setRole, setRestaurantId, setIsAuthenticated } = useGlobalContext();
+  const { setUsername, setRole, setRestaurantId, setRestaurantName, setIsAuthenticated } = useGlobalContext();
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -65,12 +66,13 @@ export default function RegistroView() {
       setUsername(result.userName);
       setRole(result.role);
       setRestaurantId(result.restaurantId);
+      setRestaurantName(result.restaurant?.name ?? "");
       setIsAuthenticated(true);
       setSuccess("Restaurante creado correctamente");
 
-      // Confirm visibly, then enter the app.
+      // Confirm visibly, then enter the app under the restaurant's slug.
       setTimeout(() => {
-        router.push(`/kitchen/${result.restaurantId}/mesas`);
+        router.push(`/kitchen/${restaurantSlug(result.restaurant?.name, result.restaurantId)}/mesas`);
       }, 1500);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "No se pudo crear el restaurante";

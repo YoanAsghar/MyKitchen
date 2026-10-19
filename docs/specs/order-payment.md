@@ -3,7 +3,7 @@
 - **ID:** SPEC-009
 - **Área:** Operación
 - **Estado:** Implementado
-- **Última actualización:** 2026-10-11
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -95,7 +95,7 @@ histórica). `PaymentMethod` enum `CASH | CARD | BANK_TRANS` (string en el wire)
 
 ## 9. UI / Flujo
 
-- `frontend/src/app/kitchen/[id]/mesas/TablePayment.tsx`: selector de método
+- `frontend/src/app/kitchen/[slug]/mesas/TablePayment.tsx`: selector de método
   (`PaymentButton`) + "Procesar pago" (`OrderServices.createOrder`) + "Editar
   orden" (`onEditOrder` → vuelve a la pestaña de productos).
 - Se monta dentro de `tableInformation.tsx`, en la pestaña "Pedidos actuales",

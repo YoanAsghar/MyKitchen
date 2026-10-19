@@ -7,6 +7,8 @@ export interface AuthSession {
   userName: string;
   role: string;
   restaurantId: number;
+  // Restaurant display name; the frontend slugifies it into the URL segment.
+  restaurantName?: string;
 }
 
 export const UserServices = {
