@@ -13,6 +13,8 @@ export const colorPalette = {
   greenText: "#15803d",
   greenSubtle: "#e9f9ef",
   amber: "#f59e0b",
+  amberBright: "#fbbf24",
+  amberSoft: "#fef3c7",
   amberText: "#b45309",
   amberSubtle: "#fffbeb",
   red: "#dc2626",

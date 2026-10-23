@@ -3,7 +3,7 @@
 **Status:** proposed source of truth for the app-wide palette migration.
 **Reference:** the current `/home` (marketing) palette, with accessibility corrections for interactive text.
 **Scope:** all product surfaces — marketing, auth, kitchen (Mesas, Cocina, Carta, Órdenes) and admin.
-**Decision logged:** hybrid surfaces — **light pages, dark chrome**; **Cocina keeps a dedicated dark high-contrast treatment**; **green becomes a secondary accent**, not the primary action color.
+**Decision logged:** hybrid surfaces — **light pages, dark chrome**; **Cocina keeps a dedicated dark high-contrast treatment**; **Carta joins the dark family** (page `#0a0a0f`, cards `#101014`); **green becomes a secondary accent**, not the primary action color.
 
 ---
 
@@ -238,7 +238,7 @@ Numeric values (totals, prices) use `ink`/`night-title`, not green or terracotta
 | Kitchen navbar | — | `#0a0a0f` | — | — |
 | Mesas | `#faf7f5` grid | dark navbar | white table cards; white composition panel | `#c2410c` |
 | Cocina | `#0a0a0f` | dark navbar | `#101014` cards, `white/10` borders | terracotta badges |
-| Carta | `#faf7f5` | dark navbar | white product cards; cream toolbar | `#c2410c` |
+| Carta | `#0a0a0f` | dark navbar | `#101014` product cards; dark top bar + category sidebar | `#c2410c` |
 | Órdenes | `#faf7f5` | dark navbar | white order table, cream header/footer | `#c2410c` |
 | Admin | `#faf7f5` content | `#0a0a0f` sidebar | white cards/modals | `#c2410c` |
 
@@ -265,11 +265,12 @@ Numeric values (totals, prices) use `ink`/`night-title`, not green or terracotta
 
 ### 7.3 Carta
 
-- Page `#faf7f5`; toolbar/header white with bottom border `#e7dfd7`.
-- Search input: `#faf7f5` or white, border `#e7dfd7`, focus `#c2410c`.
-- Category pills: default white + `#e7dfd7` text `#6b635b`; active `brand-subtle` + `brand-700` + `brand-line`.
-- Product cards: white, border `#e7dfd7`, title `#1f1b16`, price `#6b635b`, category chip `brand-subtle`/`brand-700`.
-- Toggle on: `#c2410c`; off: `#d6c9bf`.
+- Dark scope, matching Cocina/Mesas cards: page `#0a0a0f`; top bar `#0a0a0f` with bottom border `white/10`.
+- Search input: `white/[0.04]`, border `white/10`, text white, placeholder `white/40`; focus border `#d97757` + ring `rgba(217,119,87,0.20)`.
+- Category sidebar (desktop `w-60`, sticky): `#0a0a0f`, right border `white/10`. Item default `white/60`; hover `white/[0.06]` + white; active `#d97757/10` background + `#d97757` text. On mobile it becomes a horizontal, scrollable chip row under the top bar.
+- Content: all products grouped in one section per category (empty categories skipped, uncategorized last). Section title white, count `white/60`.
+- Product cards: `#101014`, border `white/10`, hover border `white/15`; title white, price/description `white/60`, category chip `#d97757/10` + `#d97757`, product id `white/30`.
+- Images toggle on: `#c2410c`; off: `white/15`.
 
 ### 7.4 Órdenes
 
@@ -367,6 +368,8 @@ Recommended semantic layer:
   --color-green-text: #15803d;
   --color-green-subtle: #e9f9ef;
   --color-amber: #f59e0b;
+  --color-amber-bright: #fbbf24; /* dark-scope kitchen note label/icon (§7.2) */
+  --color-amber-soft: #fef3c7;   /* dark-scope kitchen note body (§7.2) */
   --color-amber-text: #b45309;
   --color-amber-subtle: #fffbeb;
   --color-red: #dc2626;
@@ -443,7 +446,7 @@ Apply `.theme-dark` to the kitchen navbar, admin sidebar/topbar, Cocina screen, 
 | `indigo-600` | Cocina quantity badge, selected table outline | `brand-600` badge / `brand-600` selection ring |
 | `indigo-400` | Cocina timestamp | `white/60` |
 | `purple-500` | focus rings | `brand-600` light / `brand-500` dark |
-| `#1b1b1c` | ProductCards | `#ffffff` (light Carta) or `#101014` (dark context) |
+| `#1b1b1c` | ProductCards | `#101014` (dark Carta) or `#ffffff` (light context) |
 | `#e5e7eb` | pricing toggle off | `#d6c9bf` |
 | `#2a0096` | login hover | `#9a3412` |
 | `gray-900/700/600/500/400` | auth/marketing text | `ink` / `body` / `muted` / `subtle` / `faint` |
@@ -504,8 +507,8 @@ The home page is the reference, but these should be corrected during the migrati
 
 1. No legacy purple/indigo/blue-grey values remain in `frontend/src/app` or `frontend/src/components`.
 2. Kitchen navbar and admin sidebar are `#0a0a0f`; their content pages are `#faf7f5`.
-3. Mesas, Carta, Órdenes and all admin pages use white cards on the warm canvas.
-4. Cocina remains dark (`#0a0a0f` / `#101014`) with amber notes and terracotta quantity badges.
+3. Mesas uses dark cards on black; Cocina and Carta use `#0a0a0f` / `#101014`; Órdenes and all admin pages use white cards on the warm canvas.
+4. Cocina remains dark (`#0a0a0f` / `#101014`) with amber notes and terracotta quantity badges; Carta shares that dark surface with a category sidebar.
 5. Primary buttons are `#c2410c` with white text everywhere; green is never a primary action.
 6. Focus rings are terracotta in both scopes; green is not used for focus.
 7. Every essential text pair passes 4.5:1; `brand-500`, gold and `faint` are not used for essential small text.

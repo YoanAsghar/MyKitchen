@@ -169,7 +169,10 @@ const TableInformation = ({ table, tableNumber, onUpdateTable, setIsLoading, pro
               if (categoryProducts.length === 0 && searchBarValue.trim()) return null;
               const isOpen = openCategoryIds.includes(category.id) || searchBarValue.trim();
               return (
-                <div className="flex flex-col rounded-lg overflow-hidden border border-line">
+                <div
+                  key={category.id}
+                  className="flex flex-col rounded-lg overflow-hidden border border-line"
+                >
                   <button
                     onClick={() => toggleCategory(category.id)}
                     className={`flex flex-row items-center justify-between p-2 cursor-pointer transition-colors ${
