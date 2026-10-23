@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Zap, ArrowRight, Table2, ChefHat, MenuSquare, ScrollText, CreditCard, RefreshCw, Star, Check,
-} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Check, ChefHat, Clock, CreditCard, MenuSquare, ScrollText, Sparkles, Table2, Users, Zap } from "lucide-react";
 import { PrimaryBtn, GhostBtn, marketingPath } from "./ui";
 import { MarketingNavbar } from "./MarketingNavbar";
 import { MarketingFooter } from "./MarketingFooter";
@@ -15,32 +13,32 @@ const features = [
   {
     icon: Table2,
     title: "Mesas en tiempo real",
-    desc: "Visualizá el estado de cada mesa al instante, sin recargar ni refrescar la página.",
+    desc: "Visualizá el estado de cada mesa al instante. Sin papel, sin confusiones entre turno.",
   },
   {
     icon: ChefHat,
-    title: "Cocina en vivo",
-    desc: "Los pedidos llegan a cocina de forma automática al ser tomados en el salón.",
+    title: "Cocina organizada",
+    desc: "Las comandas llegan claras y ordenadas a cocina para preparar más rápido.",
   },
   {
     icon: MenuSquare,
-    title: "Carta e inventario",
-    desc: "Administrá tu menú digital y controlá tus productos desde un único panel.",
+    title: "Carta digital",
+    desc: "Mantené tu menú centralizado, con precios actualizados y sin reimpresiones.",
   },
   {
     icon: ScrollText,
-    title: "Historial de órdenes",
-    desc: "Consultá todas las órdenes del día, semana o mes con filtros avanzados.",
+    title: "Órdenes claras",
+    desc: "Todo el detalle del pedido queda registrado, con cantidad, observaciones y seguimiento.",
   },
   {
     icon: CreditCard,
-    title: "Múltiples métodos de pago",
-    desc: "Efectivo, tarjeta y transferencia bancaria desde la misma pantalla de cobro.",
+    title: "Cobro ágil",
+    desc: "Efectivo, tarjeta o transferencia desde la misma pantalla. Menos esperas, cierre más rápido.",
   },
   {
-    icon: RefreshCw,
-    title: "Sincronización instantánea",
-    desc: "Tecnología SignalR para actualizaciones en tiempo real entre todos los dispositivos.",
+    icon: Users,
+    title: "Equipo con roles",
+    desc: "Asigná permisos por puesto para mantener el control sin complicar al equipo.",
   },
 ];
 
@@ -48,127 +46,273 @@ const steps = [
   {
     num: "01",
     title: "Creá tu restaurante",
-    desc: "Registrá tu local en menos de 2 minutos. Sin tarjeta de crédito requerida.",
+    desc: "Registralo en minutos. Sin tarjeta, sin configuraciones complejas.",
   },
   {
     num: "02",
-    title: "Invitá a tu equipo",
-    desc: "Sumá mozos, cocineros y administradores con roles y permisos diferenciados.",
+    title: "Armá tu carta y mesas",
+    desc: "Cargá productos, creá tus mesas y asigná roles al equipo.",
   },
   {
     num: "03",
-    title: "Operá en vivo",
-    desc: "Desde el primer turno, gestioná mesas, pedidos y cobros en tiempo real.",
+    title: "Operá sin caos",
+    desc: "Tomá pedidos, enviá a cocina y cobrá desde un solo lugar.",
   },
+];
+
+const benefits = [
+  "Menos errores en comandas",
+  "Mayor agilidad en el salón",
+  "Cocina más ordenada",
+  "Cierre de caja más rápido",
+  "Todo sincronizado en tiempo real",
+  "Fácil de usar desde el primer turno",
 ];
 
 const testimonials = [
   {
-    quote:
-      "Desde que usamos MyKitchen los errores en pedidos bajaron a cero. La cocina siempre sabe qué preparar sin que nadie grite.",
+    quote: "Con MyKitchen dejamos de gritar pedidos. Todo llega claro a cocina y el salón va mucho más ágil.",
     name: "Rodrigo Méndez",
-    role: "Dueño · La Parrilla del Centro, Buenos Aires",
+    role: "Dueño · La Parrilla del Centro",
     initials: "RM",
   },
   {
-    quote:
-      "El cierre de caja ahora tarda 10 minutos. Antes éramos una hora revisando tickets en papel. Increíble.",
+    quote: "El cobro es mucho más rápido y el cierre ya no nos lleva una hora. Muy fácil para todo el equipo.",
     name: "Ana García",
-    role: "Administradora · Café El Sol, Medellín",
+    role: "Propietaria · Café El Sol",
     initials: "AG",
   },
   {
-    quote:
-      "Nuestros mozos adoptaron el sistema en media hora. La interfaz es muy intuitiva y funciona perfecto en tablet.",
+    quote: "Lo mejor es lo intuitivo. Los mozos lo aprendieron en media hora y desde el primer día funcionó perfecto.",
     name: "Carlos López",
-    role: "Gerente · El Rincón Porteño, Montevideo",
+    role: "Dueño · Taquería El Rincón",
     initials: "CL",
   },
 ];
 
-const trustNames = [
-  "La Trattoria",
-  "El Mesón de María",
-  "Sabores del Sur",
-  "Cantina Central",
-  "Bistro 21",
-  "Fonda Tradicional",
-  "El Asador",
+const trustNames = ["La Trattoria", "El Mesón", "Sabores del Sur", "Cantina Central", "Bistro 21", "Fonda Tradicional", "El Asador"];
+
+const faqs = [
+  {
+    q: "¿Necesito instalar algo para usarlo?",
+    a: "No. Funciona desde el navegador en tablet, celular o PC. Solo abrís y empezás a operar.",
+  },
+  {
+    q: "¿Es fácil de aprender para mi equipo?",
+    a: "Sí. Está pensado para usarlo el primer día, sin formación larga ni curvas complicadas.",
+  },
+  {
+    q: "¿Puedo usarlo en varias mesas al mismo tiempo?",
+    a: "Sí. Todo está sincronizado en tiempo real entre salón, cocina y caja.",
+  },
+  {
+    q: "¿Se puede empezar gratis?",
+    a: "Sí. Podés crear tu restaurante y probarlo desde el primer turno.",
+  },
 ];
 
-const planFeatures = [
-  "Hasta 50 mesas simultáneas",
-  "Sincronización en tiempo real",
-  "Módulo de cocina en vivo",
-  "Carta digital con gestión",
-  "Historial completo de órdenes",
-  "Efectivo · Tarjeta · Transferencia",
-  "Usuarios ilimitados con roles",
-  "Soporte por WhatsApp",
-  "Actualizaciones incluidas",
-  "Acceso desde cualquier dispositivo",
-];
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mq.matches) {
+      setVisible(true);
+      return;
+    }
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          io.unobserve(el);
+        }
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return { ref, visible };
+}
+
+function Reveal({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  const { ref, visible } = useReveal();
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(12px)",
+        filter: visible ? "blur(0px)" : "blur(2px)",
+        transition: `opacity 600ms ease, transform 600ms ease, filter 600ms ease`,
+        transitionDelay: `${delay}ms`,
+        willChange: "opacity, transform, filter",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
 
 export default function LandingView() {
-  const [annual, setAnnual] = useState(false);
   const router = useRouter();
   const navigate = (page: "pricing" | "contact" | "registro") => router.push(marketingPath(page));
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#ffffff" }}>
+    <div
+      className="min-h-screen"
+      style={{
+        background: "linear-gradient(to bottom, #ffffff 0%, #fffdfb 20%, #faf7f5 60%, #ffffff 100%)",
+        fontFeatureSettings: '"ss01","ss02","cv01"',
+      }}
+    >
       <MarketingNavbar />
 
-      {/* ── HERO (blanco) ── */}
-      <section className="relative pt-36 pb-24 px-6 bg-white">
+      {/* HERO */}
+      <section className="relative pt-32 pb-24 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-center mb-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-gray-50 text-sm font-medium text-gray-600">
-              <Zap className="w-3.5 h-3.5" />
-              Nuevo · Sincronización en tiempo real con SignalR
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+            <div>
+              <Reveal>
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#e7dfd7] bg-[#faf7f5] text-sm text-[#6b635b] mb-7">
+                  <Sparkles className="w-3.5 h-3.5" style={{ color: colorPalette.Gold }} />
+                  Pensado para el día a día de tu restaurante
+                </div>
+              </Reveal>
+
+              <Reveal delay={80}>
+                <h1
+                  className="font-semibold text-[#1f1b16] leading-[1.05] tracking-tight mb-6"
+                  style={{ fontSize: "clamp(2.8rem, 6vw, 5.6rem)", letterSpacing: "-0.02em" }}
+                >
+                  Ordena, cobra y cocina sin caos
+                </h1>
+              </Reveal>
+
+              <Reveal delay={140}>
+                <p className="text-lg md:text-xl text-[#6b635b] max-w-xl mb-8 leading-relaxed">
+                  Digitaliza tu operación sin complicar al equipo. Mesas, cocina, carta y cobros sincronizados al instante para atender más rápido con menos errores.
+                </p>
+              </Reveal>
+
+              <Reveal delay={200}>
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 mb-8">
+                <button
+                  onClick={() => navigate("registro")}
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-lg font-semibold text-white transition-all duration-200 hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#d97757]/60 w-full sm:w-auto"
+                  style={{ backgroundColor: colorPalette.Terracotta }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colorPalette.TerracottaHover)}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colorPalette.Terracotta)}
+                >
+                  Empezar gratis <ArrowRight className="w-4 h-4" />
+                </button>
+                </div>
+              </Reveal>
+
+              <Reveal delay={260}>
+                <div className="grid sm:grid-cols-2 gap-3 max-w-xl">
+                  <div className="flex items-center gap-2 text-[#2d2a26]">
+                    <Check className="w-4 h-4" style={{ color: colorPalette.Gold }} />
+                    <span>Sin tarjeta de crédito</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[#2d2a26]">
+                    <Check className="w-4 h-4" style={{ color: colorPalette.Gold }} />
+                    <span>Listo desde el primer turno</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[#2d2a26]">
+                    <Check className="w-4 h-4" style={{ color: colorPalette.Gold }} />
+                    <span>Sincronización en tiempo real</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[#2d2a26]">
+                    <Check className="w-4 h-4" style={{ color: colorPalette.Gold }} />
+                    <span>Fácil para todo el equipo</span>
+                  </div>
+                </div>
+              </Reveal>
             </div>
+
+            <Reveal delay={200}>
+              <div className="relative">
+                <div className="absolute -inset-6 -z-10 rounded-[32px] bg-gradient-to-br from-[#faf7f5] via-white to-transparent" />
+                <div className="relative rounded-3xl border border-[#e7dfd7] bg-white overflow-hidden shadow-[0_40px_80px_-60px_rgba(45,42,38,0.5)]">
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-[#e7dfd7] bg-[#faf7f5]">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colorPalette.Gold }} />
+                      <span className="text-sm text-[#6b635b]">Vista en tiempo real · Salón</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-[#8b8178]">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Sincronizado
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-0">
+                    <div className="p-6 border-r border-[#e7dfd7]">
+                      <p className="text-sm text-[#8b8178] mb-4">Mesas activas</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { id: "01", guests: 4, status: "Ocupada" },
+                          { id: "02", guests: 0, status: "Libre" },
+                          { id: "03", guests: 2, status: "Ocupada" },
+                          { id: "04", guests: 6, status: "Ocupada" },
+                        ].map((t) => (
+                          <div key={t.id} className="rounded-xl border border-[#e7dfd7] p-4">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium text-[#1f1b16]">Mesa {t.id}</span>
+                              <div className={`w-1.5 h-1.5 rounded-full ${t.status === "Ocupada" ? "bg-emerald-500" : "bg-[#d6c9bf]"}`} />
+                            </div>
+                            <span className="text-xs text-[#8b8178]">{t.status === "Ocupada" ? `${t.guests} comensales` : "Disponible"}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <p className="text-sm text-[#8b8178] mb-4">Pedido · Mesa 01</p>
+                      <div className="flex flex-col gap-2 mb-4">
+                        {[
+                          { item: "Hamburguesa Clásica", qty: 1, price: "$750" },
+                          { item: "Papas Bravas", qty: 1, price: "$420" },
+                          { item: "Cerveza Artesanal", qty: 2, price: "$640" },
+                        ].map((o) => (
+                          <div key={o.item} className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[#8b8178]">{o.qty}x</span>
+                              <span className="text-[#2d2a26]">{o.item}</span>
+                            </div>
+                            <span className="text-[#1f1b16]">{o.price}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border-t border-[#e7dfd7] pt-3 flex items-center justify-between">
+                        <span className="text-[#8b8178]">Total</span>
+                        <span className="text-lg font-medium text-[#1f1b16]">$1.810</span>
+                      </div>
+                      <div className="mt-4 w-full rounded-lg py-2.5 text-center text-sm font-medium text-white" style={{ backgroundColor: colorPalette.Terracotta }}>
+                        Enviar a cocina
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
           </div>
 
-          <h1
-            className="text-center font-bold text-gray-900 leading-[1.08] tracking-tight mb-6"
-            style={{ fontSize: "clamp(2.5rem, 6vw, 5rem)" }}
-          >
-            Gestioná tu restaurante
-            <br />
-            con eficiencia real
-          </h1>
 
-          <p className="text-center text-lg md:text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Mesas, cocina, carta y cobros sincronizados al instante. Una sola plataforma para
-            que tu equipo trabaje en perfecta coordinación.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <PrimaryBtn onClick={() => navigate("registro")} className="text-base px-8 py-4">
-              Crear tu restaurante <ArrowRight className="w-4 h-4" />
-            </PrimaryBtn>
-            <GhostBtn onClick={() => navigate("pricing")} className="text-base px-8 py-4">
-              Ver precios
-            </GhostBtn>
-          </div>
-
-          <div className="max-w-4xl mx-auto">
-            <AppMockup />
-          </div>
         </div>
       </section>
 
-      {/* ── TRUST STRIP (blanco) ── */}
-      <section className="py-12 border-y border-gray-200 bg-white">
+      {/* TRUST */}
+      <section className="py-10 border-y border-[#e7dfd7] bg-white">
         <div className="max-w-7xl mx-auto px-6">
-          <p className="text-center text-xs text-gray-400 uppercase tracking-[0.18em] mb-8 font-semibold">
-            Restaurantes que ya operan con MyKitchen
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12">
+          <p className="text-center text-xs uppercase tracking-[0.22em] text-[#8b8178] mb-6">Usado por restaurantes de distintos formatos</p>
+          <div className="flex flex-wrap items-center justify-center gap-7 md:gap-10">
             {trustNames.map((name) => (
-              <span
-                key={name}
-                className="text-gray-400 hover:text-gray-600 font-semibold text-sm transition-colors cursor-default"
-              >
+              <span key={name} className="text-[#9a9188] text-sm font-medium">
                 {name}
               </span>
             ))}
@@ -176,222 +320,316 @@ export default function LandingView() {
         </div>
       </section>
 
-      {/* ── FEATURES (blanco) ── */}
-      <section id="features" className="py-28 px-6 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-xs text-gray-400 uppercase tracking-[0.16em] font-semibold mb-3">
-              Funcionalidades
-            </p>
-            <h2 className="font-bold text-gray-900 leading-tight" style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)" }}>
-              Todo lo que tu restaurante
-              <br />
-              necesita en un solo lugar
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {features.map((f) => (
-              <div
-                key={f.title}
-                className="p-6 rounded-2xl border border-gray-200 bg-white group cursor-default transition-all duration-300 hover:border-gray-300 hover:shadow-lg hover:-translate-y-0.5"
-              >
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4 bg-gray-100 group-hover:bg-gray-200/40 transition-colors">
-                  <f.icon className="w-5 h-5 text-gray-600" />
-                </div>
-                <h3 className="text-gray-900 font-semibold text-lg mb-2">{f.title}</h3>
-                <p className="text-gray-500 text-sm leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS (oscuro) ── */}
-      <section className="py-28 px-6" style={{ backgroundColor: colorPalette.NearBlack }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-xs text-white/30 uppercase tracking-[0.16em] font-semibold mb-3">
-              Proceso
-            </p>
-            <h2 className="font-bold text-white" style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)" }}>
-              Cómo funciona
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative">
-            <div
-              className="hidden md:block absolute top-11 left-1/6 right-1/6 h-px pointer-events-none"
-              style={{
-                background:
-                  "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 20%, rgba(255,255,255,0.12) 50%, rgba(255,255,255,0.08) 80%, transparent 100%)",
-              }}
-            />
-            {steps.map((step) => (
-              <div key={step.num} className="flex flex-col items-center text-center">
-                <div className="w-24 h-24 rounded-full flex items-center justify-center mb-6 relative z-10 bg-white/[0.06] border border-white/[0.08]">
-                  <span className="text-2xl font-bold text-white/40" style={{ fontFamily: "'Bebas Neue', sans-serif", letterSpacing: "0.05em" }}>
-                    {step.num}
-                  </span>
-                </div>
-                <h3 className="text-white font-bold text-xl mb-3">{step.title}</h3>
-                <p className="text-white/35 text-sm leading-relaxed max-w-xs">{step.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── PRICING TEASER (blanco) ── */}
-      <section className="py-28 px-6 bg-white">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-xs text-gray-400 uppercase tracking-[0.16em] font-semibold mb-3">
-              Precios
-            </p>
-            <h2 className="font-bold text-gray-900 mb-4" style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)" }}>
-              Un plan, todo incluido
-            </h2>
-            <p className="text-gray-500 text-lg">
-              Sin comisiones ocultas. Sin límites de pedidos. Sin sorpresas.
-            </p>
-          </div>
-
-          <div className="flex items-center justify-center gap-4 mb-10">
-            <span className={`text-sm font-medium ${!annual ? "text-gray-900" : "text-gray-400"}`}>
-              Mensual
-            </span>
-            <button
-              onClick={() => setAnnual(!annual)}
-              className="w-12 h-6 rounded-full relative transition-all duration-300 cursor-pointer"
-              style={{
-                backgroundColor: annual ? colorPalette.Navy : "#e5e7eb",
-              }}
-            >
-              <div
-                className="absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-300"
-                style={{ left: annual ? "28px" : "4px" }}
-              />
-            </button>
-            <span className={`text-sm font-medium flex items-center gap-2 ${annual ? "text-gray-900" : "text-gray-400"}`}>
-              Anual
-              <span className="text-[11px] px-2 py-0.5 rounded-full font-semibold"
-                style={{ color: colorPalette.Green, backgroundColor: "rgba(34,197,94,0.1)", border: `1px solid rgba(34,197,94,0.2)` }}
-              >
-                -22%
-              </span>
-            </span>
-          </div>
-
-          <div className="rounded-2xl p-8 border border-gray-200 bg-white shadow-lg">
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-7 pb-7 border-b border-gray-200">
-              <div>
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full mb-3 bg-gray-100 text-gray-600 border border-gray-200">
-                  PROFESIONAL
-                </span>
-                <p className="text-gray-500 text-sm">Todo incluido · Sin límites de uso</p>
-              </div>
-              <div className="shrink-0">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-gray-400 text-sm">USD</span>
-                  <span className="text-gray-900 font-bold" style={{ fontSize: "3.5rem", lineHeight: 1 }}>
-                    {annual ? "69" : "89"}
-                  </span>
-                  <span className="text-gray-500 text-sm">/mes</span>
-                </div>
-                {annual && (
-                  <p className="text-gray-500 text-xs mt-1">Facturado anualmente</p>
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-              {planFeatures.map((feat) => (
-                <div key={feat} className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.2)" }}
-                  >
-                    <Check className="w-3 h-3" style={{ color: colorPalette.Green }} />
+      {/* PROBLEMA -> SOLUCION */}
+      <section className="py-24 px-6 relative">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(217,119,87,0.05)_0%,_rgba(255,255,255,0)_70%)] pointer-events-none" />
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center relative">
+          <Reveal>
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-[#8b8178] mb-4">Problema → Solución</p>
+              <h2 className="text-3xl md:text-5xl font-semibold text-[#1f1b16] leading-tight tracking-tight mb-5">
+                Menos papel. Más control. Menor presión en turno.
+              </h2>
+              <p className="text-lg text-[#6b635b] leading-relaxed mb-8">
+                Comandas en papel se pierden, se malinterpretan y retrasan la cocina. MyKitchen unifica todo en un solo flujo para que el equipo se enfoque en atender, no en corregir errores.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {benefits.map((b, i) => (
+                  <div key={b} className="flex items-center gap-2 text-[#2d2a26]">
+                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: colorPalette.Gold }} />
+                    <span>{b}</span>
                   </div>
-                  <span className="text-gray-600 text-sm">{feat}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-            <PrimaryBtn onClick={() => navigate("registro")} className="w-full text-base py-4">
-              Empezar ahora <ArrowRight className="w-4 h-4" />
-            </PrimaryBtn>
-          </div>
-
-          <p className="text-center text-gray-500 text-sm mt-6">
-            ¿Necesitás algo más?{" "}
-            <button
-              onClick={() => navigate("contact")}
-              className="text-gray-900 hover:underline underline-offset-2 cursor-pointer transition-colors"
-            >
-              Contáctanos
-            </button>
-          </p>
-        </div>
-      </section>
-
-      {/* ── TESTIMONIALS (oscuro) ── */}
-      <section className="py-28 px-6" style={{ backgroundColor: colorPalette.NearBlack }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-xs text-white/30 uppercase tracking-[0.16em] font-semibold mb-3">
-              Testimonios
-            </p>
-            <h2 className="font-bold text-white" style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)" }}>
-              Lo que dicen nuestros clientes
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {testimonials.map((t) => (
-              <div
-                key={t.name}
-                className="p-7 rounded-2xl border border-white/[0.06] bg-white/[0.02] flex flex-col"
-              >
-                <div className="flex gap-0.5 mb-4">
-                  {Array(5).fill(0).map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-white/30 text-white/30" />
-                  ))}
-                </div>
-                <p className="text-white/35 text-sm leading-relaxed flex-1 mb-6">
-                  &ldquo;{t.quote}&rdquo;
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 bg-white/[0.08]">
-                    {t.initials}
+          </Reveal>
+          <Reveal delay={120}>
+            <div className="relative">
+              <div className="rounded-2xl border border-[#e7dfd7] bg-white p-6 md:p-8 shadow-[0_20px_60px_-40px_rgba(45,42,38,0.6)]">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "rgba(245,179,1,0.12)" }}>
+                    <Zap className="w-4 h-4" style={{ color: colorPalette.Gold }} />
                   </div>
                   <div>
-                    <p className="text-white text-sm font-semibold">{t.name}</p>
-                    <p className="text-white/30 text-xs">{t.role}</p>
+                    <p className="text-[#1f1b16] font-medium">Flujo unificado</p>
+                    <p className="text-sm text-[#8b8178]">Salón → Cocina → Caja</p>
+                  </div>
+                </div>
+                <div className="grid gap-3">
+                  <div className="flex items-center justify-between rounded-lg border border-[#e7dfd7] px-4 py-3 bg-[#faf7f5]">
+                    <div className="flex items-center gap-3">
+                      <Table2 className="w-4 h-4 text-[#6b635b]" />
+                      <span className="text-[#2d2a26]">Tomar pedido en mesa</span>
+                    </div>
+                    <span className="text-xs text-[#8b8178]">Instantáneo</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-[#e7dfd7] px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <ChefHat className="w-4 h-4 text-[#6b635b]" />
+                      <span className="text-[#2d2a26]">Enviar a cocina</span>
+                    </div>
+                    <span className="text-xs text-[#8b8178]">Sin llamadas</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg border border-[#e7dfd7] px-4 py-3 bg-[#faf7f5]">
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="w-4 h-4 text-[#6b635b]" />
+                      <span className="text-[#2d2a26]">Cobrar y cerrar</span>
+                    </div>
+                    <span className="text-xs text-[#8b8178]">Ágil</span>
                   </div>
                 </div>
               </div>
+              <div className="absolute -bottom-6 -right-4 hidden md:flex items-center gap-2 rounded-full border border-[#e7dfd7] bg-white px-4 py-2 shadow-sm">
+                <Clock className="w-4 h-4" style={{ color: colorPalette.Terracotta }} />
+                <span className="text-sm text-[#2d2a26]">Menos tiempo por turno</span>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* FUNCIONALIDADES */}
+      <section id="features" className="py-24 px-6 relative">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(231,223,215,0.4)_0%,_rgba(255,255,255,0)_70%)] pointer-events-none" />
+        <div className="max-w-7xl mx-auto relative">
+          <Reveal>
+            <div className="text-center mb-14">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#8b8178] mb-4">Funcionalidades clave</p>
+              <h2 className="text-3xl md:text-5xl font-semibold text-[#1f1b16] leading-tight tracking-tight mb-4">
+                Todo lo esencial, sin lo innecesario
+              </h2>
+              <p className="text-lg text-[#6b635b] max-w-2xl mx-auto">
+                Enfocado a lo que realmente se usa en un turno: mesas, comandas, carta y cobros.
+              </p>
+            </div>
+          </Reveal>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {features.map((f, i) => (
+              <Reveal key={f.title} delay={i * 60}>
+                <div className="group h-full rounded-2xl border border-[#e7dfd7] bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_20px_60px_-30px_rgba(217,119,87,0.25)]">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4" style={{ backgroundColor: "rgba(217,119,87,0.1)" }}>
+                    <f.icon className="w-4 h-4" style={{ color: colorPalette.Terracotta }} />
+                  </div>
+                  <h3 className="text-lg font-medium text-[#1f1b16] mb-2">{f.title}</h3>
+                  <p className="text-[#6b635b] leading-relaxed">{f.desc}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── FINAL CTA BAND (blanco) ── */}
-      <section className="py-28 px-6 bg-white">
-        <div className="max-w-4xl mx-auto text-center rounded-3xl px-8 py-20 border border-gray-200 bg-gray-50">
-          <h2 className="font-bold text-gray-900 mb-5" style={{ fontSize: "clamp(2rem, 5vw, 4rem)", lineHeight: 1.1 }}>
-            Transformá la gestión
-            <br />
-            de tu restaurante hoy
-          </h2>
-          <p className="text-gray-500 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
-            Empezá sin tarjeta de crédito. Configurá tu restaurante en menos de 5 minutos.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <PrimaryBtn onClick={() => navigate("registro")} className="text-base px-10 py-4">
-              Crear tu restaurante <ArrowRight className="w-4 h-4" />
-            </PrimaryBtn>
-            <GhostBtn onClick={() => navigate("contact")} className="text-base px-10 py-4">
-              Hablar con ventas
-            </GhostBtn>
+      {/* BENEFICIOS */}
+      <section className="py-24 px-6">
+        <div className="max-w-7xl mx-auto">
+          <Reveal>
+            <div className="text-center mb-12">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#8b8178] mb-4">Beneficios</p>
+              <h2 className="text-3xl md:text-5xl font-semibold text-[#1f1b16] leading-tight tracking-tight">
+                Más orden, menos estrés
+              </h2>
+            </div>
+          </Reveal>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {benefits.map((b, i) => (
+              <Reveal key={b} delay={i * 40}>
+                <div className="flex items-center gap-3 rounded-xl border border-[#e7dfd7] bg-white px-5 py-4">
+                  <Check className="w-4 h-4" style={{ color: colorPalette.Gold }} />
+                  <span className="text-[#2d2a26]">{b}</span>
+                </div>
+              </Reveal>
+            ))}
           </div>
+        </div>
+      </section>
+
+      {/* COMO FUNCIONA */}
+      <section className="py-24 px-6 relative">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(245,179,1,0.08)_0%,_rgba(255,255,255,0)_70%)] pointer-events-none" />
+        <div className="max-w-7xl mx-auto relative">
+          <Reveal>
+            <div className="text-center mb-14">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#8b8178] mb-4">Cómo funciona</p>
+              <h2 className="text-3xl md:text-5xl font-semibold text-[#1f1b16] leading-tight tracking-tight mb-4">
+                Listo para operar en 3 pasos
+              </h2>
+              <p className="text-lg text-[#6b635b]">Rápido de configurar, natural de usar.</p>
+            </div>
+          </Reveal>
+          <div className="grid md:grid-cols-3 gap-4">
+            {steps.map((step, i) => (
+              <Reveal key={step.num} delay={i * 80}>
+                <div className="relative h-full rounded-2xl border border-[#e7dfd7] bg-white p-8 shadow-[0_20px_60px_-40px_rgba(45,42,38,0.5)]">
+                  <span className="text-sm font-medium" style={{ color: colorPalette.Gold }}>{step.num}</span>
+                  <h3 className="text-xl font-medium text-[#1f1b16] mt-3 mb-2">{step.title}</h3>
+                  <p className="text-[#6b635b] leading-relaxed">{step.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIOS */}
+      <section className="py-24 px-6">
+        <div className="max-w-7xl mx-auto">
+          <Reveal>
+            <div className="text-center mb-14">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#8b8178] mb-4">Testimonios</p>
+              <h2 className="text-3xl md:text-5xl font-semibold text-[#1f1b16] leading-tight tracking-tight mb-4">
+                Lo que dicen quienes ya lo usan
+              </h2>
+            </div>
+          </Reveal>
+          <div className="grid md:grid-cols-3 gap-4">
+            {testimonials.map((t, i) => (
+              <Reveal key={t.name} delay={i * 70}>
+                <figure className="h-full rounded-2xl border border-[#e7dfd7] bg-white p-7 flex flex-col">
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(5)].map((_, idx) => (
+                      <div key={idx} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: colorPalette.Gold }} />
+                    ))}
+                  </div>
+                  <blockquote className="text-[#2d2a26] leading-relaxed flex-1">“{t.quote}”</blockquote>
+                  <figcaption className="mt-6 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-medium text-white" style={{ backgroundColor: colorPalette.Terracotta }}>
+                      {t.initials}
+                    </div>
+                    <div>
+                      <p className="text-[#1f1b16]">{t.name}</p>
+                      <p className="text-sm text-[#8b8178]">{t.role}</p>
+                    </div>
+                  </figcaption>
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* LOGOS CONFIANZA */}
+      <section className="py-12 border-y border-[#e7dfd7]">
+        <div className="max-w-7xl mx-auto px-6">
+          <p className="text-center text-xs uppercase tracking-[0.22em] text-[#8b8178] mb-6">Confianza en distintos formatos gastronómicos</p>
+          <div className="flex flex-wrap items-center justify-center gap-7 md:gap-10">
+            {trustNames.map((name) => (
+              <span key={name} className="text-[#9a9188] text-sm font-medium">
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* PRECIOS PREVIEW */}
+      <section id="pricing" className="py-24 px-6 relative">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(231,223,215,0.35)_0%,_rgba(255,255,255,0)_70%)] pointer-events-none" />
+        <div className="max-w-7xl mx-auto relative">
+          <Reveal>
+            <div className="text-center mb-14">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#8b8178] mb-4">Precios</p>
+              <h2 className="text-3xl md:text-5xl font-semibold text-[#1f1b16] leading-tight tracking-tight mb-4">
+                Simple, directo, sin sorpresas
+              </h2>
+              <p className="text-lg text-[#6b635b]">Un plan pensado para restaurantes que quieren operar mejor desde hoy.</p>
+            </div>
+          </Reveal>
+          <Reveal delay={100}>
+            <div className="max-w-2xl mx-auto">
+              <div className="relative rounded-2xl border border-[#e7dfd7] bg-white overflow-hidden shadow-[0_30px_70px_-50px_rgba(45,42,38,0.5)]">
+                <div className="p-8 md:p-10">
+                  <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8">
+                    <div>
+                      <p className="text-sm text-[#8b8178] mb-2">Plan Restaurante</p>
+                      <div className="flex items-end gap-2">
+                        <span className="text-5xl md:text-6xl font-semibold text-[#1f1b16] tracking-tight">$0</span>
+                        <span className="text-[#8b8178] mb-2">/mes</span>
+                      </div>
+                      <p className="text-[#6b635b] mt-2">Todo lo esencial para empezar.</p>
+                    </div>
+                    <button
+                      onClick={() => navigate("registro")}
+                      className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-lg font-semibold text-white transition-all duration-200 hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#d97757]/60"
+                      style={{ backgroundColor: colorPalette.Terracotta }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colorPalette.TerracottaHover)}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colorPalette.Terracotta)}
+                    >
+                      Empezar gratis <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {["Mesas en tiempo real", "Cocina en vivo", "Carta digital", "Múltiples métodos de pago", "Roles y permisos", "Sincronización en tiempo real", "Historial de órdenes", "Soporte por WhatsApp"].map((item) => (
+                      <div key={item} className="flex items-center gap-2 text-[#2d2a26]">
+                        <Check className="w-4 h-4" style={{ color: colorPalette.Gold }} />
+                        <span>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="border-t border-[#e7dfd7] px-8 md:px-10 py-4 text-center text-sm text-[#8b8178] bg-[#faf7f5]">
+                  Sin tarjeta de crédito · Sin compromiso
+                </div>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-24 px-6">
+        <div className="max-w-4xl mx-auto">
+          <Reveal>
+            <div className="text-center mb-12">
+              <p className="text-xs uppercase tracking-[0.2em] text-[#8b8178] mb-4">Preguntas frecuentes</p>
+              <h2 className="text-3xl md:text-5xl font-semibold text-[#1f1b16] leading-tight tracking-tight">
+                Resolvemos tus dudas
+              </h2>
+            </div>
+          </Reveal>
+          <div className="grid gap-3">
+            {faqs.map((faq, i) => (
+              <Reveal key={faq.q} delay={i * 50}>
+                <details className="group rounded-xl border border-[#e7dfd7] bg-white p-6 open:shadow-[0_10px_40px_-30px_rgba(45,42,38,0.6)]">
+                  <summary className="flex cursor-pointer items-center justify-between gap-4 text-[#1f1b16] font-medium">
+                    {faq.q}
+                    <span className="text-[#8b8178] transition-transform group-open:rotate-45">+</span>
+                  </summary>
+                  <p className="mt-3 text-[#6b635b] leading-relaxed">{faq.a}</p>
+                </details>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA FINAL */}
+      <section className="py-24 px-6">
+        <div className="max-w-7xl mx-auto">
+          <Reveal>
+            <div className="relative overflow-hidden rounded-3xl border border-[#e7dfd7] bg-[#1f1b16] px-6 py-14 md:px-12 md:py-16 text-center">
+              <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)", backgroundSize: "18px 18px" }} />
+              <div className="relative">
+                <p className="text-xs uppercase tracking-[0.24em] text-white/50 mb-4">Listo para empezar</p>
+                <h2 className="text-3xl md:text-5xl font-semibold text-white leading-tight tracking-tight mb-4">
+                  Ordena, cobra y cocina sin caos
+                </h2>
+                <p className="text-lg text-white/70 max-w-2xl mx-auto mb-9">
+                  Digitaliza tu operación sin complicar al equipo. Empezá gratis desde hoy.
+                </p>
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => navigate("registro")}
+                    className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-lg font-semibold text-white transition-all duration-200 hover:brightness-105 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-white/40"
+                    style={{ backgroundColor: colorPalette.Terracotta }}
+                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colorPalette.TerracottaHover)}
+                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colorPalette.Terracotta)}
+                  >
+                    Empezar gratis <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 

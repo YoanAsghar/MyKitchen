@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { colorPalette } from "../../../../colorPallete";
+import { Plus, Search, Trash2 } from "lucide-react";
 import { Product } from "../../../../models/product";
 import { Category } from "../../../../models/category";
 import { Order } from "../../../../models/order";
@@ -138,24 +138,25 @@ const TableInformation = ({ table, tableNumber, onUpdateTable, setIsLoading, pro
   const hasOpenOrder = Boolean(table?.order);
 
   return (
-    <div className="h-full w-full lg:w-[45%] xl:w-[42%] max-w-[760px] shrink-0 flex flex-col overflow-hidden" style={{ backgroundColor: colorPalette.DeepTwilight }}>
+    <div className="h-full w-full lg:w-[45%] xl:w-[42%] max-w-[760px] shrink-0 flex flex-col overflow-hidden bg-surface">
       {/* TOP ROW: SEARCH/CATEGORIES + ORDER DETAILS */}
       <div className="flex-1 flex flex-row overflow-hidden">
         {/* LEFT: PRODUCT LIST */}
-        <div className="h-full w-1/2 flex flex-col border-r border-white/10">
+        <div className="h-full w-1/2 flex flex-col border-r border-line">
           <div className="shrink-0 p-3">
-            <h2 className="text-base font-bold text-white mb-2">{`Mesa ${tableNumber} — Productos`}</h2>
+            <h2 className="text-base font-bold text-ink mb-2">{`Mesa ${tableNumber} — Productos`}</h2>
             <div className="relative">
-              <img
-                src="/search_icon.png"
-                alt="Buscar"
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none brightness-0 invert"
+              <Search
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted pointer-events-none"
+                strokeWidth={2}
+                aria-hidden="true"
               />
               <input
                 onChange={(e) => setSearchBarValue(e.target.value.toLowerCase())}
                 type="text"
                 placeholder="Buscar producto"
-                className="w-full bg-white text-black text-sm rounded-lg p-1.5 pl-8 border-none focus:outline-none focus:ring-2 focus:ring-purple-500"
+                aria-label="Buscar producto"
+                className="w-full bg-canvas text-ink text-sm rounded-lg p-1.5 pl-8 border border-line focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 placeholder:text-subtle"
               />
             </div>
           </div>
@@ -168,31 +169,35 @@ const TableInformation = ({ table, tableNumber, onUpdateTable, setIsLoading, pro
               if (categoryProducts.length === 0 && searchBarValue.trim()) return null;
               const isOpen = openCategoryIds.includes(category.id) || searchBarValue.trim();
               return (
-                <div key={category.id} className="flex flex-col rounded-lg overflow-hidden border border-white/10">
+                <div className="flex flex-col rounded-lg overflow-hidden border border-line">
                   <button
                     onClick={() => toggleCategory(category.id)}
-                    className="flex flex-row items-center justify-between p-2 text-white cursor-pointer"
-                    style={{ backgroundColor: colorPalette.Navy }}
+                    className={`flex flex-row items-center justify-between p-2 cursor-pointer transition-colors ${
+                      isOpen
+                        ? "bg-brand-subtle text-brand-700"
+                        : "bg-surface text-body hover:bg-canvas"
+                    }`}
                   >
                     <p className="font-bold text-sm">{category.name}</p>
                     <span className="text-base">{isOpen ? "−" : "+"}</span>
                   </button>
                   {isOpen && (
-                    <ul className="flex flex-col gap-1.5 p-1.5" style={{ backgroundColor: colorPalette.DeepTwilight }}>
+                    <ul className="flex flex-col gap-1.5 p-1.5 bg-canvas">
                       {categoryProducts.map((product) => (
                         <li
                           key={product.id}
-                          className="flex flex-row justify-between items-center rounded-lg text-black p-2 bg-white shadow-sm hover:bg-gray-50 transition-colors"
+                          className="flex flex-row justify-between items-center rounded-lg text-ink p-2 bg-surface border border-line shadow-sm hover:bg-canvas-deep transition-colors"
                         >
                           <div className="flex flex-col">
                             <p className="font-bold text-sm leading-tight">{product.name}</p>
-                            <p className="text-xs opacity-60 font-medium">${product.price}</p>
+                            <p className="text-xs text-muted font-medium">${product.price}</p>
                           </div>
                           <button
                             onClick={() => addProductToTable(product)}
-                            className="rounded-lg cursor-pointer transition-transform hover:scale-110 shadow-md"
+                            aria-label={`Agregar ${product.name}`}
+                            className="grid place-items-center size-7 rounded-lg bg-brand-600 text-white cursor-pointer transition-colors hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                           >
-                            <img className="bg-stone-950 rounded-lg size-7 p-1.5" src="/plus.png" alt="Agregar" />
+                            <Plus className="size-4" strokeWidth={2.5} aria-hidden="true" />
                           </button>
                         </li>
                       ))}
@@ -202,10 +207,10 @@ const TableInformation = ({ table, tableNumber, onUpdateTable, setIsLoading, pro
               );
             })}
             {!searchBarValue.trim() && sortedCategories.length === 0 && (
-              <p className="text-white/50 text-xs text-center mt-4">No hay categorías</p>
+              <p className="text-muted text-xs text-center mt-4">No hay categorías</p>
             )}
             {searchBarValue.trim() && filteredProducts.length === 0 && (
-              <p className="text-white/50 text-xs text-center mt-4">No se encontraron productos</p>
+              <p className="text-muted text-xs text-center mt-4">No se encontraron productos</p>
             )}
           </div>
         </div>
@@ -213,44 +218,46 @@ const TableInformation = ({ table, tableNumber, onUpdateTable, setIsLoading, pro
         {/* RIGHT: ORDER DETAILS */}
         <div className="h-full w-1/2 flex flex-col">
           <div className="shrink-0 p-3 flex flex-col gap-2">
-            <h2 className="text-base font-bold text-white">{`Mesa ${tableNumber} — Pedido`}</h2>
+            <h2 className="text-base font-bold text-ink">{`Mesa ${tableNumber} — Pedido`}</h2>
             <div className="flex flex-wrap gap-2">
               <div className="flex items-center gap-2">
-                <label className="text-white text-xs">Propina:</label>
+                <label className="text-muted text-xs">Propina:</label>
                 <input
                   type="number"
                   min={0}
                   value={propina}
                   onChange={(e) => handlePropinaChange(Number(e.target.value) || 0)}
-                  className="bg-black text-white text-sm text-center w-16 h-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className="bg-surface text-ink text-sm text-center w-16 h-8 rounded-lg border border-line focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20"
                 />
               </div>
             </div>
           </div>
 
           <div className="flex-1 overflow-auto p-2">
-            <table className="w-full text-white">
-              <thead className="sticky top-0 z-10" style={{ backgroundColor: colorPalette.DeepTwilight }}>
+            <table className="w-full text-body">
+              <thead className="sticky top-0 z-10 bg-canvas-deep text-muted">
                 <tr>
-                  <th className="text-left py-1.5 px-1.5 text-xs">Artículo</th>
-                  <th className="text-center py-1.5 px-1.5 text-xs">Precio</th>
-                  <th className="text-center py-1.5 px-1.5 text-xs">Cant.</th>
+                  <th className="text-left py-1.5 px-1.5 text-xs font-semibold">Artículo</th>
+                  <th className="text-center py-1.5 px-1.5 text-xs font-semibold">Precio</th>
+                  <th className="text-center py-1.5 px-1.5 text-xs font-semibold">Cant.</th>
                   <th className="w-6"></th>
                 </tr>
               </thead>
               <tbody>
                 {currentProducts.map((detail: orderDetail, index: number) => (
-                  <tr key={index} className="border-b border-white/10">
+                  <tr key={index} className="border-b border-line-soft hover:bg-canvas">
                     <td className="py-1.5 px-1.5 text-xs">{detail.product?.name}</td>
                     <td className="py-1.5 px-1.5 text-center text-xs">${detail.product?.price}</td>
                     <td className="py-1.5 px-1.5 text-center text-xs">{detail.quantity}</td>
                     <td className="py-1.5 px-1.5">
-                      <img
-                        className="cursor-pointer mx-auto hover:scale-110 transition-transform size-4"
-                        src="/trash_icon.png"
-                        alt="Eliminar"
+                      <button
+                        type="button"
                         onClick={() => removeProductFromTable(index)}
-                      />
+                        aria-label={`Eliminar ${detail.product?.name ?? "producto"}`}
+                        className="mx-auto grid place-items-center text-muted cursor-pointer transition-colors hover:text-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 rounded"
+                      >
+                        <Trash2 className="size-4" strokeWidth={1.75} aria-hidden="true" />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -268,8 +275,8 @@ const TableInformation = ({ table, tableNumber, onUpdateTable, setIsLoading, pro
       </div>
 
       {/* KITCHEN NOTE (local draft, only persisted on commit) */}
-      <div className="shrink-0 p-2 bg-black/20 border-t border-white/10">
-        <label htmlFor="kitchen-comment" className="block text-white/70 text-xs font-medium mb-1">
+      <div className="shrink-0 p-2 bg-canvas border-t border-line">
+        <label htmlFor="kitchen-comment" className="block text-muted text-xs font-medium mb-1">
           Nota para la cocina
         </label>
         <textarea
@@ -279,20 +286,20 @@ const TableInformation = ({ table, tableNumber, onUpdateTable, setIsLoading, pro
           maxLength={500}
           rows={2}
           placeholder="Ej: sin cebolla, servir primero a los niños…"
-          className="w-full resize-none bg-black/40 text-white text-xs rounded-lg p-2 border border-white/10 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder:text-white/30"
+          className="w-full resize-none bg-surface text-ink text-xs rounded-lg p-2 border border-line focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 placeholder:text-subtle"
         />
       </div>
 
       {/* TOTAL + SAVE (full width, spans both sections) */}
-      <div className="shrink-0 p-2 bg-black/20 border-t border-white/10">
-        <div className="flex justify-between items-center text-base font-bold text-white mb-1.5">
+      <div className="shrink-0 p-2 bg-canvas border-t border-line">
+        <div className="flex justify-between items-center text-base font-bold text-ink mb-1.5">
           <span>Total:</span>
           <span>${totalPrice.toFixed(0)}</span>
         </div>
 
         <button
           onClick={handleSaveOrder}
-          className="cursor-pointer w-full bg-[#22007c] hover:bg-[#140152] h-9 rounded-xl text-white font-bold text-sm transition-colors"
+          className="cursor-pointer w-full bg-brand-600 hover:bg-brand-700 h-9 rounded-xl text-white font-bold text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >
           {hasOpenOrder ? "Actualizar orden" : "Crear orden"}
         </button>

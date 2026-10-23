@@ -30,9 +30,9 @@ export function MarketingNavbar() {
     <nav
       className="fixed top-0 left-0 right-0 z-50"
       style={{
-        backgroundColor: "rgba(255,255,255,0.9)",
+        backgroundColor: "rgba(250,247,245,0.9)",
         backdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(0,0,0,0.08)",
+        borderBottom: "1px solid rgba(231,223,215,0.9)",
       }}
     >
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
@@ -77,7 +77,7 @@ export function MarketingNavbar() {
 
         <div className="hidden md:flex items-center gap-3 shrink-0">
           {isAuthChecking ? (
-            <div className="w-[280px] h-10" />
+            <div className="w-[120px] h-10" />
           ) : isAuthenticated ? (
             <>
               {canManage && (
@@ -89,16 +89,7 @@ export function MarketingNavbar() {
                 Ir a mi restaurante
               </PrimaryBtn>
             </>
-          ) : (
-            <>
-              <GhostBtn onClick={() => navigate("login")} className="text-sm py-2 px-5">
-                Iniciar sesión
-              </GhostBtn>
-              <PrimaryBtn onClick={() => navigate("registro")} className="text-sm py-2 px-5">
-                Crear tu restaurante
-              </PrimaryBtn>
-            </>
-          )}
+          ) : null}
         </div>
 
         <button
@@ -154,28 +145,7 @@ export function MarketingNavbar() {
                 Ir a mi restaurante
               </PrimaryBtn>
             </>
-          ) : (
-            <>
-              <GhostBtn
-                onClick={() => {
-                  setMobileOpen(false);
-                  navigate("login");
-                }}
-                className="w-full mt-1"
-              >
-                Iniciar sesión
-              </GhostBtn>
-              <PrimaryBtn
-                onClick={() => {
-                  setMobileOpen(false);
-                  navigate("registro");
-                }}
-                className="w-full"
-              >
-                Crear tu restaurante
-              </PrimaryBtn>
-            </>
-          )}
+          ) : null}
         </div>
       )}
     </nav>

@@ -1,3 +1,6 @@
+"use client";
+
+import { useRef } from "react";
 import { colorPalette } from "../../../../colorPallete"
 import { Order } from "../../../../models/order";
 
@@ -7,8 +10,36 @@ interface KitchenViewProps {
 }
 
 const KitchenView = ({ activeOrders, tableNumbers }: KitchenViewProps) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // A plain mouse wheel only emits deltaY; translate it into horizontal scroll
+  // so the order row can be browsed without shift/trackpad gestures. If the
+  // pointer is over a product list that can still scroll vertically, let it.
+  const handleWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    if (event.deltaX === 0) {
+      const list = (event.target as HTMLElement).closest<HTMLElement>("[data-scroll-y]");
+      if (list && list.scrollHeight > list.clientHeight) {
+        const canScrollUp = event.deltaY < 0 && list.scrollTop > 0;
+        const canScrollDown =
+          event.deltaY > 0 &&
+          list.scrollTop + list.clientHeight < list.scrollHeight - 1;
+        if (canScrollUp || canScrollDown) return;
+      }
+    }
+
+    container.scrollLeft += event.deltaX !== 0 ? event.deltaX : event.deltaY;
+  };
+
   return (
-    <div className="flex flex-row flex-wrap h-full w-full p-6 gap-6 overflow-y-auto" style={{ backgroundColor: colorPalette.Charcoal }}>
+    <div
+      ref={scrollRef}
+      onWheel={handleWheel}
+      className="flex flex-row items-stretch h-full w-full p-6 gap-6 overflow-x-auto overscroll-x-contain"
+      style={{ backgroundColor: colorPalette.Charcoal }}
+    >
       {activeOrders.length === 0 ? (
         <div className="flex flex-col items-center justify-center w-full h-full opacity-30">
           <img src="/kitchen.png" alt="Kitchen" className="w-32 h-32 mb-4 invert" />
@@ -18,7 +49,7 @@ const KitchenView = ({ activeOrders, tableNumbers }: KitchenViewProps) => {
         activeOrders.map((order) => (
           <div 
             key={order.tableId} 
-            className="flex flex-col w-72 rounded-2xl overflow-hidden shadow-xl"
+            className="flex flex-col w-72 shrink-0 h-full rounded-2xl overflow-hidden shadow-xl"
             style={{ backgroundColor: colorPalette.DeepTwilight }}
           >
             {/* Header */}
@@ -56,7 +87,7 @@ const KitchenView = ({ activeOrders, tableNumbers }: KitchenViewProps) => {
             )}
 
             {/* Product List */}
-            <div className="flex-1 p-4">
+            <div data-scroll-y className="flex-1 overflow-y-auto p-4">
               <ul className="space-y-3">
                 {order.orderDetail.map((detail, idx) => (
                   <li key={idx} className="flex justify-between items-start">
