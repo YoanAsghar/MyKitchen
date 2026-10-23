@@ -116,8 +116,10 @@ N/A (los productos no se sincronizan por hub; la carta se recarga al entrar).
 - `frontend/src/app/kitchen/[slug]/carta/page.tsx`: carga `ProductServices.getAll()`
   y `CategoryServices.getAll()`.
 - `frontend/src/app/kitchen/[slug]/carta/MenuContent.tsx`: top bar fija (buscador
-  + toggle de imágenes), sidebar de categorías (`w-60` en desktop, chips
-  horizontales en móvil) con scroll-spy, y secciones de productos con header.
+  + toggle de imágenes, en una sola fila), sidebar de categorías (`w-60` desde
+  `lg`, chips horizontales debajo) con scroll-spy, y secciones de productos con
+  header. La grilla es fluida: 1 columna en teléfonos, 2 desde `xs` y
+  `auto-fill minmax(210px,1fr)` desde `sm`.
 - `frontend/src/components/ProductCards.tsx`: tarjeta de producto (dark scope).
 - Selección en Mesas: `tableInformation.tsx` filtra `products` por nombre.
 - `frontend/src/services/ProductServices.tsx`: `getAll`, `createProduct`,

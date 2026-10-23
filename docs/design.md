@@ -267,9 +267,9 @@ Numeric values (totals, prices) use `ink`/`night-title`, not green or terracotta
 
 - Dark scope, matching Cocina/Mesas cards: page `#0a0a0f`; top bar `#0a0a0f` with bottom border `white/10`.
 - Search input: `white/[0.04]`, border `white/10`, text white, placeholder `white/40`; focus border `#d97757` + ring `rgba(217,119,87,0.20)`.
-- Category sidebar (desktop `w-60`, sticky): `#0a0a0f`, right border `white/10`. Item default `white/60`; hover `white/[0.06]` + white; active `#d97757/10` background + `#d97757` text. On mobile it becomes a horizontal, scrollable chip row under the top bar.
+- Category sidebar (`w-60`, sticky, from `lg` up): `#0a0a0f`, right border `white/10`. Item default `white/60`; hover `white/[0.06]` + white; active `#d97757/10` background + `#d97757` text. Below `lg` it becomes a horizontal, scrollable chip row under the top bar so the content keeps the full width.
 - Content: all products grouped in one section per category (empty categories skipped, uncategorized last). Section title white, count `white/60`.
-- Product cards: `#101014`, border `white/10`, hover border `white/15`; title white, price/description `white/60`, category chip `#d97757/10` + `#d97757`, product id `white/30`.
+- Product cards: fluid grid — 1 column on phones, 2 from `xs`, `auto-fill minmax(210px,1fr)` from `sm`. Cards `#101014`, border `white/10`, hover border `white/15`; title white, price/description `white/60`, category chip `#d97757/10` + `#d97757`, product id `white/30` (hidden on phones). Compact mobile type/padding.
 - Images toggle on: `#c2410c`; off: `white/15`.
 
 ### 7.4 Órdenes

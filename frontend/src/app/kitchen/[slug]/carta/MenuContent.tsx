@@ -146,9 +146,9 @@ const MenuContent = ({ products, categories }: MenuContentProps) => {
   return (
     <div className="flex h-full w-full flex-col overflow-hidden bg-night">
       {/* TOP BAR: SEARCH + IMAGES TOGGLE */}
-      <div className="shrink-0 border-b border-night-line bg-night p-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
+      <div className="shrink-0 border-b border-night-line bg-night p-3 sm:p-4">
+        <div className="flex flex-row items-center gap-3">
+          <div className="relative min-w-0 flex-1">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-night-muted"
               strokeWidth={2}
@@ -164,9 +164,9 @@ const MenuContent = ({ products, categories }: MenuContentProps) => {
             />
           </div>
 
-          <div className="flex shrink-0 items-center gap-2 sm:pl-2">
-            <span className="text-sm font-medium text-night-secondary">
-              Mostrar imágenes
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="text-xs font-medium text-night-secondary sm:text-sm">
+              <span className="hidden sm:inline">Mostrar </span>imágenes
             </span>
             <button
               type="button"
@@ -174,13 +174,13 @@ const MenuContent = ({ products, categories }: MenuContentProps) => {
               aria-checked={showImages}
               aria-label="Mostrar imágenes"
               onClick={() => setShowImages((value) => !value)}
-              className={`relative h-7 w-14 shrink-0 rounded-full p-1 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 ${
+              className={`relative h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 sm:h-7 sm:w-14 sm:p-1 ${
                 showImages ? "bg-brand-600" : "bg-white/15"
               }`}
             >
               <span
                 className={`block size-5 rounded-full bg-white shadow transition-transform duration-200 ${
-                  showImages ? "translate-x-7" : "translate-x-0"
+                  showImages ? "translate-x-5 sm:translate-x-7" : "translate-x-0"
                 }`}
               />
             </button>
@@ -188,14 +188,14 @@ const MenuContent = ({ products, categories }: MenuContentProps) => {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
-        {/* CATEGORY SIDEBAR (horizontal chip row on mobile) */}
-        <aside className="shrink-0 border-b border-night-line bg-night md:flex md:h-full md:w-60 md:flex-col md:border-b-0 md:border-r">
+      <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
+        {/* CATEGORY SIDEBAR (horizontal chip row below lg) */}
+        <aside className="shrink-0 border-b border-night-line bg-night lg:flex lg:h-full lg:w-60 lg:flex-col lg:border-b-0 lg:border-r">
           <nav
             aria-label="Categorías de la carta"
-            className="flex gap-1 overflow-x-auto p-2 md:min-h-0 md:flex-1 md:flex-col md:overflow-x-hidden md:overflow-y-auto md:p-3"
+            className="flex gap-1 overflow-x-auto p-2 lg:min-h-0 lg:flex-1 lg:flex-col lg:overflow-x-hidden lg:overflow-y-auto lg:p-3"
           >
-            <p className="hidden px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-night-muted md:block">
+            <p className="hidden px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-night-muted lg:block">
               Categorías
             </p>
             {sections.map((section) => {
@@ -225,9 +225,9 @@ const MenuContent = ({ products, categories }: MenuContentProps) => {
           onScroll={handleScroll}
           className="relative flex-1 overflow-y-auto"
         >
-          <div className="p-4 md:p-6">
+          <div className="p-3 sm:p-4 lg:p-6">
             {sections.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 text-center">
+              <div className="flex flex-col items-center justify-center py-16 text-center sm:py-24">
                 <BookOpen
                   className="size-12 text-night-ghost"
                   strokeWidth={1.5}
@@ -247,18 +247,18 @@ const MenuContent = ({ products, categories }: MenuContentProps) => {
                 <section
                   key={section.key}
                   data-section-key={section.key}
-                  className="mb-8 last:mb-0"
+                  className="mb-6 last:mb-0 lg:mb-8"
                 >
-                  <div className="mb-3 flex items-baseline justify-between gap-3">
-                    <h2 className="text-xl font-bold text-night-title">
+                  <div className="mb-2 flex items-baseline justify-between gap-3 sm:mb-3">
+                    <h2 className="text-lg font-bold text-night-title lg:text-xl">
                       {section.title}
                     </h2>
-                    <span className="shrink-0 text-xs font-medium text-night-muted">
+                    <span className="shrink-0 text-[11px] font-medium text-night-muted sm:text-xs">
                       {section.products.length}{" "}
                       {section.products.length === 1 ? "producto" : "productos"}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-4">
+                  <div className="grid grid-cols-1 gap-3 xs:grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(210px,1fr))] sm:gap-4">
                     {section.products.map((product) => (
                       <ProductCards
                         key={product.id}
