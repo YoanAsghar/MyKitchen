@@ -3,7 +3,7 @@
 - **ID:** SPEC-012
 - **Área:** Catálogo
 - **Estado:** Implementado (backend + lectura + CRUD UI en Admin)
-- **Última actualización:** 2026-10-22
+- **Última actualización:** 2026-10-18
 
 ## 1. Contexto y problema
 
@@ -13,8 +13,7 @@ en la carta y definen precios. Cada restaurante administra su propio catálogo.
 ## 2. Objetivo
 
 Ofrecer CRUD de productos scoped por restaurante, búsqueda por nombre y una vista
-de carta que muestra todos los productos agrupados por categoría, con una sidebar
-para saltar a cada sección.
+de carta con filtro por categoría.
 
 ## 3. Alcance
 
@@ -23,8 +22,7 @@ para saltar a cada sección.
 - Categorías como entidad propia (`Category`, un-a-muchos); el producto referencia
   `categoryId` (ver [categories.md](./categories.md)).
 - Búsqueda por nombre (`/Product/search?search=`).
-- Vista de carta con todas las secciones de categoría visibles, sidebar de salto,
-  buscador y toggle de imágenes.
+- Vista de carta con filtro por categoría, buscador y toggle de imágenes.
 - Selección de productos al componer una orden.
 
 **No incluye (fuera de alcance)**
@@ -40,18 +38,10 @@ para saltar a cada sección.
 - **Cuando** entra a Carta
 - **Entonces** ve las tarjetas con categoría, nombre, precio y descripción.
 
-### HU-2 — Navegar por categoría
-- **Dado** varias categorías con productos
-- **Cuando** entro a Carta
-- **Entonces** veo todos los productos agrupados por categoría, en secciones.
-- **Dado** la sidebar de categorías
-- **Cuando** hago clic en una
-- **Entonces** la vista hace scroll suave a esa sección y el ítem queda resaltado.
-- **Dado** que hago scroll manual
-- **Entonces** la sidebar resalta la sección que estoy viendo (scroll-spy).
-- **Dado** una categoría sin productos
-- **Entonces** no aparece en la sidebar; los productos sin categoría van a una
-  sección final "Sin categoría".
+### HU-2 — Filtrar por categoría
+- **Dado** varias categorías
+- **Cuando** elijo una
+- **Entonces** solo se muestran sus productos ("Todas" los muestra todos).
 
 ### HU-3 — Buscar
 - **Dado** el buscador
@@ -104,23 +94,17 @@ N/A (los productos no se sincronizan por hub; la carta se recarga al entrar).
 
 - Todas las consultas filtran por `RestaurantId`; creates/updates lo estampan.
 - `PUT` actualiza también `CategoryId`; un `categoryId` de otro restaurante → `400`.
-- La carta solo muestra (no edita); `MenuContent` arma las secciones desde la tabla
-  de categorías (no desde los productos) y agrupa por `CategoryId`. Las categorías
-  vacías se omiten; los productos sin categoría conocida van a "Sin categoría".
-- El buscador filtra por nombre y oculta las secciones que quedan sin resultados;
-  la sidebar refleja solo las secciones visibles.
+- La carta solo muestra (no edita); `MenuContent` arma las pestañas desde la tabla
+  de categorías (no desde los productos) y filtra por `CategoryId`.
 - `Image` se muestra solo con el toggle "Mostrar imágenes" activo.
 
 ## 9. UI / Flujo
 
 - `frontend/src/app/kitchen/[slug]/carta/page.tsx`: carga `ProductServices.getAll()`
-  y `CategoryServices.getAll()`.
-- `frontend/src/app/kitchen/[slug]/carta/MenuContent.tsx`: top bar fija (buscador
-  + toggle de imágenes, en una sola fila), sidebar de categorías (`w-60` desde
-  `lg`, chips horizontales debajo) con scroll-spy, y secciones de productos con
-  header. La grilla es fluida: 1 columna en teléfonos, 2 desde `xs` y
-  `auto-fill minmax(210px,1fr)` desde `sm`.
-- `frontend/src/components/ProductCards.tsx`: tarjeta de producto (dark scope).
+  y deriva `productCategories`.
+- `frontend/src/app/kitchen/[slug]/carta/MenuContent.tsx`: buscador, tabs de
+  categoría, toggle de imágenes, grilla.
+- `frontend/src/components/ProductCards.tsx`: tarjeta de producto.
 - Selección en Mesas: `tableInformation.tsx` filtra `products` por nombre.
 - `frontend/src/services/ProductServices.tsx`: `getAll`, `createProduct`,
   `editProduct`, `deleteProduct`.

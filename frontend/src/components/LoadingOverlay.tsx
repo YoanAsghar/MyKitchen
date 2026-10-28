@@ -12,7 +12,7 @@ const LoadingOverlay: FC<LoadingOverlayProps> = ({ isVisible, message = "Cargand
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <div className="flex flex-col items-center">
         {/* Spinner */}
-        <div className="w-14 h-14 border-4 border-gray-300 border-t-brand-600 rounded-full animate-spin"></div>
+        <div className="w-14 h-14 border-4 border-gray-300 border-t-purple-600 rounded-full animate-spin"></div>
         
         {/* Mensaje opcional */}
         {message && (

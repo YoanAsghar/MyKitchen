@@ -24,10 +24,10 @@ export function PrimaryBtn({
     <button
       type={type}
       onClick={onClick}
-      className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-all duration-200 hover:brightness-105 active:scale-[0.98] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#d97757]/60 ${className}`}
-      style={{ backgroundColor: colorPalette.Terracotta }}
-      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = colorPalette.TerracottaHover)}
-      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colorPalette.Terracotta)}
+      className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200 hover:brightness-110 active:scale-[0.98] cursor-pointer ${className}`}
+      style={{ backgroundColor: colorPalette.Navy }}
+      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#2a0096")}
+      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = colorPalette.Navy)}
     >
       {children}
     </button>
@@ -52,9 +52,9 @@ export function GhostBtn({
     <button
       type={type}
       onClick={onClick}
-      className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#d97757]/40 ${
+      className={`inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 cursor-pointer ${
         light
-          ? "text-[#2d2a26] border border-[#e7dfd7] bg-white hover:bg-[#faf7f5] hover:border-[#d6c9bf]"
+          ? "text-gray-700 border border-gray-300 hover:bg-gray-100 hover:border-gray-400"
           : "text-white border border-white/15 hover:bg-white/10"
       } ${className}`}
     >

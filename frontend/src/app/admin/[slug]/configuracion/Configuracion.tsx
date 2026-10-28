@@ -6,7 +6,7 @@ import { RestaurantServices } from "../../../../services/RestaurantServices";
 import { useGlobalContext } from "../../../GlobalContext";
 
 const inputClassName =
-  "w-full px-3.5 py-2.5 rounded-lg bg-white/[0.04] border border-white/10 text-sm focus:outline-none focus:border-brand-500 disabled:opacity-60 disabled:cursor-not-allowed";
+  "w-full px-3.5 py-2.5 rounded-lg bg-white/[0.04] border border-white/10 text-sm focus:outline-none focus:border-[#22c55e] disabled:opacity-60 disabled:cursor-not-allowed";
 
 export default function Configuracion() {
   const { role, restaurantId, setRestaurantName } = useGlobalContext();
@@ -105,7 +105,7 @@ export default function Configuracion() {
         </p>
       )}
       {success && (
-        <p className="mt-4 flex items-center gap-2 text-sm text-green-text border border-green/20 bg-green-subtle rounded-lg px-3 py-2">
+        <p className="mt-4 flex items-center gap-2 text-sm text-[#4ade80] border border-[#22c55e]/20 bg-[#22c55e]/10 rounded-lg px-3 py-2">
           <Check className="w-4 h-4" /> {success}
         </p>
       )}
@@ -193,7 +193,7 @@ export default function Configuracion() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-semibold bg-brand-600 text-white hover:bg-brand-700 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-sm font-semibold bg-[#22c55e] text-[#0a0a0f] hover:brightness-110 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <Save className="w-4 h-4" />
                 {saving ? "Guardando..." : "Guardar cambios"}

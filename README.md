@@ -30,10 +30,6 @@ aceptación se traducen en tests del backend.
 
 ---
 
-## 🎨 Diseño
-
-La app está migrando a la paleta cálida definida en [`docs/design.md`](./docs/design.md): superficies claras (`#faf7f5` / blanco), chrome oscuro (`#0a0a0f`) para el navbar de cocina y el panel de administración, acento principal terracota `#c2410c`, y verde/dorado como acentos secundarios (el verde ya no es color de acciones primarias). Los tokens viven una sola vez en `frontend/src/index.css` (`@theme` + `.theme-dark`) y se espejan en `frontend/src/colorPallete.tsx`. **Migración en curso:** el navbar de cocina y la capa de mesas (tarjetas, pagos, panel de composición) ya usan el sistema nuevo; Cocina, Carta, Órdenes, admin, marketing y auth siguen pendientes.
-
 ## 🛠️ Funcionalidades Principales
 
 ### 0. Sitio de marketing (SaaS)
@@ -60,7 +56,6 @@ Las rutas de la app (business) viven bajo `/kitchen/{slug}/` (mesas, cocina, car
 
 ### 3. Cocina
 - Todos los pedidos **activos** (mesas con orden abierta) llegan a Cocina al instante.
-- Los pedidos se muestran como tarjetas de **altura completa** en una fila con scroll horizontal (la rueda del mouse también desplaza la fila).
 - Una orden entra a Cocina cuando el mesero presiona **"Crear orden"** (o la actualiza con "Editar orden"); los cambios previos al envío nunca llegan a Cocina.
 - Las tarjetas de cocina muestran la **"nota para la cocina"** resaltada cuando el pedido la incluye.
 
