@@ -70,7 +70,7 @@ export default function AdminLayout({
               : "text-white/60 hover:text-white hover:bg-white/5"
           }`}
         >
-          <Icon className={`${iconClassName} ${active ? "text-[#22c55e]" : ""}`} />
+          <Icon className={`${iconClassName} ${active ? "text-brand-500" : ""}`} />
           {section.label}
         </button>
       );
@@ -81,7 +81,7 @@ export default function AdminLayout({
       {/* Sidebar (desktop) */}
       <aside className="hidden md:flex w-72 flex-col border-r border-white/10 bg-white/[0.02]">
         <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-[#22c55e]">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-brand-500">
             <ChefHat className="w-5 h-5 text-[#0a0a0f]" />
           </div>
           <div>
@@ -119,7 +119,7 @@ export default function AdminLayout({
         {/* Topbar (mobile) */}
         <header className="md:hidden flex items-center justify-between gap-3 px-4 py-3 border-b border-white/10 bg-white/[0.02]">
           <div className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-[#22c55e]">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-brand-500">
               <ChefHat className="w-4 h-4 text-[#0a0a0f]" />
             </div>
             <p className="font-bold text-sm">Admin</p>
@@ -153,7 +153,7 @@ export default function AdminLayout({
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-canvas text-ink">{children}</main>
       </div>
     </div>
   );
