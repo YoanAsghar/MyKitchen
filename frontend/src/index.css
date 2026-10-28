@@ -1,30 +1,98 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap");
 
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #030014;
+  --color-brand-500: #d97757;
+  --color-brand-600: #c2410c;
+  --color-brand-700: #9a3412;
+  --color-brand-800: #7c2d12;
+  --color-brand-subtle: #fbeee9;
+  --color-brand-line: #f0c9b9;
 
-  --color-light-100: #cecefb;
-  --color-light-200: #a8b5db;
+  --color-gold: #f5b301;
+  --color-gold-subtle: #fef7e0;
+  --color-green: #22c55e;
+  --color-green-strong: #16a34a;
+  --color-green-text: #15803d;
+  --color-green-subtle: #e9f9ef;
+  --color-amber: #f59e0b;
+  --color-amber-bright: #fbbf24;
+  --color-amber-soft: #fef3c7;
+  --color-amber-text: #b45309;
+  --color-amber-subtle: #fffbeb;
+  --color-red: #dc2626;
+  --color-red-strong: #b91c1c;
+  --color-red-subtle: #fef2f2;
+  --color-red-line: #fecaca;
 
-  --color-gray-100: #9ca4ab;
+  --color-canvas: #faf7f5;
+  --color-canvas-deep: #f5f0ea;
+  --color-canvas-sand: #ece4da;
+  --color-surface: #ffffff;
+  --color-surface-warm: #fffdfb;
+  --color-line: #e7dfd7;
+  --color-line-soft: #efe8e1;
+  --color-line-strong: #d6c9bf;
+  --color-ink: #1f1b16;
+  --color-body: #2d2a26;
+  --color-muted: #6b635b;
+  --color-subtle: #7a7168;
+  --color-faint: #9a9188;
 
-  --color-dark-100: #0f0d23;
+  --color-night: #0a0a0f;
+  --color-night-raised: #101014;
+  --color-night-chrome: #121212;
+  --color-night-warm: #1f1b16;
+  --color-night-inset: rgba(0, 0, 0, 0.2);
+  --color-night-surface: rgba(255, 255, 255, 0.02);
+  --color-night-hover: rgba(255, 255, 255, 0.04);
+  --color-night-active: rgba(255, 255, 255, 0.06);
+  --color-night-line: rgba(255, 255, 255, 0.1);
+  --color-night-line-soft: rgba(255, 255, 255, 0.06);
+  --color-night-line-strong: rgba(255, 255, 255, 0.15);
+  --color-night-overlay: rgba(0, 0, 0, 0.6);
+  --color-night-title: #ffffff;
+  --color-night-body: rgba(255, 255, 255, 0.8);
+  --color-night-secondary: rgba(255, 255, 255, 0.7);
+  --color-night-muted: rgba(255, 255, 255, 0.6);
+  --color-night-faint: rgba(255, 255, 255, 0.4);
+  --color-night-ghost: rgba(255, 255, 255, 0.3);
+  --color-night-disabled: rgba(255, 255, 255, 0.2);
+
+  --color-app-bg: var(--color-canvas);
+  --color-app-surface: var(--color-surface);
+  --color-app-text: var(--color-ink);
+  --color-app-muted: var(--color-muted);
+  --color-app-border: var(--color-line);
+  --color-action: var(--color-brand-600);
+  --color-action-hover: var(--color-brand-700);
+  --color-focus: var(--color-brand-600);
+
+  --color-primary: #0a0a0f;
 
   --font-dm-sans: DM Sans, sans-serif;
 
   --breakpoint-xs: 480px;
+}
 
-  --background-image-hero-pattern: url("/hero-bg.png");
+.theme-dark {
+  --color-app-bg: var(--color-night);
+  --color-app-surface: var(--color-night-raised);
+  --color-app-text: var(--color-night-title);
+  --color-app-muted: var(--color-night-muted);
+  --color-app-border: var(--color-night-line);
+  --color-action: var(--color-brand-600);
+  --color-action-hover: var(--color-brand-700);
+  --color-focus: var(--color-brand-500);
 }
 
 @layer base {
   body {
     font-family: "DM Sans", serif;
     font-optical-sizing: auto;
-    background: #030014;
+    background: var(--color-night);
+    color: var(--color-night-body);
   }
 
   h1 {
@@ -59,120 +127,6 @@
   }
 }
 
-@layer components {
-  .pattern {
-    @apply bg-hero-pattern w-full h-screen bg-center bg-cover absolute z-0;
-  }
-
-  .wrapper {
-    @apply px-5 py-12 xs:p-10 max-w-7xl mx-auto flex flex-col relative z-10;
-  }
-
-  .trending {
-    @apply mt-20;
-
-    & ul {
-      @apply flex flex-row overflow-y-auto gap-5 -mt-10 w-full hide-scrollbar;
-    }
-
-    & ul li {
-      @apply min-w-[230px] flex flex-row items-center;
-    }
-
-    & ul li p {
-      @apply fancy-text mt-[22px] text-nowrap;
-    }
-
-    & ul li img {
-      @apply w-[127px] h-[163px] rounded-lg object-cover -ml-3.5;
-    }
-  }
-
-  .search {
-    @apply w-full bg-light-100/5 px-4 py-3 rounded-lg mt-10 max-w-3xl mx-auto;
-
-    & div {
-      @apply relative flex items-center;
-    }
-
-    & img {
-      @apply absolute left-2 h-5 w-5;
-    }
-
-    & input {
-      @apply w-full bg-transparent py-2 sm:pr-10 pl-10 text-base text-gray-200 placeholder-light-200 outline-hidden;
-    }
-  }
-
-  .all-movies {
-    @apply space-y-9;
-
-    & ul {
-      @apply grid grid-cols-1 gap-5 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4;
-    }
-  }
-
-  .movie-card {
-    @apply bg-dark-100 p-5 rounded-2xl shadow-inner shadow-light-100/10;
-
-    & img {
-      @apply rounded-lg h-auto w-full;
-    }
-
-    & h3 {
-      @apply text-white font-bold text-base line-clamp-1;
-    }
-
-    & .content {
-      @apply mt-2 flex flex-row items-center flex-wrap gap-2;
-    }
-
-    & .rating {
-      @apply flex flex-row items-center gap-1;
-    }
-
-    & .rating img {
-      @apply size-4 object-contain;
-    }
-
-    & .rating p {
-      @apply font-bold text-base text-white;
-    }
-
-    & .content span {
-      @apply text-sm text-gray-100;
-    }
-
-    & .content .lang {
-      @apply capitalize text-gray-100 font-medium text-base;
-    }
-
-    & .content .year {
-      @apply text-gray-100 font-medium text-base;
-    }
-  }
-}
-
-@utility text-gradient {
-  @apply bg-linear-to-r from-[#D6C7FF] to-[#AB8BFF] bg-clip-text text-transparent;
-}
-
-@utility fancy-text {
-  -webkit-text-stroke: 5px rgba(206, 206, 251, 0.5);
-  font-size: 190px;
-  font-family: "Bebas Neue", sans-serif;
-}
-
-@utility hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-/* Animaciones para las pestañas */
 .tab-pane {
   display: flex;
   width: 0;
@@ -189,13 +143,11 @@
   pointer-events: auto;
 }
 
-/* Para asegurar que el contenido dentro no se rompa mientras el ancho cambia */
 .tab-content-wrapper {
-  width: 100%; 
+  width: 100%;
   height: 100%;
 }
 
-/* Animaciones verticales para TableInformation */
 .tab-pane-vertical {
   display: flex;
   flex-direction: column;
@@ -211,7 +163,7 @@
 }
 
 .inner-content-vertical {
-  min-height: 500px; /* Asegura que el contenido no se colapse visualmente */
+  min-height: 500px;
   display: flex;
   flex-direction: column;
   height: 100%;

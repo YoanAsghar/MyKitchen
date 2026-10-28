@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ArrowLeftRight, Banknote, CreditCard, type LucideIcon } from "lucide-react";
 import { Order, PaymentMethod } from "../../../../models/order";
 import { OrderServices } from "../../../../services/OrderServices";
 import { Table } from "../../../../models/table";
@@ -10,7 +11,7 @@ interface TablePaymentProps {
 }
 
 // Payment section for a table that already has a created OPEN order.
-const TablePayment = ({ table, tableNumber, setIsLoading }: TablePaymentProps) => {
+const TablePayment = ({ table, setIsLoading }: TablePaymentProps) => {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
 
   async function handleProcessPayment() {
@@ -38,51 +39,59 @@ const TablePayment = ({ table, tableNumber, setIsLoading }: TablePaymentProps) =
   }
 
   return (
-    <div className="bg-black p-3 space-y-2">
-
+    <div className="space-y-2 border-t border-line bg-canvas p-2">
       <div className="grid grid-cols-3 gap-2">
         <PaymentButton
           active={paymentMethod === PaymentMethod.CASH}
           onClick={() => setPaymentMethod(PaymentMethod.CASH)}
-          icon="/dollar_icon.png"
+          icon={Banknote}
           label="Efectivo"
         />
         <PaymentButton
           active={paymentMethod === PaymentMethod.BANK_TRANS}
           onClick={() => setPaymentMethod(PaymentMethod.BANK_TRANS)}
-          icon="/currency_icon.png"
+          icon={ArrowLeftRight}
           label="Transferencia"
         />
         <PaymentButton
           active={paymentMethod === PaymentMethod.CARD}
           onClick={() => setPaymentMethod(PaymentMethod.CARD)}
-          icon="/credit_card.png"
+          icon={CreditCard}
           label="Tarjeta"
         />
       </div>
 
       <button
         onClick={handleProcessPayment}
-        className="cursor-pointer w-full bg-[#22007c] hover:bg-[#140152] h-10 rounded-2xl text-white font-bold text-sm transition-colors"
+        className="cursor-pointer w-full bg-brand-600 hover:bg-brand-700 h-10 rounded-xl text-white font-semibold text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/30"
       >
         Procesar pago
       </button>
-
     </div>
   );
 };
 
-const PaymentButton = ({ active, onClick, icon, label }: any) => (
-  <div
+interface PaymentButtonProps {
+  active: boolean;
+  onClick: () => void;
+  icon: LucideIcon;
+  label: string;
+}
+
+const PaymentButton = ({ active, onClick, icon: Icon, label }: PaymentButtonProps) => (
+  <button
+    type="button"
     onClick={onClick}
-    className={`flex flex-col items-center justify-center p-2 rounded-2xl cursor-pointer transition-all
-${active
-    ? "bg-[#22007c] scale-105"
-    : "bg-zinc-900 hover:bg-zinc-800"}`}
+    aria-pressed={active}
+    className={`flex flex-col items-center justify-center gap-1 rounded-xl border p-2 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600/30 ${
+      active
+        ? "border-brand-600 bg-brand-600 text-white"
+        : "border-line bg-surface text-muted hover:bg-canvas-deep hover:text-ink"
+    }`}
   >
-    <img className="w-6 h-6 mb-1" src={icon} alt={label} />
-    <p className="text-white text-xs font-medium">{label}</p>
-  </div>
+    <Icon className="size-5" strokeWidth={1.75} aria-hidden="true" />
+    <p className="text-xs font-medium">{label}</p>
+  </button>
 );
 
 export default TablePayment;

@@ -31,7 +31,7 @@ export function AppMockup() {
           <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
           <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
         </div>
-        <div className="flex-1 bg-white/5 rounded-md px-3 py-1 text-[10px] text-white/25 font-mono">
+        <div className="flex-1 bg-white/5 rounded-md px-3 py-1 text-[10px] text-white/40 font-mono">
           app.mykitchen.lat/kitchen/la-parrilla-del-centro/mesas
         </div>
         <Wifi className="w-3 h-3 opacity-70" style={{ color: colorPalette.Green }} />
@@ -90,15 +90,15 @@ export function AppMockup() {
             ))}
           </div>
           <div className="mt-auto pt-2 border-t border-white/8">
-            <div className="flex justify-between text-[10px] text-white/30 mb-1">
+            <div className="flex justify-between text-[10px] text-white/40 mb-1">
               <span>Subtotal</span>
-              <span className="text-white/70">$1.880</span>
+              <span className="text-white/80">$1.880</span>
             </div>
-            <div className="flex justify-between text-[10px] text-white/30 mb-2">
+            <div className="flex justify-between text-[10px] text-white/40 mb-2">
               <span>Propina 10%</span>
-              <span className="text-white/70">$188</span>
+              <span className="text-white/80">$188</span>
             </div>
-            <div className="w-full py-1.5 rounded-xl text-[10px] font-bold text-white text-center" style={{ backgroundColor: colorPalette.Navy }}>
+            <div className="w-full py-1.5 rounded-lg text-[10px] font-bold text-white text-center" style={{ backgroundColor: colorPalette.Terracotta }}>
               Cobrar $2.068
             </div>
           </div>
