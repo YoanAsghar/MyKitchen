@@ -21,7 +21,6 @@ const UNCATEGORIZED_KEY = "uncategorized";
 
 const MenuContent = ({ products, categories }: MenuContentProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [showImages, setShowImages] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -164,27 +163,6 @@ const MenuContent = ({ products, categories }: MenuContentProps) => {
             />
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="text-xs font-medium text-night-secondary sm:text-sm">
-              <span className="hidden sm:inline">Mostrar </span>imágenes
-            </span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={showImages}
-              aria-label="Mostrar imágenes"
-              onClick={() => setShowImages((value) => !value)}
-              className={`relative h-6 w-11 shrink-0 rounded-full p-0.5 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 sm:h-7 sm:w-14 sm:p-1 ${
-                showImages ? "bg-brand-600" : "bg-white/15"
-              }`}
-            >
-              <span
-                className={`block size-5 rounded-full bg-white shadow transition-transform duration-200 ${
-                  showImages ? "translate-x-5 sm:translate-x-7" : "translate-x-0"
-                }`}
-              />
-            </button>
-          </div>
         </div>
       </div>
 
@@ -263,7 +241,6 @@ const MenuContent = ({ products, categories }: MenuContentProps) => {
                       <ProductCards
                         key={product.id}
                         product={product}
-                        showImages={showImages}
                       />
                     ))}
                   </div>

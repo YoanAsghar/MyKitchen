@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Menu, X, ChefHat } from "lucide-react";
-import { GhostBtn, PrimaryBtn, marketingPath, type MarketingPage } from "./ui";
+import { PrimaryBtn, marketingPath, type MarketingPage } from "./ui";
 import { useRouter } from "next/navigation";
 import { useGlobalContext } from "../../GlobalContext";
 import { restaurantSlug } from "../../../restaurantSlug";
@@ -10,14 +10,14 @@ import { restaurantSlug } from "../../../restaurantSlug";
 export function MarketingNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
-  const { isAuthenticated, isAuthChecking, role, restaurantId, restaurantName } = useGlobalContext();
+  const { isAuthenticated, isAuthChecking, restaurantId, restaurantName } = useGlobalContext();
 
-  const canManage = role === "admin" || role === "owner";
   const slug = restaurantSlug(restaurantName, restaurantId);
 
   const navigate = (page: MarketingPage) => router.push(marketingPath(page));
   const goToRestaurant = () => router.push(`/kitchen/${slug}/mesas`);
-  const goToManagement = () => router.push(`/admin/${slug}`);
+  const goToRegistro = () => router.push("/home/registro");
+  const goToLogin = () => router.push("/auth/login");
 
   const goToLandingWithFeatures = () => {
     router.push(marketingPath("landing"));
@@ -48,48 +48,27 @@ export function MarketingNavbar() {
           </span>
         </button>
 
-        <div className="hidden md:flex items-center gap-8 flex-1 justify-center">
-          <button
-            onClick={() => navigate("landing")}
-            className="text-gray-500 hover:text-gray-900 transition-colors text-sm font-medium cursor-pointer"
-          >
-            Inicio
-          </button>
-          <button
-            onClick={goToLandingWithFeatures}
-            className="text-gray-500 hover:text-gray-900 transition-colors text-sm font-medium cursor-pointer"
-          >
-            Funciones
-          </button>
-          <button
-            onClick={() => navigate("pricing")}
-            className="text-gray-500 hover:text-gray-900 transition-colors text-sm font-medium cursor-pointer"
-          >
-            Precios
-          </button>
-          <button
-            onClick={() => navigate("contact")}
-            className="text-gray-500 hover:text-gray-900 transition-colors text-sm font-medium cursor-pointer"
-          >
-            Contacto
-          </button>
-        </div>
 
         <div className="hidden md:flex items-center gap-3 shrink-0">
           {isAuthChecking ? (
-            <div className="w-[120px] h-10" />
+            <div className="w-[200px] h-10" />
           ) : isAuthenticated ? (
+            <PrimaryBtn onClick={goToRestaurant} className="text-sm py-2 px-5">
+              Ir a mi restaurante
+            </PrimaryBtn>
+          ) : (
             <>
-              {canManage && (
-                <GhostBtn onClick={goToManagement} className="text-sm py-2 px-5">
-                  Gestionar mi restaurante
-                </GhostBtn>
-              )}
-              <PrimaryBtn onClick={goToRestaurant} className="text-sm py-2 px-5">
-                Ir a mi restaurante
+              <button
+                onClick={goToRegistro}
+                className="text-gray-900 hover:bg-gray-100 transition-colors text-sm font-medium py-2 px-5 rounded-lg cursor-pointer"
+              >
+                Crea tu restaurante
+              </button>
+              <PrimaryBtn onClick={goToLogin} className="text-sm py-2 px-5">
+                Acceder a tu restaurante
               </PrimaryBtn>
             </>
-          ) : null}
+          )}
         </div>
 
         <button
@@ -115,7 +94,11 @@ export function MarketingNavbar() {
               key={l.label}
               onClick={() => {
                 setMobileOpen(false);
-                navigate(l.page);
+                if (l.label === "Funciones") {
+                  goToLandingWithFeatures();
+                } else {
+                  navigate(l.page);
+                }
               }}
               className="text-left py-2.5 text-gray-500 hover:text-gray-900 text-base font-medium border-b border-black/5 transition-colors cursor-pointer"
             >
@@ -123,29 +106,37 @@ export function MarketingNavbar() {
             </button>
           ))}
           {isAuthenticated ? (
+            <PrimaryBtn
+              onClick={() => {
+                setMobileOpen(false);
+                goToRestaurant();
+              }}
+              className="w-full mt-1"
+            >
+              Ir a mi restaurante
+            </PrimaryBtn>
+          ) : (
             <>
-              {canManage && (
-                <GhostBtn
-                  onClick={() => {
-                    setMobileOpen(false);
-                    goToManagement();
-                  }}
-                  className="w-full mt-1"
-                >
-                  Gestionar mi restaurante
-                </GhostBtn>
-              )}
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  goToRegistro();
+                }}
+                className="text-left py-2.5 text-gray-900 hover:text-gray-700 text-base font-medium transition-colors cursor-pointer"
+              >
+                Crea tu restaurante
+              </button>
               <PrimaryBtn
                 onClick={() => {
                   setMobileOpen(false);
-                  goToRestaurant();
+                  goToLogin();
                 }}
                 className="w-full"
               >
-                Ir a mi restaurante
+                Acceder a tu restaurante
               </PrimaryBtn>
             </>
-          ) : null}
+          )}
         </div>
       )}
     </nav>

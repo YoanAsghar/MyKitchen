@@ -2,13 +2,11 @@ import { Product } from "../models/product"
 
 interface ProductCardsProps {
   product: Product;
-  showImages: boolean;
 }
 
-const ProductCards = ({product, showImages} :ProductCardsProps)  => {
+const ProductCards = ({product} :ProductCardsProps)  => {
   return (
     <div className="rounded-xl w-full flex flex-col overflow-hidden border border-night-line bg-night-raised shadow-[0_20px_50px_-25px_rgba(0,0,0,0.65)] transition-colors hover:border-night-line-strong">
-      {showImages && (
         <div className="h-32 w-full border-b border-night-line sm:h-40">
           <img 
             className="w-full h-full object-cover" 
@@ -16,7 +14,6 @@ const ProductCards = ({product, showImages} :ProductCardsProps)  => {
             alt={product.name} 
           />
         </div>
-      )}
       <div className="flex flex-row items-center p-3 min-h-0 sm:p-4 sm:min-h-20">
         <div className="flex flex-col w-full">
           <span className="mt-1 mb-1 w-fit max-w-full truncate rounded-md bg-brand-500/10 px-2 py-0.5 text-[10px] font-medium text-brand-500 sm:py-1 sm:text-xs">

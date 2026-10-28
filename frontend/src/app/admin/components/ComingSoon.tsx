@@ -6,11 +6,13 @@ export default function ComingSoon({
   description: string;
 }) {
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold">{title}</h1>
-      <p className="mt-2 text-white/40 max-w-xl">{description}</p>
-      <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.02] p-8 text-center">
-        <p className="text-sm text-white/50">Próximamente</p>
+    <div className="p-6 sm:p-8">
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-ink">{title}</h1>
+        <p className="mt-1 text-sm text-muted max-w-xl">{description}</p>
+      </div>
+      <div className="rounded-2xl border border-line bg-surface p-8 text-center shadow-sm">
+        <p className="text-sm text-muted">Próximamente</p>
       </div>
     </div>
   );
